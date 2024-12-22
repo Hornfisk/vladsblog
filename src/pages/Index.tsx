@@ -7,21 +7,21 @@ const posts = [
     excerpt: "An exploration of zero-trust architecture principles and practical implementation strategies for modern web applications.",
     date: "2024-02-20",
     slug: "zero-trust-security",
-    tags: ["Security", "Architecture", "Best Practices"],
+    tags: ["Zero Trust", "Cloud", "Architecture"],
   },
   {
-    title: "Advanced Penetration Testing Techniques",
-    excerpt: "Deep dive into advanced penetration testing methodologies and tools used in cybersecurity assessments.",
+    title: "Building a Security-Focused Homelab",
+    excerpt: "A comprehensive guide to setting up a homelab environment for cybersecurity testing and learning.",
     date: "2024-02-15",
-    slug: "advanced-pentesting",
-    tags: ["Security", "Pentesting", "Tools"],
+    slug: "security-homelab",
+    tags: ["Homelab", "Infrastructure", "Cloud"],
   },
   {
-    title: "Secure Code Review Best Practices",
-    excerpt: "Essential guidelines and practices for conducting effective security-focused code reviews.",
+    title: "AI in Cybersecurity: Opportunities and Risks",
+    excerpt: "Exploring the intersection of artificial intelligence and cybersecurity - from threat detection to potential vulnerabilities.",
     date: "2024-02-10",
-    slug: "secure-code-review",
-    tags: ["Security", "Code Quality", "Best Practices"],
+    slug: "ai-cybersecurity",
+    tags: ["AI", "Security", "News"],
   },
 ];
 
@@ -32,7 +32,7 @@ const Index = () => {
       <main className="container max-w-6xl mx-auto px-4 py-12">
         <section className="mb-16">
           <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
-            > Hello, cyber traveler_
+            {">"} Hello, cyber traveler_
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl leading-relaxed">
             I'm Vlad, a cybersecurity nerd navigating the digital labyrinth. Here to share insights, break stuff (ethically), and maybe drop a few security breadcrumbs along the way. Grab a coffee, and let's explore the code less traveled.
