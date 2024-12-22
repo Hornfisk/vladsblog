@@ -29,7 +29,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         blogBg: "#1A1F2C",
-        accent1: "#9b87f5",
+        accent1: "#8B5CF6",
         accent2: "#D946EF",
         primary: {
           DEFAULT: "hsl(var(--primary))",
