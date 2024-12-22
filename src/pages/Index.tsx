@@ -35,7 +35,7 @@ const Index = () => {
             > Hello, cyber traveler_
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl leading-relaxed">
-            Welcome to my digital sanctuary. I'm Vlad, a cybersecurity enthusiast with an eye for the elegant intersection of security and code. Here, I document my adventures in the digital realm, share battle-tested insights, and occasionally drop some security wisdom. Whether you're here to learn, collaborate, or just curious about the art of secure systems - you're in the right place.
+            I'm Vlad, a cybersecurity nerd navigating the digital labyrinth. Here to share insights, break stuff (ethically), and maybe drop a few security breadcrumbs along the way. Grab a coffee, and let's explore the code less traveled.
           </p>
         </section>
         
