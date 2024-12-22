@@ -1,7 +1,6 @@
 import { BlogHeader } from "@/components/BlogHeader";
 import { BlogPost } from "@/components/BlogPost";
 
-// Sample blog posts (you can replace these with real data later)
 const posts = [
   {
     title: "Implementing Zero-Trust Security in Modern Applications",
@@ -28,16 +27,15 @@ const posts = [
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-blogBg text-gray-100">
+    <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
       <main className="container max-w-6xl mx-auto px-4 py-12">
         <section className="mb-16">
           <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
-            Welcome to My Tech Blog
+            > Hello, cyber traveler_
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl">
-            Exploring cybersecurity, software engineering, and technical discoveries.
-            Join me on this journey of continuous learning and sharing.
+          <p className="text-xl text-gray-300 max-w-2xl leading-relaxed">
+            Welcome to my digital sanctuary. I'm Vlad, a cybersecurity enthusiast with an eye for the elegant intersection of security and code. Here, I document my adventures in the digital realm, share battle-tested insights, and occasionally drop some security wisdom. Whether you're here to learn, collaborate, or just curious about the art of secure systems - you're in the right place.
           </p>
         </section>
         
