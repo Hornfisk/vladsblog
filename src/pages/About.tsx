@@ -1,6 +1,7 @@
 import { BlogHeader } from "@/components/BlogHeader";
 import { Button } from "@/components/ui/button";
 import { Linkedin } from "lucide-react";
+import { ContactForm } from "@/components/ContactForm";
 
 const About = () => {
   return (
@@ -14,7 +15,7 @@ const About = () => {
           <p className="text-gray-300 leading-relaxed">
             [Placeholder] A cybersecurity enthusiast and cloud infrastructure specialist with a passion for building secure, scalable systems. More details coming soon...
           </p>
-          <div className="pt-6">
+          <div className="pt-6 flex gap-4">
             <a 
               href="https://linkedin.com/in/your-profile" 
               target="_blank" 
@@ -27,6 +28,7 @@ const About = () => {
                 Connect on LinkedIn
               </Button>
             </a>
+            <ContactForm />
           </div>
         </div>
       </main>
