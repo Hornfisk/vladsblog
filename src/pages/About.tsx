@@ -1,6 +1,5 @@
 import { BlogHeader } from "@/components/BlogHeader";
 import { Button } from "@/components/ui/button";
-import { Linkedin } from "lucide-react";
 import { ContactForm } from "@/components/ContactForm";
 
 const About = () => {
@@ -26,7 +25,6 @@ const About = () => {
                 target="_blank" 
                 rel="noopener noreferrer"
               >
-                <Linkedin className="mr-2 h-4 w-4" />
                 LinkedIn
               </a>
             </Button>
