@@ -16,18 +16,20 @@ const About = () => {
             [Placeholder] A cybersecurity enthusiast and cloud infrastructure specialist with a passion for building secure, scalable systems. More details coming soon...
           </p>
           <div className="pt-6 flex gap-4">
-            <a 
-              href="https://linkedin.com/in/your-profile" 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <Button 
+              variant="outline"
+              className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50"
+              asChild
             >
-              <Button 
-                className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white"
+              <a 
+                href="https://linkedin.com/in/your-profile" 
+                target="_blank" 
+                rel="noopener noreferrer"
               >
-                <Linkedin className="mr-2 h-5 w-5" />
-                Connect on LinkedIn
-              </Button>
-            </a>
+                <Linkedin className="mr-2 h-4 w-4" />
+                LinkedIn
+              </a>
+            </Button>
             <ContactForm />
           </div>
         </div>
