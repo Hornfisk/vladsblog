@@ -27,9 +27,9 @@ const Index = () => {
         .from('page_content')
         .select('content')
         .eq('page_name', 'home-intro')
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGSQL_NO_ROWS_RETURNED') throw error;
+      if (error) throw error;
       return data?.content || "I'm Vlad, a cybersecurity nerd navigating the digital labyrinth. Here to share insights, break stuff (ethically), and maybe drop a few security breadcrumbs along the way. Grab a coffee, and let's explore the code less traveled.";
     },
   });

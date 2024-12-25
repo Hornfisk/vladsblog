@@ -39,6 +39,7 @@ export function InlineEdit({ content, pageName, className = "" }: InlineEditProp
     }
   };
 
+  // Always show the content, even if not logged in
   if (!session) return <div className={className}>{content}</div>;
 
   return (
@@ -49,7 +50,7 @@ export function InlineEdit({ content, pageName, className = "" }: InlineEditProp
           <Button
             variant="ghost"
             size="icon"
-            className="absolute -right-10 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute -right-10 top-0 opacity-70 group-hover:opacity-100 transition-opacity"
             onClick={() => setIsEditing(true)}
           >
             <Pencil className="h-4 w-4 text-accent1" />

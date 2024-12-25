@@ -13,9 +13,9 @@ const About = () => {
         .from('page_content')
         .select('content')
         .eq('page_name', 'about')
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGSQL_NO_ROWS_RETURNED') throw error;
+      if (error) throw error;
       return data?.content || "A cybersecurity enthusiast and cloud infrastructure specialist with a passion for building secure, scalable systems. I specialize in penetration testing, cloud security architecture, and developing robust security solutions. When I'm not breaking (or fixing) things, I'm probably writing about it here or contributing to open-source security tools.";
     },
   });
