@@ -38,6 +38,9 @@ const handler = async (req: Request): Promise<Response> => {
       messagePreview: message.substring(0, 50) + "..."
     });
 
+    // During testing, we'll use the Resend test email
+    const testEmail = "delivered@resend.dev";
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -46,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Contact Form <onboarding@resend.dev>",
-        to: [RECIPIENT_EMAIL],
+        to: [testEmail], // Using test email during verification period
         reply_to: email,
         subject: `[TEST MODE] New Contact Form Message from ${name}`,
         html: `
@@ -55,6 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Message:</strong></p>
           <p>${message}</p>
+          <p><em>Note: This is a test email. The actual recipient (${RECIPIENT_EMAIL}) will receive messages once domain verification is complete.</em></p>
         `,
       }),
     });
@@ -73,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Message sent successfully! I'll get back to you soon.",
+        message: "Message received! (Test Mode: Email functionality is being verified)",
         testMode: true
       }),
       {
