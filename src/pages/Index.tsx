@@ -1,31 +1,24 @@
 import { BlogHeader } from "@/components/BlogHeader";
 import { BlogPost } from "@/components/BlogPost";
-
-const posts = [
-  {
-    title: "Implementing Zero-Trust Security in Modern Applications",
-    excerpt: "An exploration of zero-trust architecture principles and practical implementation strategies for modern web applications.",
-    date: "2024-02-20",
-    slug: "zero-trust-security",
-    tags: ["Zero Trust", "Cloud", "Architecture"],
-  },
-  {
-    title: "Building a Security-Focused Homelab",
-    excerpt: "A comprehensive guide to setting up a homelab environment for cybersecurity testing and learning.",
-    date: "2024-02-15",
-    slug: "security-homelab",
-    tags: ["Homelab", "Infrastructure", "Cloud"],
-  },
-  {
-    title: "AI in Cybersecurity: Opportunities and Risks",
-    excerpt: "Exploring the intersection of artificial intelligence and cybersecurity - from threat detection to potential vulnerabilities.",
-    date: "2024-02-10",
-    slug: "ai-cybersecurity",
-    tags: ["AI", "Security", "News"],
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['latest-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
@@ -41,11 +34,24 @@ const Index = () => {
         
         <section className="space-y-8">
           <h2 className="text-2xl font-bold mb-8">Latest Posts</h2>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <BlogPost key={post.slug} {...post} />
-            ))}
-          </div>
+          {isLoading ? (
+            <p className="text-gray-400">Loading posts...</p>
+          ) : !posts?.length ? (
+            <p className="text-gray-400">No posts published yet.</p>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <BlogPost
+                  key={post.slug}
+                  title={post.title}
+                  excerpt={post.excerpt || ''}
+                  date={new Date(post.created_at).toLocaleDateString()}
+                  slug={post.slug}
+                  tags={[]} // We'll implement tags later
+                />
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </div>
