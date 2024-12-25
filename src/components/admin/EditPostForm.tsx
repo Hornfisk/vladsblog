@@ -34,7 +34,7 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
         .from('posts')
         .select('*')
         .eq('id', post.id)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error('Error fetching existing post:', fetchError);
@@ -58,7 +58,7 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
         })
         .eq('id', post.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (updateError) {
         console.error('Error updating post:', updateError);
