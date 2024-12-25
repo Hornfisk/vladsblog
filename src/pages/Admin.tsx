@@ -21,15 +21,18 @@ export default function Admin() {
   const [isPublished, setIsPublished] = useState(false);
 
   useEffect(() => {
+    // Check if user is not authenticated
     if (!session) {
-      toast({
-        title: "Access Denied",
-        description: "Please log in to access the admin panel",
-        variant: "destructive",
-      });
+      console.log("No session found, redirecting to login");
       navigate("/login");
+      return;
     }
-  }, [session, navigate, toast]);
+  }, [session, navigate]);
+
+  // If no session, don't render the admin interface
+  if (!session) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,8 +70,6 @@ export default function Admin() {
       });
     }
   };
-
-  if (!session) return null;
 
   return (
     <div className="min-h-screen bg-blogBg">

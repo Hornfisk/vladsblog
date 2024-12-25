@@ -11,7 +11,8 @@ export default function Login() {
   const { session } = useAuth();
 
   useEffect(() => {
-    if (session) {
+    // Only redirect if we have an active session and we're on the login page
+    if (session && window.location.pathname.includes('/login')) {
       navigate("/admin");
     }
   }, [session, navigate]);
@@ -38,6 +39,7 @@ export default function Login() {
               }
             }}
             providers={[]}
+            redirectTo={`${window.location.origin}/admin`}
           />
         </div>
       </div>
