@@ -22,7 +22,7 @@ const About = () => {
   });
 
   return (
-    <div className="bg-blogBg min-h-screen">
+    <div className="min-h-screen">
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
         <section className="mb-12 md:mb-16">
