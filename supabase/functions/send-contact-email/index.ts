@@ -45,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Contact Form <onboarding@resend.dev>",
+        from: "Contact Form <contact@vlads.blog>",
         to: [RECIPIENT_EMAIL],
         reply_to: email,
         subject: `New Contact Form Message from ${name}`,
@@ -105,16 +105,13 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in send-contact-email function:", error);
-    return new Response(
-      JSON.stringify({ 
-        error: true,
-        message: error.message || "Failed to send message. Please try again later."
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      }
-    );
+    return new Response(JSON.stringify({ 
+      error: true,
+      message: error.message || "Failed to send message. Please try again later."
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400,
+    });
   }
 };
 
