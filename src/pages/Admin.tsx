@@ -9,6 +9,7 @@ import { Plus, Save } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Admin() {
   const { session } = useAuth();
@@ -19,9 +20,25 @@ export default function Admin() {
   const [excerpt, setExcerpt] = useState("");
   const [slug, setSlug] = useState("");
   const [isPublished, setIsPublished] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch existing posts for the current user
+  const { data: posts, refetch: refetchPosts } = useQuery({
+    queryKey: ['posts', session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('author_id', session?.user?.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
 
   useEffect(() => {
-    // Check if user is not authenticated
     if (!session) {
       console.log("No session found, redirecting to login");
       navigate("/login");
@@ -29,13 +46,36 @@ export default function Admin() {
     }
   }, [session, navigate]);
 
-  // If no session, don't render the admin interface
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    if (!slug) {
+      setSlug(generateSlug(newTitle));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!title || !content || !slug) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     
     try {
       const { error } = await supabase.from("posts").insert([
@@ -45,7 +85,7 @@ export default function Admin() {
           excerpt,
           slug,
           published: isPublished,
-          author_id: session?.user.id,
+          author_id: session.user.id,
         },
       ]);
 
@@ -62,12 +102,17 @@ export default function Admin() {
       setExcerpt("");
       setSlug("");
       setIsPublished(false);
+      
+      // Refresh posts list
+      refetchPosts();
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -100,9 +145,10 @@ export default function Admin() {
                     <Input
                       id="title"
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={handleTitleChange}
                       className="bg-blogBg border-accent1/20 focus:border-accent1"
                       placeholder="Post title"
+                      required
                     />
                   </div>
 
@@ -116,6 +162,7 @@ export default function Admin() {
                       onChange={(e) => setSlug(e.target.value)}
                       className="bg-blogBg border-accent1/20 focus:border-accent1"
                       placeholder="post-url-slug"
+                      required
                     />
                   </div>
 
@@ -142,6 +189,7 @@ export default function Admin() {
                       onChange={(e) => setContent(e.target.value)}
                       className="min-h-[200px] bg-blogBg border-accent1/20 focus:border-accent1"
                       placeholder="Write your post content here..."
+                      required
                     />
                   </div>
 
@@ -163,9 +211,10 @@ export default function Admin() {
                   <Button 
                     type="submit"
                     className="bg-accent1/10 hover:bg-accent1/20 border border-accent1/50 text-accent1"
+                    disabled={isSubmitting}
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    Save Post
+                    {isSubmitting ? "Saving..." : "Save Post"}
                   </Button>
                 </div>
               </form>
@@ -173,7 +222,33 @@ export default function Admin() {
 
             <TabsContent value="posts">
               <div className="bg-accent1/5 p-6 rounded-lg border border-accent1/10">
-                <p className="text-gray-400">Post list will be implemented in the next step...</p>
+                {posts?.length === 0 ? (
+                  <p className="text-gray-400">No posts yet. Create your first post!</p>
+                ) : (
+                  <div className="space-y-4">
+                    {posts?.map((post) => (
+                      <div 
+                        key={post.id} 
+                        className="p-4 border border-accent1/20 rounded-lg bg-blogBg/50"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-200">{post.title}</h3>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            post.published 
+                              ? "bg-green-500/20 text-green-400" 
+                              : "bg-yellow-500/20 text-yellow-400"
+                          }`}>
+                            {post.published ? "Published" : "Draft"}
+                          </span>
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">{post.excerpt || "No excerpt"}</p>
+                        <div className="mt-2 text-xs text-gray-500">
+                          Created: {new Date(post.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
