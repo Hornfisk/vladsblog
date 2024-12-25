@@ -15,61 +15,24 @@ export const PostsList = () => {
   const { data: posts, isLoading, error: fetchError } = useQuery({
     queryKey: ['posts'],
     queryFn: async () => {
-      console.log('Fetching posts with user:', user?.id);
       const { data, error } = await supabase
         .from('posts')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error('Error fetching posts:', error);
-        throw error;
-      }
-      console.log('Fetched posts:', data);
+      if (error) throw error;
       return data;
     },
   });
 
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      if (!user) {
-        console.error('No user logged in');
-        throw new Error('You must be logged in to delete posts');
-      }
-
-      console.log('Starting delete operation for post:', postId);
-      console.log('Current user:', user.id);
-      
-      const { data: post, error: fetchError } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('id', postId)
-        .single();
-      
-      if (fetchError) {
-        console.error('Error fetching post before delete:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('Found post:', post);
-      console.log('Post author:', post.author_id);
-      console.log('Current user:', user.id);
-      console.log('Author matches current user:', post.author_id === user.id);
-
-      if (post.author_id !== user.id) {
-        throw new Error('You do not have permission to delete this post');
-      }
-
       const { error: deleteError } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
       
-      if (deleteError) {
-        console.error('Delete error:', deleteError);
-        throw deleteError;
-      }
-
+      if (deleteError) throw deleteError;
       return true;
     },
     onSuccess: () => {
@@ -77,7 +40,6 @@ export const PostsList = () => {
       toast.success('Post deleted successfully');
     },
     onError: (error: any) => {
-      console.error('Delete mutation error:', error);
       toast.error(`Failed to delete post: ${error.message}`);
     },
   });
@@ -98,8 +60,6 @@ export const PostsList = () => {
     );
   }
 
-  console.log('Current user ID:', user?.id);
-
   return (
     <div className="space-y-4">
       {editingPost && (
@@ -113,62 +73,49 @@ export const PostsList = () => {
         />
       )}
       
-      {posts.map((post) => {
-        const isAuthor = user?.id === post.author_id;
-        console.log(`Post ${post.id} - Author: ${post.author_id}, Current user: ${user?.id}, Is author: ${isAuthor}`);
-        
-        return (
-          <div 
-            key={post.id} 
-            className="p-4 border border-accent1/20 rounded-lg bg-blogBg/50 shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-200">{post.title}</h3>
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-1 rounded text-xs ${
-                  post.published 
-                    ? "bg-green-500/20 text-green-400" 
-                    : "bg-yellow-500/20 text-yellow-400"
-                }`}>
-                  {post.published ? "Published" : "Draft"}
-                </span>
-                {isAuthor && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingPost(post)}
-                      className="h-8 w-8 text-accent1 hover:text-accent1/80 hover:bg-accent1/10"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this post?')) {
-                          deletePostMutation.mutate(post.id);
-                        }
-                      }}
-                      className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-            <p className="text-gray-400 text-sm mt-2">{post.excerpt || "No excerpt"}</p>
-            <div className="mt-2 text-xs text-gray-500">
-              Created: {new Date(post.created_at).toLocaleDateString()}
-              <br />
-              Author ID: {post.author_id}
-              <br />
-              Current User ID: {user?.id}
+      {posts.map((post) => (
+        <div 
+          key={post.id} 
+          className="p-4 border border-accent1/20 rounded-lg bg-blogBg/50 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-200">{post.title}</h3>
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-1 rounded text-xs ${
+                post.published 
+                  ? "bg-green-500/20 text-green-400" 
+                  : "bg-yellow-500/20 text-yellow-400"
+              }`}>
+                {post.published ? "Published" : "Draft"}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setEditingPost(post)}
+                className="h-8 w-8 text-accent1 hover:text-accent1/80 hover:bg-accent1/10"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this post?')) {
+                    deletePostMutation.mutate(post.id);
+                  }
+                }}
+                className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        );
-      })}
+          <p className="text-gray-400 text-sm mt-2">{post.excerpt || "No excerpt"}</p>
+          <div className="mt-2 text-xs text-gray-500">
+            Created: {new Date(post.created_at).toLocaleDateString()}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
