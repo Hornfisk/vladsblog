@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const RECIPIENT_EMAIL = "vladsec@proton.me";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -10,9 +13,6 @@ interface EmailRequest {
   email: string;
   message: string;
 }
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const RECIPIENT_EMAIL = "vladsec@proton.me";
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
