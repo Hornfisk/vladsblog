@@ -27,9 +27,26 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
     setIsSubmitting(true);
 
     try {
-      console.log('Updating post:', { title, content, excerpt, slug, isPublished });
+      console.log('Starting post update:', { id: post.id, title, content, excerpt, slug, isPublished });
       
-      const { error } = await supabase
+      // First, verify we can still access the post
+      const { data: existingPost, error: fetchError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', post.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching existing post:', fetchError);
+        throw new Error('Could not verify post access');
+      }
+
+      if (!existingPost) {
+        throw new Error('Post not found');
+      }
+
+      // Perform the update
+      const { data: updatedPost, error: updateError } = await supabase
         .from('posts')
         .update({
           title,
@@ -39,11 +56,22 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
           published: isPublished,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', post.id);
+        .eq('id', post.id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating post:', updateError);
+        throw updateError;
+      }
 
-      // Invalidate all queries that might contain this post
+      if (!updatedPost) {
+        throw new Error('Update succeeded but no data returned');
+      }
+
+      console.log('Post updated successfully:', updatedPost);
+
+      // Invalidate all relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['post', post.slug] }),
         queryClient.invalidateQueries({ queryKey: ['post', slug] }), // In case slug was changed
@@ -52,14 +80,18 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
         queryClient.invalidateQueries({ queryKey: ['published-posts'] }),
       ]);
 
-      // Force refetch the post data
-      await queryClient.refetchQueries({ queryKey: ['post', slug] });
+      // Force an immediate refetch of the post data
+      await queryClient.refetchQueries({ 
+        queryKey: ['post', slug],
+        exact: true,
+        type: 'active',
+      });
 
       toast.success('Post updated successfully');
       onSuccess();
     } catch (error: any) {
       console.error('Failed to update post:', error);
-      toast.error('Failed to update post: ' + error.message);
+      toast.error(`Failed to update post: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

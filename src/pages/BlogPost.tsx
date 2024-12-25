@@ -20,11 +20,18 @@ const BlogPost = () => {
         console.error('Error fetching post:', error);
         throw error;
       }
-      console.log('Fetched post:', data);
+
+      if (!data) {
+        console.log('No post found with slug:', slug);
+        return null;
+      }
+
+      console.log('Successfully fetched post:', data);
       return data;
     },
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   return (
