@@ -22,7 +22,7 @@ const About = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-mono">
+    <div className="fixed inset-0 min-h-screen bg-background text-foreground font-mono overflow-y-auto">
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
         <section className="mb-12 md:mb-16">
