@@ -9,14 +9,19 @@ const Index = () => {
   const { data: posts, isLoading: postsLoading } = useQuery({
     queryKey: ['latest-posts'],
     queryFn: async () => {
+      console.log('Fetching latest posts...');
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select('id, title, excerpt, created_at, slug')
         .eq('published', true)
         .order('created_at', { ascending: false })
         .limit(3);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching posts:', error);
+        throw error;
+      }
+      console.log('Fetched posts:', data);
       return data;
     },
   });
@@ -64,7 +69,7 @@ const Index = () => {
             <div className="grid gap-6 md:gap-8">
               {posts.map((post) => (
                 <BlogPost
-                  key={post.slug}
+                  key={post.id}
                   title={post.title}
                   excerpt={post.excerpt || ''}
                   date={new Date(post.created_at).toLocaleDateString()}
