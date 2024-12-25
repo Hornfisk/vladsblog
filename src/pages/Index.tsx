@@ -41,7 +41,7 @@ const Index = () => {
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
         <section className="mb-12 md:mb-16">
-          <h1 className="text-2xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
+          <h1 className="text-3xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
             {">"} Latest Posts_
           </h1>
           {contentLoading ? (
@@ -56,7 +56,7 @@ const Index = () => {
         </section>
         
         <section>
-          <h2 className="text-xl font-bold mb-6 md:mb-8">Recent Updates</h2>
+          <h2 className="text-2xl font-bold mb-6 md:mb-8">Recent Updates</h2>
           {postsLoading ? (
             <p className="text-gray-400 text-base md:text-sm">Loading posts...</p>
           ) : !posts?.length ? (
