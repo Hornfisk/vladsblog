@@ -34,7 +34,13 @@ export const ContactFormFields = ({ submitTime, onSuccess }: ContactFormFieldsPr
     }
 
     try {
-      const { error } = await supabase.functions.invoke('send-contact-email', {
+      console.log("Sending contact form data:", { 
+        name: data.name, 
+        email: data.email,
+        messageLength: data.message.length 
+      });
+
+      const { data: response, error } = await supabase.functions.invoke('send-contact-email', {
         body: {
           name: data.name,
           email: data.email,
@@ -42,7 +48,12 @@ export const ContactFormFields = ({ submitTime, onSuccess }: ContactFormFieldsPr
         },
       });
 
-      if (error) throw error;
+      console.log("Response from edge function:", { response, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       toast.success("Message sent successfully! I'll get back to you soon.");
       onSuccess();

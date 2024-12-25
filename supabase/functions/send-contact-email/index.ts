@@ -21,11 +21,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Received request to send-contact-email");
+    
+    if (!RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not set");
+      throw new Error("Missing API key configuration");
+    }
+
     const { name, email, message }: EmailRequest = await req.json();
+    
+    console.log("Parsed request data:", { name, email, messageLength: message.length });
 
     // Validate email format
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
     if (!emailRegex.test(email)) {
+      console.error("Invalid email format:", email);
       throw new Error("Invalid email format");
     }
 
@@ -53,10 +63,16 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
+    const responseText = await res.text();
+    console.log("Resend API response:", {
+      status: res.status,
+      statusText: res.statusText,
+      body: responseText
+    });
+
     if (!res.ok) {
-      const error = await res.text();
-      console.error("Resend API error:", error);
-      throw new Error("Failed to send email");
+      console.error("Resend API error:", responseText);
+      throw new Error(`Failed to send email: ${responseText}`);
     }
 
     console.log("Email sent successfully");
@@ -67,7 +83,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error("Error in send-contact-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
