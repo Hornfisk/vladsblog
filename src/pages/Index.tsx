@@ -41,8 +41,8 @@ const Index = () => {
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
         <section className="mb-12 md:mb-16">
-          <h1 className="text-4xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
-            {">"} Latest Posts_
+          <h1 className="text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
+            {"> "}Latest Posts_
           </h1>
           {contentLoading ? (
             <div className="animate-pulse bg-gray-700/20 h-24 rounded-md" />

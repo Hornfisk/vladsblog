@@ -29,7 +29,7 @@ const Admin = () => {
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
-        <h1 className="text-4xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
+        <h1 className="text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
           {"> "}Dashboard_
         </h1>
         <Card className="bg-accent1/5 border-accent1/10">
