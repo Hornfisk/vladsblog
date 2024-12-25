@@ -60,19 +60,17 @@ export const PostsList = () => {
         throw new Error('You do not have permission to delete this post');
       }
 
-      const { error: deleteError, data: deleteResult } = await supabase
+      const { error: deleteError } = await supabase
         .from('posts')
         .delete()
-        .eq('id', postId)
-        .select();
+        .eq('id', postId);
       
       if (deleteError) {
         console.error('Delete error:', deleteError);
         throw deleteError;
       }
 
-      console.log('Delete result:', deleteResult);
-      return deleteResult;
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
