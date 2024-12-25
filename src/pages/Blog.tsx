@@ -1,19 +1,23 @@
 import { BlogHeader } from "@/components/BlogHeader";
 import { BlogPost } from "@/components/BlogPost";
-
-const samplePost = {
-  title: "Implementing Zero-Trust Security in Modern Applications",
-  excerpt: "An in-depth exploration of zero-trust architecture principles and practical implementation strategies for modern cloud infrastructure. Learn about the key components, best practices, and common pitfalls to avoid.",
-  date: "2024-02-20",
-  slug: "zero-trust-security",
-  tags: ["Zero Trust", "Cloud", "Architecture"],
-  content: `
-    Zero Trust security is revolutionizing how we approach network security in the cloud era. 
-    Gone are the days of implicit trust within network perimeters...
-  `,
-};
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Blog = () => {
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['published-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('published', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
@@ -21,9 +25,24 @@ const Blog = () => {
         <h1 className="text-4xl font-bold mb-12 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
           {">"} Latest Posts_
         </h1>
-        <div className="space-y-8">
-          <BlogPost {...samplePost} />
-        </div>
+        {isLoading ? (
+          <p className="text-gray-400">Loading posts...</p>
+        ) : !posts?.length ? (
+          <p className="text-gray-400">No posts published yet.</p>
+        ) : (
+          <div className="space-y-8">
+            {posts.map((post) => (
+              <BlogPost
+                key={post.id}
+                title={post.title}
+                excerpt={post.excerpt || ''}
+                date={new Date(post.created_at).toLocaleDateString()}
+                slug={post.slug}
+                tags={[]} // We'll implement tags later
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
