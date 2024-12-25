@@ -1,158 +1,65 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { FormField } from "./FormField";
+import { PublishToggle } from "./PublishToggle";
+import { usePostForm } from "@/hooks/usePostForm";
 
 export const BlogPostForm = ({ onPostCreated }: { onPostCreated: () => void }) => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [excerpt, setExcerpt] = useState("");
-  const [slug, setSlug] = useState("");
-  const [isPublished, setIsPublished] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
-  };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
-    setTitle(newTitle);
-    if (!slug) {
-      setSlug(generateSlug(newTitle));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!title || !content || !slug || !user) {
-      toast({
-        title: "Error",
-        description: !user ? "You must be logged in to create posts" : "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await supabase.from("posts").insert({
-        title,
-        content,
-        excerpt,
-        slug,
-        published: isPublished,
-        author_id: user.id
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Post created successfully",
-      });
-
-      // Clear form
-      setTitle("");
-      setContent("");
-      setExcerpt("");
-      setSlug("");
-      setIsPublished(false);
-      
-      // Notify parent component
-      onPostCreated();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    title,
+    content,
+    excerpt,
+    slug,
+    isPublished,
+    isSubmitting,
+    handleTitleChange,
+    setContent,
+    setExcerpt,
+    setSlug,
+    setIsPublished,
+    handleSubmit,
+  } = usePostForm(onPostCreated);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-accent1/5 p-6 rounded-lg border border-accent1/10">
       <div className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-200 mb-1">
-            Title
-          </label>
-          <Input
-            id="title"
-            value={title}
-            onChange={handleTitleChange}
-            className="bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200"
-            placeholder="Post title"
-            required
-          />
-        </div>
+        <FormField
+          id="title"
+          label="Title"
+          value={title}
+          onChange={handleTitleChange}
+          placeholder="Post title"
+          required
+        />
 
-        <div>
-          <label htmlFor="slug" className="block text-sm font-medium text-gray-200 mb-1">
-            Slug
-          </label>
-          <Input
-            id="slug"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            className="bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200"
-            placeholder="post-url-slug"
-            required
-          />
-        </div>
+        <FormField
+          id="slug"
+          label="Slug"
+          value={slug}
+          onChange={setSlug}
+          placeholder="post-url-slug"
+          required
+        />
 
-        <div>
-          <label htmlFor="excerpt" className="block text-sm font-medium text-gray-200 mb-1">
-            Excerpt
-          </label>
-          <Input
-            id="excerpt"
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
-            className="bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200"
-            placeholder="Brief description"
-          />
-        </div>
+        <FormField
+          id="excerpt"
+          label="Excerpt"
+          value={excerpt}
+          onChange={setExcerpt}
+          placeholder="Brief description"
+        />
 
-        <div>
-          <label htmlFor="content" className="block text-sm font-medium text-gray-200 mb-1">
-            Content
-          </label>
-          <Textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[200px] bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200"
-            placeholder="Write your post content here..."
-            required
-          />
-        </div>
+        <FormField
+          id="content"
+          label="Content"
+          value={content}
+          onChange={setContent}
+          type="textarea"
+          placeholder="Write your post content here..."
+          required
+        />
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="published"
-            checked={isPublished}
-            onChange={(e) => setIsPublished(e.target.checked)}
-            className="rounded border-accent1/20 bg-blogBg text-accent1"
-          />
-          <label htmlFor="published" className="text-sm font-medium text-gray-200">
-            Publish immediately
-          </label>
-        </div>
+        <PublishToggle isPublished={isPublished} onChange={setIsPublished} />
       </div>
 
       <div className="flex justify-end">
