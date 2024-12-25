@@ -5,10 +5,12 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditPostForm } from "./EditPostForm";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const PostsList = () => {
   const [editingPost, setEditingPost] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: posts } = useQuery({
     queryKey: ['posts'],
@@ -46,6 +48,12 @@ export const PostsList = () => {
       if (!post) {
         console.error('Post not found:', postId);
         throw new Error('Post not found');
+      }
+
+      // Check if current user is the author
+      if (post.author_id !== user?.id) {
+        console.error('Current user is not the author. Post author:', post.author_id, 'Current user:', user?.id);
+        throw new Error('You do not have permission to delete this post');
       }
 
       console.log('Found post to delete:', post);
@@ -110,32 +118,38 @@ export const PostsList = () => {
               }`}>
                 {post.published ? "Published" : "Draft"}
               </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setEditingPost(post)}
-                className="h-8 w-8 text-accent1 hover:text-accent1/80"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  console.log('Delete button clicked for post:', post);
-                  if (window.confirm('Are you sure you want to delete this post?')) {
-                    deletePostMutation.mutate(post.id);
-                  }
-                }}
-                className="h-8 w-8 text-red-500 hover:text-red-400"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {post.author_id === user?.id && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setEditingPost(post)}
+                    className="h-8 w-8 text-accent1 hover:text-accent1/80"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      console.log('Delete button clicked for post:', post);
+                      if (window.confirm('Are you sure you want to delete this post?')) {
+                        deletePostMutation.mutate(post.id);
+                      }
+                    }}
+                    className="h-8 w-8 text-red-500 hover:text-red-400"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           <p className="text-gray-400 text-sm mt-2">{post.excerpt || "No excerpt"}</p>
           <div className="mt-2 text-xs text-gray-500">
             Created: {new Date(post.created_at).toLocaleDateString()}
+            <br />
+            Author ID: {post.author_id}
           </div>
         </div>
       ))}
