@@ -2,6 +2,7 @@ import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import ReactMarkdown from 'react-markdown';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -44,14 +45,14 @@ const BlogPost = () => {
           <p className="text-gray-400 text-base md:text-sm">Post not found.</p>
         ) : (
           <article className="prose prose-invert max-w-none">
-            <h1 className="text-3xl md:text-2xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
               {post.title}
             </h1>
             <time className="text-sm text-gray-400 block mb-8">
               {new Date(post.created_at).toLocaleDateString()}
             </time>
-            <div className="text-lg md:text-base text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {post.content}
+            <div className="text-lg md:text-base text-gray-300 leading-relaxed">
+              <ReactMarkdown>{post.content}</ReactMarkdown>
             </div>
           </article>
         )}

@@ -60,6 +60,47 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: '#fff',
+            h1: {
+              color: '#fff',
+            },
+            h2: {
+              color: '#fff',
+            },
+            h3: {
+              color: '#fff',
+            },
+            h4: {
+              color: '#fff',
+            },
+            strong: {
+              color: '#fff',
+            },
+            a: {
+              color: '#9b87f5',
+              '&:hover': {
+                color: '#D946EF',
+              },
+            },
+            code: {
+              color: '#9b87f5',
+              backgroundColor: 'rgba(155, 135, 245, 0.1)',
+              padding: '0.2em 0.4em',
+              borderRadius: '0.25rem',
+            },
+            pre: {
+              backgroundColor: 'rgba(155, 135, 245, 0.1)',
+              code: {
+                backgroundColor: 'transparent',
+                padding: 0,
+              },
+            },
+          },
+        },
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -81,5 +122,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;
