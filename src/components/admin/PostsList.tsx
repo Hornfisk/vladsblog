@@ -12,9 +12,10 @@ export const PostsList = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: posts } = useQuery({
+  const { data: posts, isLoading, error: fetchError } = useQuery({
     queryKey: ['posts'],
     queryFn: async () => {
+      console.log('Fetching posts with user:', user?.id);
       const { data, error } = await supabase
         .from('posts')
         .select('*')
@@ -31,46 +32,49 @@ export const PostsList = () => {
 
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      console.log('Attempting to delete post:', postId);
+      if (!user) {
+        console.error('No user logged in');
+        throw new Error('You must be logged in to delete posts');
+      }
+
+      console.log('Starting delete operation for post:', postId);
+      console.log('Current user:', user.id);
       
       // First verify the post exists and we have permission
       const { data: post, error: fetchError } = await supabase
         .from('posts')
         .select('*')
         .eq('id', postId)
-        .maybeSingle();
+        .single();
       
       if (fetchError) {
         console.error('Error fetching post before delete:', fetchError);
         throw fetchError;
       }
 
-      if (!post) {
-        console.error('Post not found:', postId);
-        throw new Error('Post not found');
-      }
+      console.log('Found post:', post);
+      console.log('Post author:', post.author_id);
+      console.log('Current user:', user.id);
+      console.log('Author matches current user:', post.author_id === user.id);
 
-      // Check if current user is the author
-      if (post.author_id !== user?.id) {
-        console.error('Current user is not the author. Post author:', post.author_id, 'Current user:', user?.id);
+      if (post.author_id !== user.id) {
         throw new Error('You do not have permission to delete this post');
       }
 
-      console.log('Found post to delete:', post);
-
       // Proceed with deletion
-      const { error: deleteError } = await supabase
+      const { error: deleteError, data: deleteResult } = await supabase
         .from('posts')
         .delete()
-        .eq('id', postId);
+        .eq('id', postId)
+        .select();
       
       if (deleteError) {
         console.error('Delete error:', deleteError);
         throw deleteError;
       }
 
-      console.log('Post deleted successfully');
-      return true;
+      console.log('Delete result:', deleteResult);
+      return deleteResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -78,9 +82,17 @@ export const PostsList = () => {
     },
     onError: (error: any) => {
       console.error('Delete mutation error:', error);
-      toast.error('Failed to delete post: ' + error.message);
+      toast.error(`Failed to delete post: ${error.message}`);
     },
   });
+
+  if (isLoading) {
+    return <div className="text-gray-400">Loading posts...</div>;
+  }
+
+  if (fetchError) {
+    return <div className="text-red-400">Error loading posts: {fetchError.message}</div>;
+  }
 
   if (!posts?.length) {
     return (
@@ -132,7 +144,6 @@ export const PostsList = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      console.log('Delete button clicked for post:', post);
                       if (window.confirm('Are you sure you want to delete this post?')) {
                         deletePostMutation.mutate(post.id);
                       }
@@ -150,6 +161,8 @@ export const PostsList = () => {
             Created: {new Date(post.created_at).toLocaleDateString()}
             <br />
             Author ID: {post.author_id}
+            <br />
+            Current User ID: {user?.id}
           </div>
         </div>
       ))}
