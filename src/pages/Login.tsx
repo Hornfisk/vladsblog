@@ -42,6 +42,8 @@ export default function Login() {
                     inputBorderFocus: '#D946EF',
                     inputText: 'white',
                     inputPlaceholder: '#666',
+                    anchorTextColor: '#9b87f5',
+                    dividerBackground: '#9b87f580',
                   },
                 },
               },
@@ -50,6 +52,16 @@ export default function Login() {
                 label: 'text-gray-200',
                 button: 'bg-accent1/10 hover:bg-accent1/20 border border-accent1/50',
                 input: 'bg-blogBg border-accent1/20 focus:border-accent1',
+                anchor: 'text-accent1 hover:text-accent2',
+              },
+              style: {
+                input: {
+                  backgroundColor: '#1A1F2C',
+                  color: 'white',
+                },
+                message: {
+                  color: '#9b87f5',
+                },
               },
             }}
             providers={[]}
