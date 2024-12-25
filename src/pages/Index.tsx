@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { InlineEdit } from "@/components/admin/InlineEdit";
 
 const Index = () => {
-  const { data: posts, isLoading } = useQuery({
+  const { data: posts, isLoading: postsLoading } = useQuery({
     queryKey: ['latest-posts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -20,7 +20,7 @@ const Index = () => {
     },
   });
 
-  const { data: pageContent } = useQuery({
+  const { data: pageContent, isLoading: contentLoading } = useQuery({
     queryKey: ['page-content', 'home-intro'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,6 +32,8 @@ const Index = () => {
       if (error) throw error;
       return data?.content || "I'm Vlad, a cybersecurity nerd navigating the digital labyrinth. Here to share insights, break stuff (ethically), and maybe drop a few security breadcrumbs along the way. Grab a coffee, and let's explore the code less traveled.";
     },
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    refetchOnMount: true,
   });
 
   return (
@@ -42,16 +44,20 @@ const Index = () => {
           <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
             {">"} Hello, cyber traveler_
           </h1>
-          <InlineEdit
-            content={pageContent || ""}
-            pageName="home-intro"
-            className="text-xl text-gray-300 max-w-2xl leading-relaxed"
-          />
+          {contentLoading ? (
+            <div className="animate-pulse bg-gray-700/20 h-24 rounded-md" />
+          ) : (
+            <InlineEdit
+              content={pageContent || ""}
+              pageName="home-intro"
+              className="text-xl text-gray-300 max-w-2xl leading-relaxed"
+            />
+          )}
         </section>
         
         <section className="space-y-8">
           <h2 className="text-2xl font-bold mb-8">Latest Posts</h2>
-          {isLoading ? (
+          {postsLoading ? (
             <p className="text-gray-400">Loading posts...</p>
           ) : !posts?.length ? (
             <p className="text-gray-400">No posts published yet.</p>
