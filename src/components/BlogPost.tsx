@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { format } from "date-fns";
 
 interface BlogPostProps {
   title: string;
@@ -17,7 +16,7 @@ const truncateExcerpt = (text: string, maxLength: number = 150) => {
 };
 
 export function BlogPost({ title, excerpt, date, slug, tags }: BlogPostProps) {
-  const formattedDate = format(new Date(date), 'dd/MM/yyyy');
+  const formattedDate = new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   
   return (
     <article className="p-4 md:p-6 rounded-lg bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 hover:border-accent1/30 transition-all">
