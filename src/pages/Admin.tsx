@@ -6,16 +6,22 @@ import { PostsList } from "@/components/admin/PostsList";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Admin = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!session) {
       navigate('/login');
     }
   }, [session, navigate]);
+
+  const handlePostCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+  };
 
   if (!session) return null;
 
@@ -38,7 +44,7 @@ const Admin = () => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="new-post" className="mt-4">
-                <BlogPostForm />
+                <BlogPostForm onPostCreated={handlePostCreated} />
               </TabsContent>
               <TabsContent value="all-posts" className="mt-4">
                 <PostsList />
