@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { FormField } from "./FormField";
 import { PublishToggle } from "./PublishToggle";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useEditPostForm } from "@/hooks/useEditPostForm";
+import { EditPostHeader } from "./EditPostHeader";
 
 interface EditPostFormProps {
   post: any;
@@ -13,54 +11,24 @@ interface EditPostFormProps {
 }
 
 export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) => {
-  const [title, setTitle] = useState(post.title);
-  const [content, setContent] = useState(post.content);
-  const [excerpt, setExcerpt] = useState(post.excerpt || '');
-  const [slug, setSlug] = useState(post.slug);
-  const [isPublished, setIsPublished] = useState(post.published);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase
-        .from('posts')
-        .update({
-          title,
-          content,
-          excerpt,
-          slug,
-          published: isPublished,
-        })
-        .eq('id', post.id);
-
-      if (error) throw error;
-
-      toast.success('Post updated successfully');
-      onSuccess();
-    } catch (error: any) {
-      toast.error('Failed to update post: ' + error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    title,
+    setTitle,
+    content,
+    setContent,
+    excerpt,
+    setExcerpt,
+    slug,
+    setSlug,
+    isPublished,
+    setIsPublished,
+    isSubmitting,
+    handleSubmit,
+  } = useEditPostForm({ post, onSuccess });
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-accent1/5 p-6 rounded-lg border border-accent1/10">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-200">Edit Post</h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="h-8 w-8"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+      <EditPostHeader onClose={onClose} />
 
       <div className="space-y-4">
         <FormField

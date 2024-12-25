@@ -17,18 +17,20 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
-        </BrowserRouter>
+        <div className="min-h-screen bg-blogBg">
+          <Toaster />
+          <Sonner />
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
+          </BrowserRouter>
+        </div>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

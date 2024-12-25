@@ -37,7 +37,10 @@ const handler = async (req: Request): Promise<Response> => {
       toEmail: RECIPIENT_EMAIL,
       messagePreview: message.substring(0, 50) + "..."
     });
-    
+
+    // During testing, we'll use the Resend test email
+    const testEmail = "delivered@resend.dev";
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -46,15 +49,16 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Contact Form <onboarding@resend.dev>",
-        to: [RECIPIENT_EMAIL],
+        to: [testEmail], // Using test email during verification period
         reply_to: email,
-        subject: `New Contact Form Message from ${name}`,
+        subject: `[TEST MODE] New Contact Form Message from ${name}`,
         html: `
-          <h2>New message from your website contact form</h2>
+          <h2>New message from your website contact form (TEST MODE)</h2>
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Message:</strong></p>
           <p>${message}</p>
+          <p><em>Note: This is a test email. The actual recipient (${RECIPIENT_EMAIL}) will receive messages once domain verification is complete.</em></p>
         `,
       }),
     });
@@ -67,36 +71,14 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!res.ok) {
-      // Check for specific error cases
-      if (responseData.includes("can only send testing emails")) {
-        // Store the message details in logs at least
-        console.log("TEST MODE - Would have sent email:", {
-          to: RECIPIENT_EMAIL,
-          from: email,
-          name,
-          messagePreview: message.substring(0, 100) + "..."
-        });
-        
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Message logged successfully! (Note: Email delivery is in test mode)",
-            testMode: true
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200,
-          }
-        );
-      }
-      
       throw new Error(`Failed to send email: ${responseData}`);
     }
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Message sent successfully! I'll get back to you soon."
+        message: "Message received! (Test Mode: Email functionality is being verified)",
+        testMode: true
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -109,10 +91,10 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         error: true,
         message: error.message || "Failed to send message. Please try again later."
-      }),
+      }), 
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+        status: 500,
       }
     );
   }

@@ -1,16 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditPostForm } from "./EditPostForm";
+import { PostItem } from "./PostItem";
 import { toast } from "sonner";
 
 export const PostsList = () => {
   const [editingPost, setEditingPost] = useState<any>(null);
   const queryClient = useQueryClient();
 
-  const { data: posts } = useQuery({
+  const { data: posts, isLoading, error: fetchError } = useQuery({
     queryKey: ['posts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -31,15 +30,24 @@ export const PostsList = () => {
         .eq('id', postId);
       
       if (error) throw error;
+      return postId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       toast.success('Post deleted successfully');
     },
-    onError: (error) => {
-      toast.error('Failed to delete post: ' + error.message);
+    onError: (error: any) => {
+      toast.error(`Failed to delete post: ${error.message}`);
     },
   });
+
+  if (isLoading) {
+    return <div className="text-gray-400">Loading posts...</div>;
+  }
+
+  if (fetchError) {
+    return <div className="text-red-400">Error loading posts: {fetchError.message}</div>;
+  }
 
   if (!posts?.length) {
     return (
@@ -63,47 +71,12 @@ export const PostsList = () => {
       )}
       
       {posts.map((post) => (
-        <div 
-          key={post.id} 
-          className="p-4 border border-accent1/20 rounded-lg bg-blogBg/50"
-        >
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-200">{post.title}</h3>
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded text-xs ${
-                post.published 
-                  ? "bg-green-500/20 text-green-400" 
-                  : "bg-yellow-500/20 text-yellow-400"
-              }`}>
-                {post.published ? "Published" : "Draft"}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setEditingPost(post)}
-                className="h-8 w-8 text-accent1 hover:text-accent1/80"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to delete this post?')) {
-                    deletePostMutation.mutate(post.id);
-                  }
-                }}
-                className="h-8 w-8 text-red-500 hover:text-red-400"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <p className="text-gray-400 text-sm mt-2">{post.excerpt || "No excerpt"}</p>
-          <div className="mt-2 text-xs text-gray-500">
-            Created: {new Date(post.created_at).toLocaleDateString()}
-          </div>
-        </div>
+        <PostItem
+          key={post.id}
+          post={post}
+          onEdit={setEditingPost}
+          onDelete={(postId) => deletePostMutation.mutate(postId)}
+        />
       ))}
     </div>
   );

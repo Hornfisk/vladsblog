@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const usePostForm = (onPostCreated: () => void) => {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -49,20 +48,12 @@ export const usePostForm = (onPostCreated: () => void) => {
     e.preventDefault();
     
     if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to create posts",
-        variant: "destructive",
-      });
+      toast.error("You must be logged in to create posts");
       return;
     }
 
     if (!title || !content || !slug) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -72,11 +63,7 @@ export const usePostForm = (onPostCreated: () => void) => {
       // Check if slug already exists
       const slugExists = await checkSlugExists(slug);
       if (slugExists) {
-        toast({
-          title: "Error",
-          description: "A post with this slug already exists. Please choose a different one.",
-          variant: "destructive",
-        });
+        toast.error("A post with this URL already exists. Please choose a different one.");
         setIsSubmitting(false);
         return;
       }
@@ -92,20 +79,12 @@ export const usePostForm = (onPostCreated: () => void) => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Post created successfully",
-      });
-
+      toast.success("Post created successfully");
       resetForm();
       onPostCreated();
     } catch (error: any) {
       console.error('Error creating post:', error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
