@@ -22,7 +22,7 @@ export const ContactFormFields = ({ submitTime, onSuccess }: ContactFormFieldsPr
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
@@ -106,9 +106,10 @@ export const ContactFormFields = ({ submitTime, onSuccess }: ContactFormFieldsPr
 
       <Button 
         type="submit"
+        disabled={isSubmitting}
         className="w-full bg-gradient-to-r from-accent1 to-accent2 hover:opacity-90"
       >
-        Send Message
+        {isSubmitting ? "Sending..." : "Send Message"}
       </Button>
     </form>
   );

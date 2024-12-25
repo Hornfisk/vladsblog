@@ -12,7 +12,7 @@ interface EmailRequest {
 }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const RECIPIENT_EMAIL = "vladsec@proton.me"; // Replace with your email
+const RECIPIENT_EMAIL = "vladsec@proton.me";
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -29,6 +29,8 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Invalid email format");
     }
 
+    console.log("Sending email to:", RECIPIENT_EMAIL);
+    
     // Send email using Resend
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -57,6 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to send email");
     }
 
+    console.log("Email sent successfully");
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
