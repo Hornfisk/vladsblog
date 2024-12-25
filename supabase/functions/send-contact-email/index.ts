@@ -38,7 +38,8 @@ const handler = async (req: Request): Promise<Response> => {
       messagePreview: message.substring(0, 50) + "..."
     });
     
-    const res = await fetch("https://api.resend.com/emails", {
+    // First try with the verified domain
+    let res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -66,37 +67,48 @@ const handler = async (req: Request): Promise<Response> => {
       body: responseData
     });
 
-    if (!res.ok) {
-      // Check for specific error cases
-      if (responseData.includes("can only send testing emails")) {
-        // Store the message details in logs at least
-        console.log("TEST MODE - Would have sent email:", {
-          to: RECIPIENT_EMAIL,
-          from: email,
-          name,
-          messagePreview: message.substring(0, 100) + "..."
-        });
-        
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Message logged successfully! (Note: Email delivery is in test mode)",
-            testMode: true
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200,
-          }
-        );
-      }
+    // If we get a 403 forbidden (domain not verified), try with the test domain
+    if (res.status === 403 && responseData.includes("can only send test emails")) {
+      console.log("Falling back to test domain onboarding@resend.dev");
       
+      res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: "Contact Form <onboarding@resend.dev>",
+          to: [RECIPIENT_EMAIL],
+          reply_to: email,
+          subject: `[TEST MODE] New Contact Form Message from ${name}`,
+          html: `
+            <h2>New message from your website contact form (TEST MODE)</h2>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message}</p>
+          `,
+        }),
+      });
+
+      const testResponseData = await res.text();
+      console.log("Resend API test mode response:", {
+        status: res.status,
+        statusText: res.statusText,
+        body: testResponseData
+      });
+    }
+
+    if (!res.ok) {
       throw new Error(`Failed to send email: ${responseData}`);
     }
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Message sent successfully! I'll get back to you soon."
+        message: "Message sent successfully! I'll get back to you soon.",
+        testMode: res.status === 403
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
