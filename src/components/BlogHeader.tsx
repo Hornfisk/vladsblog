@@ -5,6 +5,7 @@ import { LogIn, LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export function BlogHeader() {
   const { session, signOut } = useAuth();
@@ -37,9 +38,13 @@ export function BlogHeader() {
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       toast.success("Logged out successfully");
       navigate('/');
+      // Force reload to clear any cached state
+      window.location.reload();
     } catch (error) {
       console.error('Error logging out:', error);
       toast.error("Failed to log out");
