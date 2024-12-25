@@ -49,7 +49,7 @@ const BlogPost = () => {
               {post.title}
             </h1>
             <time className="text-sm text-gray-400 block mb-8">
-              {new Date(post.created_at).toLocaleDateString()}
+              {new Date(post.created_at).toLocaleDateString('en-GB')}
             </time>
             <div className="text-lg md:text-base text-gray-300 leading-relaxed">
               <ReactMarkdown components={{
