@@ -55,14 +55,14 @@ const Index = () => {
           )}
         </section>
         
-        <section className="space-y-6 md:space-y-8">
+        <section>
           <h2 className="text-xl md:text-lg font-bold mb-6 md:mb-8">Latest Posts</h2>
           {postsLoading ? (
             <p className="text-gray-400 text-base md:text-sm">Loading posts...</p>
           ) : !posts?.length ? (
             <p className="text-gray-400 text-base md:text-sm">No posts published yet.</p>
           ) : (
-            <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:gap-8">
               {posts.map((post) => (
                 <BlogPost
                   key={post.slug}
