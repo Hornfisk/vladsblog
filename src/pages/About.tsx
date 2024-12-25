@@ -21,7 +21,7 @@ const About = () => {
               asChild
             >
               <a 
-                href="https://linkedin.com/in/your-profile" 
+                href="https://www.linkedin.com/in/vladsec" 
                 target="_blank" 
                 rel="noopener noreferrer"
               >

@@ -38,10 +38,17 @@ export const ContactForm = () => {
       return;
     }
 
-    // Here you would typically send the data to your backend
-    console.log("Form submitted:", { name: data.name, email: data.email, message: data.message });
+    // Construct mailto URL with form data
+    const subject = encodeURIComponent("Contact Form Submission");
+    const body = encodeURIComponent(
+      `Name: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`
+    );
+    const mailtoUrl = `mailto:vladsblog.zeaxg@simplelogin.com?subject=${subject}&body=${body}`;
     
-    toast.success("Message sent successfully!");
+    // Open default email client
+    window.location.href = mailtoUrl;
+    
+    toast.success("Opening your email client...");
     setOpen(false);
     reset();
   };
