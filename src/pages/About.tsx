@@ -23,33 +23,35 @@ const About = () => {
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
-      <main className="container max-w-6xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
-          {">"} About Me_
-        </h1>
-        <div className="max-w-2xl mx-auto space-y-6">
-          <InlineEdit
-            content={pageContent || ""}
-            pageName="about"
-            className="text-gray-300 leading-relaxed"
-          />
-          <div className="pt-6 flex gap-4">
-            <Button 
-              variant="outline"
-              className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50"
-              asChild
-            >
-              <a 
-                href="https://www.linkedin.com/in/vladsec" 
-                target="_blank" 
-                rel="noopener noreferrer"
+      <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
+        <section className="mb-12 md:mb-16">
+          <h1 className="text-3xl md:text-2xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
+            {">"} About Me_
+          </h1>
+          <div className="space-y-6">
+            <InlineEdit
+              content={pageContent || ""}
+              pageName="about"
+              className="text-lg md:text-base text-gray-300 leading-relaxed"
+            />
+            <div className="flex gap-4">
+              <Button 
+                variant="outline"
+                className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50"
+                asChild
               >
-                LinkedIn
-              </a>
-            </Button>
-            <ContactForm />
+                <a 
+                  href="https://www.linkedin.com/in/vladsec" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  LinkedIn
+                </a>
+              </Button>
+              <ContactForm />
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
