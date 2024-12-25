@@ -40,7 +40,6 @@ export const PostsList = () => {
       console.log('Starting delete operation for post:', postId);
       console.log('Current user:', user.id);
       
-      // First verify the post exists and we have permission
       const { data: post, error: fetchError } = await supabase
         .from('posts')
         .select('*')
@@ -61,7 +60,6 @@ export const PostsList = () => {
         throw new Error('You do not have permission to delete this post');
       }
 
-      // Proceed with deletion
       const { error: deleteError, data: deleteResult } = await supabase
         .from('posts')
         .delete()
@@ -118,7 +116,7 @@ export const PostsList = () => {
       {posts.map((post) => (
         <div 
           key={post.id} 
-          className="p-4 border border-accent1/20 rounded-lg bg-blogBg/50"
+          className="p-4 border border-accent1/20 rounded-lg bg-blogBg/50 shadow-sm"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-200">{post.title}</h3>
@@ -136,7 +134,7 @@ export const PostsList = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => setEditingPost(post)}
-                    className="h-8 w-8 text-accent1 hover:text-accent1/80"
+                    className="h-8 w-8 text-accent1 hover:text-accent1/80 hover:bg-accent1/10"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -148,7 +146,7 @@ export const PostsList = () => {
                         deletePostMutation.mutate(post.id);
                       }
                     }}
-                    className="h-8 w-8 text-red-500 hover:text-red-400"
+                    className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
