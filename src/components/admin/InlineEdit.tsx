@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Pencil, Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface InlineEditProps {
   content: string;
@@ -13,25 +13,27 @@ interface InlineEditProps {
   className?: string;
 }
 
-export function InlineEdit({ content, pageName, className = "" }: InlineEditProps) {
+export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const { session } = useAuth();
+  const queryClient = useQueryClient();
 
   const handleSave = async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user) {
+      toast.error("You must be logged in to edit content");
+      return;
+    }
 
     try {
-      // First try to update existing record
-      const { data: existingData, error: fetchError } = await supabase
+      // First check if a record exists
+      const { data: existingContent } = await supabase
         .from('page_content')
-        .select()
+        .select('id')
         .eq('page_name', pageName)
-        .maybeSingle();
+        .single();
 
-      if (fetchError) throw fetchError;
-
-      if (existingData) {
+      if (existingContent) {
         // Update existing record
         const { error: updateError } = await supabase
           .from('page_content')
@@ -43,67 +45,70 @@ export function InlineEdit({ content, pageName, className = "" }: InlineEditProp
         // Insert new record
         const { error: insertError } = await supabase
           .from('page_content')
-          .insert({
-            page_name: pageName,
-            content: editedContent,
-            author_id: session.user.id
-          } as Database['public']['Tables']['page_content']['Insert']);
+          .insert([
+            {
+              page_name: pageName,
+              content: editedContent,
+              author_id: session.user.id,
+            },
+          ]);
 
         if (insertError) throw insertError;
       }
-      
-      toast.success("Content updated successfully");
+
+      queryClient.invalidateQueries({ queryKey: ['page-content', pageName] });
       setIsEditing(false);
+      toast.success("Content updated successfully");
     } catch (error: any) {
-      toast.error("Failed to update content: " + error.message);
+      toast.error(`Failed to update content: ${error.message}`);
     }
   };
 
-  // Always show the content, even if not logged in
-  if (!session) return <div className={className}>{content}</div>;
+  if (!session?.user) {
+    return <div className={className}>{content}</div>;
+  }
 
   return (
     <div className="relative group">
-      {!isEditing ? (
-        <>
-          <div className={className}>{editedContent}</div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute -right-10 top-0 opacity-70 group-hover:opacity-100 transition-opacity"
-            onClick={() => setIsEditing(true)}
-          >
-            <Pencil className="h-4 w-4 text-accent1" />
-          </Button>
-        </>
-      ) : (
+      {isEditing ? (
         <div className="space-y-2">
           <Textarea
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
-            className="min-h-[100px] bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200"
+            className="min-h-[100px] bg-gray-800/50 text-gray-100 border-accent1/20"
           />
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2">
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setEditedContent(content);
-                setIsEditing(false);
-              }}
+              onClick={handleSave}
+              className="bg-accent1 hover:bg-accent1/80 text-white"
             >
-              <X className="h-4 w-4 text-red-500" />
+              Save
             </Button>
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSave}
+              variant="outline"
+              onClick={() => {
+                setIsEditing(false);
+                setEditedContent(content);
+              }}
+              className="border-accent1/20 text-gray-300 hover:bg-accent1/10"
             >
-              <Check className="h-4 w-4 text-green-500" />
+              Cancel
             </Button>
           </div>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 relative">
+          <div className={className}>{content}</div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsEditing(true)}
+            className="h-8 w-8 text-accent1/50 hover:text-accent1 hover:bg-accent1/10 absolute -right-10 top-0 opacity-0 group-hover:opacity-100 transition-opacity sm:static sm:opacity-100"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
         </div>
       )}
     </div>
   );
-}
+};
