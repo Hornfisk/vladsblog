@@ -55,12 +55,16 @@ export const ContactFormFields = ({ submitTime, onSuccess }: ContactFormFieldsPr
         throw error;
       }
 
-      toast.success("Message sent successfully! I'll get back to you soon.");
+      if (response.error) {
+        throw new Error(response.message);
+      }
+
+      toast.success(response.message || "Message sent successfully! I'll get back to you soon.");
       onSuccess();
       reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      toast.error("Failed to send message. Please try again later.");
+      toast.error(error.message || "Failed to send message. Please try again later.");
     }
   };
 

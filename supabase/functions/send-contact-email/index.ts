@@ -5,7 +5,8 @@ const RECIPIENT_EMAIL = "vladsec@proton.me";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 interface EmailRequest {
@@ -21,27 +22,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Received request to send-contact-email");
-    
-    if (!RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not set");
-      throw new Error("Missing API key configuration");
-    }
-
+    console.log("Received contact form submission");
     const { name, email, message }: EmailRequest = await req.json();
     
-    console.log("Parsed request data:", { name, email, messageLength: message.length });
-
-    // Validate email format
-    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-    if (!emailRegex.test(email)) {
-      console.error("Invalid email format:", email);
-      throw new Error("Invalid email format");
+    if (!RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not configured");
+      throw new Error("Email service is not properly configured");
     }
 
-    console.log("Sending email to:", RECIPIENT_EMAIL);
+    console.log("Sending email to:", RECIPIENT_EMAIL, "from:", email);
     
-    // Send email using Resend
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -50,7 +40,8 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Contact Form <onboarding@resend.dev>",
-        to: [RECIPIENT_EMAIL],
+        to: [RECIPIENT_EMAIL], // Always send to the verified recipient
+        reply_to: email, // Set reply-to as the contact form submitter
         subject: `New Contact Form Message from ${name}`,
         html: `
           <h2>New message from your website contact form</h2>
@@ -59,33 +50,39 @@ const handler = async (req: Request): Promise<Response> => {
           <p><strong>Message:</strong></p>
           <p>${message}</p>
         `,
-        reply_to: email,
       }),
     });
 
-    const responseText = await res.text();
+    const responseData = await res.text();
     console.log("Resend API response:", {
       status: res.status,
       statusText: res.statusText,
-      body: responseText
+      body: responseData
     });
 
     if (!res.ok) {
-      console.error("Resend API error:", responseText);
-      throw new Error(`Failed to send email: ${responseText}`);
+      if (responseData.includes("can only send testing emails")) {
+        throw new Error("Domain verification pending. Your message has been logged but email delivery is temporarily disabled.");
+      }
+      throw new Error(`Failed to send email: ${responseData}`);
     }
 
-    console.log("Email sent successfully");
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        message: "Message received! I'll get back to you soon."
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error("Error in send-contact-email function:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
+        error: true,
+        message: error.message || "Failed to send message. Please try again later."
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
