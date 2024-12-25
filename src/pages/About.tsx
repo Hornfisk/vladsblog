@@ -4,6 +4,7 @@ import { ContactForm } from "@/components/ContactForm";
 import { InlineEdit } from "@/components/admin/InlineEdit";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PageTitle } from "@/components/PageTitle";
 
 const About = () => {
   const { data: pageContent } = useQuery({
@@ -25,9 +26,7 @@ const About = () => {
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
         <section className="mb-12 md:mb-16">
-          <h1 className="text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
-            {"> "}About Me_
-          </h1>
+          <PageTitle>About Me</PageTitle>
           <div className="space-y-6">
             <InlineEdit
               content={pageContent || ""}

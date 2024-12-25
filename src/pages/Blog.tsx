@@ -2,6 +2,7 @@ import { BlogHeader } from "@/components/BlogHeader";
 import { BlogPost } from "@/components/BlogPost";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PageTitle } from "@/components/PageTitle";
 
 const Blog = () => {
   const { data: posts, isLoading } = useQuery({
@@ -22,9 +23,7 @@ const Blog = () => {
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
-        <h1 className="text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
-          {"> "}Latest Posts_
-        </h1>
+        <PageTitle>Latest Posts</PageTitle>
         {isLoading ? (
           <p className="text-gray-400 text-base md:text-sm">Loading posts...</p>
         ) : !posts?.length ? (
