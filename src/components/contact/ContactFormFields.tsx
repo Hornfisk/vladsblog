@@ -59,7 +59,15 @@ export const ContactFormFields = ({ submitTime, onSuccess }: ContactFormFieldsPr
         throw new Error(response.message);
       }
 
-      toast.success(response.message || "Message sent successfully! I'll get back to you soon.");
+      // Handle test mode case
+      if (response.testMode) {
+        toast.success(response.message, {
+          description: "Your message has been logged for testing purposes."
+        });
+      } else {
+        toast.success(response.message || "Message sent successfully!");
+      }
+      
       onSuccess();
       reset();
     } catch (error: any) {

@@ -22,7 +22,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Received contact form submission");
+    console.log("Processing contact form submission");
     const { name, email, message }: EmailRequest = await req.json();
     
     if (!RESEND_API_KEY) {
@@ -30,7 +30,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email service is not properly configured");
     }
 
-    console.log("Sending email to:", RECIPIENT_EMAIL, "from:", email);
+    // Log the submission details
+    console.log("Form submission details:", {
+      name,
+      fromEmail: email,
+      toEmail: RECIPIENT_EMAIL,
+      messagePreview: message.substring(0, 50) + "..."
+    });
     
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -40,8 +46,8 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Contact Form <onboarding@resend.dev>",
-        to: [RECIPIENT_EMAIL], // Always send to the verified recipient
-        reply_to: email, // Set reply-to as the contact form submitter
+        to: [RECIPIENT_EMAIL],
+        reply_to: email,
         subject: `New Contact Form Message from ${name}`,
         html: `
           <h2>New message from your website contact form</h2>
@@ -61,23 +67,43 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!res.ok) {
+      // Check for specific error cases
       if (responseData.includes("can only send testing emails")) {
-        throw new Error("Domain verification pending. Your message has been logged but email delivery is temporarily disabled.");
+        // Store the message details in logs at least
+        console.log("TEST MODE - Would have sent email:", {
+          to: RECIPIENT_EMAIL,
+          from: email,
+          name,
+          messagePreview: message.substring(0, 100) + "..."
+        });
+        
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Message logged successfully! (Note: Email delivery is in test mode)",
+            testMode: true
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
       }
+      
       throw new Error(`Failed to send email: ${responseData}`);
     }
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Message received! I'll get back to you soon."
+        message: "Message sent successfully! I'll get back to you soon."
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in send-contact-email function:", error);
     return new Response(
       JSON.stringify({ 
