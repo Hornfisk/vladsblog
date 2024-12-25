@@ -30,16 +30,39 @@ export const PostsList = () => {
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
       console.log('Attempting to delete post:', postId);
-      const { error } = await supabase
+      
+      // First verify the post exists and we have permission
+      const { data: post, error: fetchError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', postId)
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error('Error fetching post before delete:', fetchError);
+        throw fetchError;
+      }
+
+      if (!post) {
+        console.error('Post not found:', postId);
+        throw new Error('Post not found');
+      }
+
+      console.log('Found post to delete:', post);
+
+      // Proceed with deletion
+      const { error: deleteError } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
       
-      if (error) {
-        console.error('Delete error:', error);
-        throw error;
+      if (deleteError) {
+        console.error('Delete error:', deleteError);
+        throw deleteError;
       }
+
       console.log('Post deleted successfully');
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
