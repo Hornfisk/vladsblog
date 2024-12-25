@@ -37,16 +37,15 @@ const handler = async (req: Request): Promise<Response> => {
       toEmail: RECIPIENT_EMAIL,
       messagePreview: message.substring(0, 50) + "..."
     });
-    
-    // First try with the verified domain
-    let res = await fetch("https://api.resend.com/emails", {
+
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Contact Form <contact@vlads.blog>",
+        from: "Contact Form <onboarding@resend.dev>",
         to: [RECIPIENT_EMAIL],
         reply_to: email,
         subject: `New Contact Form Message from ${name}`,
@@ -67,39 +66,6 @@ const handler = async (req: Request): Promise<Response> => {
       body: responseData
     });
 
-    // If we get a 403 forbidden (domain not verified), try with the test domain
-    if (res.status === 403 && responseData.includes("can only send test emails")) {
-      console.log("Falling back to test domain onboarding@resend.dev");
-      
-      res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: "Contact Form <onboarding@resend.dev>",
-          to: [RECIPIENT_EMAIL],
-          reply_to: email,
-          subject: `[TEST MODE] New Contact Form Message from ${name}`,
-          html: `
-            <h2>New message from your website contact form (TEST MODE)</h2>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Message:</strong></p>
-            <p>${message}</p>
-          `,
-        }),
-      });
-
-      const testResponseData = await res.text();
-      console.log("Resend API test mode response:", {
-        status: res.status,
-        statusText: res.statusText,
-        body: testResponseData
-      });
-    }
-
     if (!res.ok) {
       throw new Error(`Failed to send email: ${responseData}`);
     }
@@ -107,8 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Message sent successfully! I'll get back to you soon.",
-        testMode: res.status === 403
+        message: "Message sent successfully! I'll get back to you soon."
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -117,13 +82,16 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in send-contact-email function:", error);
-    return new Response(JSON.stringify({ 
-      error: true,
-      message: error.message || "Failed to send message. Please try again later."
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: true,
+        message: error.message || "Failed to send message. Please try again later."
+      }), 
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
   }
 };
 
