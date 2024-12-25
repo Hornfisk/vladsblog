@@ -5,6 +5,7 @@ import { PublishToggle } from "./PublishToggle";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EditPostFormProps {
   post: any;
@@ -19,6 +20,7 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
   const [slug, setSlug] = useState(post.slug);
   const [isPublished, setIsPublished] = useState(post.published);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,10 +35,17 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
           excerpt,
           slug,
           published: isPublished,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', post.id);
 
       if (error) throw error;
+
+      // Invalidate all queries that might contain this post
+      queryClient.invalidateQueries({ queryKey: ['post', slug] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['latest-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['published-posts'] });
 
       toast.success('Post updated successfully');
       onSuccess();
