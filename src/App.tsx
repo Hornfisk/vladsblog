@@ -12,13 +12,16 @@ import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
+// Get the base URL from the environment or default to '/'
+const baseUrl = import.meta.env.BASE_URL || '/';
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter basename={baseUrl}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/blog" element={<Blog />} />
