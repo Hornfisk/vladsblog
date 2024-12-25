@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
 
 const Blog = () => {
-  const { data: posts, isLoading } = useQuery({
+  const { data: posts, isLoading, error } = useQuery({
     queryKey: ['published-posts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -15,9 +15,13 @@ const Blog = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
+
+  if (error) {
+    console.error('Error loading posts:', error);
+  }
 
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">

@@ -6,13 +6,13 @@ import { InlineEdit } from "@/components/admin/InlineEdit";
 import { PageTitle } from "@/components/PageTitle";
 
 const Index = () => {
-  const { data: posts, isLoading: postsLoading } = useQuery({
+  const { data: posts, isLoading: postsLoading, error } = useQuery({
     queryKey: ['latest-posts'],
     queryFn: async () => {
       console.log('Fetching latest posts...');
       const { data, error } = await supabase
         .from('posts')
-        .select('id, title, excerpt, created_at, slug')
+        .select('*')
         .eq('published', true)
         .order('created_at', { ascending: false })
         .limit(3);
@@ -21,8 +21,7 @@ const Index = () => {
         console.error('Error fetching posts:', error);
         throw error;
       }
-      console.log('Fetched posts:', data);
-      return data;
+      return data || [];
     },
   });
 
@@ -38,9 +37,11 @@ const Index = () => {
       if (error) throw error;
       return data?.content || "I'm Vlad, a cybersecurity nerd navigating the digital labyrinth. Here to share insights, break stuff (ethically), and maybe drop a few security breadcrumbs along the way. Grab a coffee, and let's explore the code less traveled.";
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: true,
   });
+
+  if (error) {
+    console.error('Error loading posts:', error);
+  }
 
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
