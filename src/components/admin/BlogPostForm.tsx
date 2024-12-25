@@ -5,9 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const BlogPostForm = ({ onPostCreated }: { onPostCreated: () => void }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
@@ -33,10 +35,10 @@ export const BlogPostForm = ({ onPostCreated }: { onPostCreated: () => void }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !content || !slug) {
+    if (!title || !content || !slug || !user) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: !user ? "You must be logged in to create posts" : "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -45,15 +47,14 @@ export const BlogPostForm = ({ onPostCreated }: { onPostCreated: () => void }) =
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase.from("posts").insert([
-        {
-          title,
-          content,
-          excerpt,
-          slug,
-          published: isPublished,
-        },
-      ]);
+      const { error } = await supabase.from("posts").insert({
+        title,
+        content,
+        excerpt,
+        slug,
+        published: isPublished,
+        author_id: user.id
+      });
 
       if (error) throw error;
 
