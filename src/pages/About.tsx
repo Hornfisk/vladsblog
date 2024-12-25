@@ -22,7 +22,7 @@ const About = () => {
   });
 
   return (
-    <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
+    <div className="min-h-screen bg-background text-foreground font-mono">
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
         <section className="mb-12 md:mb-16">
@@ -31,7 +31,7 @@ const About = () => {
             <InlineEdit
               content={pageContent || ""}
               pageName="about"
-              className="text-lg md:text-base text-gray-300 leading-relaxed"
+              className="text-lg md:text-base leading-relaxed"
             />
             <div className="flex gap-4">
               <Button 
