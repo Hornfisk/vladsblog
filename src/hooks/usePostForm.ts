@@ -38,10 +38,19 @@ export const usePostForm = (onPostCreated: () => void) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !content || !slug || !user) {
+    if (!user) {
       toast({
         title: "Error",
-        description: !user ? "You must be logged in to create posts" : "Please fill in all required fields",
+        description: "You must be logged in to create posts",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!title || !content || !slug) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -69,6 +78,7 @@ export const usePostForm = (onPostCreated: () => void) => {
       resetForm();
       onPostCreated();
     } catch (error: any) {
+      console.error('Error creating post:', error);
       toast({
         title: "Error",
         description: error.message,
