@@ -18,14 +18,16 @@ export function InlineEdit({ content, pageName, className = "" }: InlineEditProp
   const { session } = useAuth();
 
   const handleSave = async () => {
+    if (!session?.user?.id) return;
+
     try {
       const { error } = await supabase
         .from('page_content')
         .upsert({
           page_name: pageName,
           content: editedContent,
-          author_id: session?.user.id
-        });
+          author_id: session.user.id
+        } as Database['public']['Tables']['page_content']['Insert']);
 
       if (error) throw error;
       
