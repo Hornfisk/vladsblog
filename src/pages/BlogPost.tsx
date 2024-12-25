@@ -13,7 +13,7 @@ const BlogPost = () => {
         .from('posts')
         .select('*')
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
