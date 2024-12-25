@@ -29,31 +29,29 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-blogBg">
       <BlogHeader />
-      <main className="container max-w-4xl mx-auto px-4 py-12">
-        <div className="space-y-6">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text font-mono">
-            {">"} Dashboard_
-          </h1>
+      <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
+        <h1 className="text-3xl md:text-2xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text font-mono">
+          {">"} Dashboard_
+        </h1>
 
-          <Tabs defaultValue="new-post" className="w-full">
-            <TabsList className="bg-accent1/10 border border-accent1/20">
-              <TabsTrigger value="new-post" className="data-[state=active]:bg-accent1/20">
-                New Post
-              </TabsTrigger>
-              <TabsTrigger value="posts" className="data-[state=active]:bg-accent1/20">
-                All Posts
-              </TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="new-post" className="w-full">
+          <TabsList className="bg-accent1/10 border border-accent1/20">
+            <TabsTrigger value="new-post" className="data-[state=active]:bg-accent1/20">
+              New Post
+            </TabsTrigger>
+            <TabsTrigger value="posts" className="data-[state=active]:bg-accent1/20">
+              All Posts
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="new-post">
-              <BlogPostForm onPostCreated={handlePostCreated} />
-            </TabsContent>
+          <TabsContent value="new-post" className="mt-6">
+            <BlogPostForm onPostCreated={handlePostCreated} />
+          </TabsContent>
 
-            <TabsContent value="posts">
-              <PostsList />
-            </TabsContent>
-          </Tabs>
-        </div>
+          <TabsContent value="posts" className="mt-6">
+            <PostsList />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

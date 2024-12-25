@@ -30,7 +30,7 @@ const Blog = () => {
         ) : !posts?.length ? (
           <p className="text-gray-400 text-base md:text-sm">No posts published yet.</p>
         ) : (
-          <div className="grid gap-6 md:gap-8">
+          <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
               <BlogPost
                 key={post.id}
