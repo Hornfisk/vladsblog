@@ -26,7 +26,6 @@ export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProp
     }
 
     try {
-      // First check if a record exists
       const { data: existingContent } = await supabase
         .from('page_content')
         .select('id')
@@ -34,7 +33,6 @@ export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProp
         .single();
 
       if (existingContent) {
-        // Update existing record
         const { error: updateError } = await supabase
           .from('page_content')
           .update({ content: editedContent })
@@ -42,7 +40,6 @@ export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProp
 
         if (updateError) throw updateError;
       } else {
-        // Insert new record
         const { error: insertError } = await supabase
           .from('page_content')
           .insert([
@@ -97,13 +94,13 @@ export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProp
           </div>
         </div>
       ) : (
-        <div className="flex items-start gap-2 relative">
+        <div className="flex items-start gap-2">
           <div className={className}>{content}</div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsEditing(true)}
-            className="h-8 w-8 text-accent1/50 hover:text-accent1 hover:bg-accent1/10 absolute -right-10 top-0 opacity-0 group-hover:opacity-100 transition-opacity sm:static sm:opacity-100"
+            className="h-8 w-8 text-accent1/50 hover:text-accent1 hover:bg-accent1/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity -ml-8 sm:ml-0"
           >
             <Pencil className="h-4 w-4" />
           </Button>
