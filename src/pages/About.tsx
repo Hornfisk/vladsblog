@@ -1,8 +1,25 @@
 import { BlogHeader } from "@/components/BlogHeader";
 import { Button } from "@/components/ui/button";
 import { ContactForm } from "@/components/ContactForm";
+import { InlineEdit } from "@/components/admin/InlineEdit";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const About = () => {
+  const { data: pageContent } = useQuery({
+    queryKey: ['page-content', 'about'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('page_content')
+        .select('content')
+        .eq('page_name', 'about')
+        .single();
+      
+      if (error && error.code !== 'PGSQL_NO_ROWS_RETURNED') throw error;
+      return data?.content || "A cybersecurity enthusiast and cloud infrastructure specialist with a passion for building secure, scalable systems. More details coming soon...";
+    },
+  });
+
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
@@ -11,9 +28,11 @@ const About = () => {
           {">"} About Me_
         </h1>
         <div className="max-w-2xl mx-auto space-y-6">
-          <p className="text-gray-300 leading-relaxed">
-            [Placeholder] A cybersecurity enthusiast and cloud infrastructure specialist with a passion for building secure, scalable systems. More details coming soon...
-          </p>
+          <InlineEdit
+            content={pageContent || ""}
+            pageName="about"
+            className="text-gray-300 leading-relaxed"
+          />
           <div className="pt-6 flex gap-4">
             <Button 
               variant="outline"
