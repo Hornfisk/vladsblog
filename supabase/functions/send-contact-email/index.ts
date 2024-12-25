@@ -48,9 +48,9 @@ const handler = async (req: Request): Promise<Response> => {
         from: "Contact Form <onboarding@resend.dev>",
         to: [RECIPIENT_EMAIL],
         reply_to: email,
-        subject: `New Contact Form Message from ${name}`,
+        subject: `[TEST MODE] New Contact Form Message from ${name}`,
         html: `
-          <h2>New message from your website contact form</h2>
+          <h2>New message from your website contact form (TEST MODE)</h2>
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Message:</strong></p>
@@ -73,7 +73,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Message sent successfully! I'll get back to you soon."
+        message: "Message sent successfully! I'll get back to you soon.",
+        testMode: true
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
