@@ -22,15 +22,35 @@ export function InlineEdit({ content, pageName, className = "" }: InlineEditProp
     if (!session?.user?.id) return;
 
     try {
-      const { error } = await supabase
+      // First try to update existing record
+      const { data: existingData, error: fetchError } = await supabase
         .from('page_content')
-        .upsert({
-          page_name: pageName,
-          content: editedContent,
-          author_id: session.user.id
-        } as Database['public']['Tables']['page_content']['Insert']);
+        .select()
+        .eq('page_name', pageName)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
+
+      if (existingData) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('page_content')
+          .update({ content: editedContent })
+          .eq('page_name', pageName);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new record
+        const { error: insertError } = await supabase
+          .from('page_content')
+          .insert({
+            page_name: pageName,
+            content: editedContent,
+            author_id: session.user.id
+          } as Database['public']['Tables']['page_content']['Insert']);
+
+        if (insertError) throw insertError;
+      }
       
       toast.success("Content updated successfully");
       setIsEditing(false);
