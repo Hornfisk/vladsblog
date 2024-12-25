@@ -8,6 +8,7 @@ interface PostItemProps {
     excerpt?: string;
     published: boolean;
     created_at: string;
+    author_id: string;
   };
   onEdit: (post: any) => void;
   onDelete: (postId: string) => void;
@@ -23,15 +24,19 @@ export const PostItem = ({ post, onEdit, onDelete }: PostItemProps) => {
   return (
     <div className="p-4 border border-accent1/20 rounded-lg bg-blogBg/50 shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-200">{post.title}</h3>
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-200">{post.title}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`px-2 py-1 rounded text-xs ${
+              post.published 
+                ? "bg-green-500/20 text-green-400" 
+                : "bg-yellow-500/20 text-yellow-400"
+            }`}>
+              {post.published ? "Published" : "Draft"}
+            </span>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
-          <span className={`px-2 py-1 rounded text-xs ${
-            post.published 
-              ? "bg-green-500/20 text-green-400" 
-              : "bg-yellow-500/20 text-yellow-400"
-          }`}>
-            {post.published ? "Published" : "Draft"}
-          </span>
           <Button
             variant="ghost"
             size="icon"

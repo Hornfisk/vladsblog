@@ -30,7 +30,7 @@ export const PostsList = () => {
         .eq('id', postId);
       
       if (error) throw error;
-      return true;
+      return postId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
