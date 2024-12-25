@@ -80,6 +80,32 @@ export default function Login() {
             }}
             showLinks={false}
             view="sign_in"
+            appearance={{
+              extend: true,
+              className: {
+                container: 'text-gray-200',
+                label: 'text-gray-200',
+                button: 'bg-accent1/10 hover:bg-accent1/20 border border-accent1/50',
+                input: 'bg-blogBg border-accent1/20 focus:border-accent1',
+                anchor: 'text-accent1 hover:text-accent2',
+              },
+            }}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Sign in',
+                  loading_button_label: 'Signing in...',
+                  social_provider_text: 'Sign in with {{provider}}',
+                  link_text: "Don't have an account? Sign up",
+                },
+              },
+            }}
+            options={{
+              emailRedirectTo: `${window.location.origin}/admin`,
+              shouldRememberSession: true,
+            }}
           />
         </div>
       </div>
