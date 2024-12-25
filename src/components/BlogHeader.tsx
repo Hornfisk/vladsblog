@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogIn, LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function BlogHeader() {
   const { session, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Close menu when route changes
   useEffect(() => {
@@ -31,6 +34,17 @@ export function BlogHeader() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [isMenuOpen]);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Logged out successfully");
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error("Failed to log out");
+    }
+  };
 
   return (
     <header className="sticky top-0 w-full py-6 px-4 bg-gradient-to-r from-accent1/10 to-accent2/10 backdrop-blur-sm border-b border-accent1/10 z-50">
@@ -110,7 +124,7 @@ export function BlogHeader() {
                   size="sm"
                   onClick={() => {
                     setIsMenuOpen(false);
-                    signOut();
+                    handleLogout();
                   }}
                   className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 w-full md:w-auto"
                 >
@@ -124,7 +138,7 @@ export function BlogHeader() {
                 size="sm"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  window.location.href = '/login';
+                  navigate('/login');
                 }}
                 className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 w-full md:w-auto"
               >
