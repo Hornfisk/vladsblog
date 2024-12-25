@@ -9,15 +9,22 @@ const BlogPost = () => {
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', slug],
     queryFn: async () => {
+      console.log('Fetching post with slug:', slug);
       const { data, error } = await supabase
         .from('posts')
         .select('*')
         .eq('slug', slug)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching post:', error);
+        throw error;
+      }
+      console.log('Fetched post:', data);
       return data;
     },
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
   });
 
   return (

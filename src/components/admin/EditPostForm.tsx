@@ -27,6 +27,8 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
     setIsSubmitting(true);
 
     try {
+      console.log('Updating post:', { title, content, excerpt, slug, isPublished });
+      
       const { error } = await supabase
         .from('posts')
         .update({
@@ -42,14 +44,21 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
       if (error) throw error;
 
       // Invalidate all queries that might contain this post
-      queryClient.invalidateQueries({ queryKey: ['post', slug] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      queryClient.invalidateQueries({ queryKey: ['latest-posts'] });
-      queryClient.invalidateQueries({ queryKey: ['published-posts'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['post', post.slug] }),
+        queryClient.invalidateQueries({ queryKey: ['post', slug] }), // In case slug was changed
+        queryClient.invalidateQueries({ queryKey: ['posts'] }),
+        queryClient.invalidateQueries({ queryKey: ['latest-posts'] }),
+        queryClient.invalidateQueries({ queryKey: ['published-posts'] }),
+      ]);
+
+      // Force refetch the post data
+      await queryClient.refetchQueries({ queryKey: ['post', slug] });
 
       toast.success('Post updated successfully');
       onSuccess();
     } catch (error: any) {
+      console.error('Failed to update post:', error);
       toast.error('Failed to update post: ' + error.message);
     } finally {
       setIsSubmitting(false);
