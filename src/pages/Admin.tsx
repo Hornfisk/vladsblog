@@ -4,26 +4,33 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Admin() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!session) {
+      toast({
+        title: "Access Denied",
+        description: "Please log in to access the admin panel",
+        variant: "destructive",
+      });
       navigate("/login");
     }
-  }, [session, navigate]);
+  }, [session, navigate, toast]);
 
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-blogBg text-gray-100">
+    <div className="min-h-screen bg-background">
       <BlogHeader />
       <main className="container max-w-6xl mx-auto px-4 py-12">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
-            Dashboard
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text font-mono">
+            {">"} Dashboard_
           </h1>
           <Button
             onClick={() => navigate("/admin/new")}
@@ -34,7 +41,7 @@ export default function Admin() {
           </Button>
         </div>
         <div className="grid gap-6">
-          {/* We'll implement the post list here in the next step */}
+          {/* Post list will be implemented in the next step */}
         </div>
       </main>
     </div>
