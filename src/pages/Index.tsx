@@ -32,16 +32,16 @@ const Index = () => {
       if (error) throw error;
       return data?.content || "I'm Vlad, a cybersecurity nerd navigating the digital labyrinth. Here to share insights, break stuff (ethically), and maybe drop a few security breadcrumbs along the way. Grab a coffee, and let's explore the code less traveled.";
     },
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnMount: true,
   });
 
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
-      <main className="container max-w-6xl mx-auto px-4 py-12">
-        <section className="mb-16">
-          <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
+      <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
+        <section className="mb-12 md:mb-16">
+          <h1 className="text-3xl md:text-2xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
             {">"} Hello, cyber traveler_
           </h1>
           {contentLoading ? (
@@ -50,19 +50,19 @@ const Index = () => {
             <InlineEdit
               content={pageContent || ""}
               pageName="home-intro"
-              className="text-xl text-gray-300 max-w-2xl leading-relaxed"
+              className="text-lg md:text-base text-gray-300 max-w-2xl leading-relaxed"
             />
           )}
         </section>
         
-        <section className="space-y-8">
-          <h2 className="text-2xl font-bold mb-8">Latest Posts</h2>
+        <section className="space-y-6 md:space-y-8">
+          <h2 className="text-xl md:text-lg font-bold mb-6 md:mb-8">Latest Posts</h2>
           {postsLoading ? (
-            <p className="text-gray-400">Loading posts...</p>
+            <p className="text-gray-400 text-base md:text-sm">Loading posts...</p>
           ) : !posts?.length ? (
-            <p className="text-gray-400">No posts published yet.</p>
+            <p className="text-gray-400 text-base md:text-sm">No posts published yet.</p>
           ) : (
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
                 <BlogPost
                   key={post.slug}
