@@ -18,25 +18,35 @@ export const PostsList = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching posts:', error);
+        throw error;
+      }
+      console.log('Fetched posts:', data);
       return data;
     },
   });
 
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
+      console.log('Attempting to delete post:', postId);
       const { error } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+      console.log('Post deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       toast.success('Post deleted successfully');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Delete mutation error:', error);
       toast.error('Failed to delete post: ' + error.message);
     },
   });
@@ -89,6 +99,7 @@ export const PostsList = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
+                  console.log('Delete button clicked for post:', post);
                   if (window.confirm('Are you sure you want to delete this post?')) {
                     deletePostMutation.mutate(post.id);
                   }
