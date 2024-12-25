@@ -53,6 +53,7 @@ export default function Login() {
                 button: 'bg-accent1/10 hover:bg-accent1/20 border border-accent1/50',
                 input: 'bg-blogBg border-accent1/20 focus:border-accent1',
                 anchor: 'text-accent1 hover:text-accent2',
+                checkbox: 'accent-accent1',
               },
               style: {
                 input: {
@@ -66,6 +67,21 @@ export default function Login() {
             }}
             providers={[]}
             redirectTo={`${window.location.origin}/admin`}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Sign in',
+                  loading_button_label: 'Signing in...',
+                  social_provider_text: 'Sign in with {{provider}}',
+                  link_text: "Don't have an account? Sign up",
+                  remember_me_label: 'Remember me',
+                },
+              },
+            }}
+            showLinks={false}
+            view="sign_in"
           />
         </div>
       </div>
