@@ -35,6 +35,16 @@ export const usePostForm = (onPostCreated: () => void) => {
     setIsPublished(false);
   };
 
+  const checkSlugExists = async (slug: string) => {
+    const { data } = await supabase
+      .from("posts")
+      .select("slug")
+      .eq("slug", slug)
+      .single();
+    
+    return !!data;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -59,6 +69,18 @@ export const usePostForm = (onPostCreated: () => void) => {
     setIsSubmitting(true);
     
     try {
+      // Check if slug already exists
+      const slugExists = await checkSlugExists(slug);
+      if (slugExists) {
+        toast({
+          title: "Error",
+          description: "A post with this slug already exists. Please choose a different one.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase.from("posts").insert({
         title,
         content,
