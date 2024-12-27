@@ -33,8 +33,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+        throw new Error("Failed to log out");
+      }
+      console.log("Signed out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error; // Propagate the error if necessary
+    }
   };
+
 
   return (
     <AuthContext.Provider value={{ session, user, signOut }}>
