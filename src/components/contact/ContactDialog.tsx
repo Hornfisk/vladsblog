@@ -19,10 +19,11 @@ export const ContactDialog = () => {
         <Button 
           onClick={() => setSubmitTime(Date.now())}
           variant="outline"
-          className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50"
+          className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white"
         >
-          Contact Me
-        </Button>
+  Contact Me
+</Button>
+
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

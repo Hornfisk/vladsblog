@@ -40,7 +40,7 @@ export function BlogHeader() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
+
       toast.success("Logged out successfully");
       navigate('/');
       // Force reload to clear any cached state
@@ -55,13 +55,13 @@ export function BlogHeader() {
     <header className="sticky top-0 w-full py-6 px-4 bg-gradient-to-r from-accent1/10 to-accent2/10 backdrop-blur-sm border-b border-accent1/10 z-50">
       <div className="container max-w-6xl mx-auto">
         <div className="flex justify-between items-center">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="text-2xl font-bold bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text hover:opacity-80 transition-opacity font-mono"
           >
             vlads.blog
           </Link>
-          
+
           <button
             id="menu-button"
             onClick={(e) => {
@@ -94,22 +94,22 @@ export function BlogHeader() {
               ${isMenuOpen ? 'min-h-[calc(100vh-5rem)]' : ''}
             `}
           >
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
               onClick={() => setIsMenuOpen(false)}
             >
               Home
             </Link>
-            <Link 
-              to="/blog" 
+            <Link
+              to="/blog"
               className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
               onClick={() => setIsMenuOpen(false)}
             >
               Blog
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
               onClick={() => setIsMenuOpen(false)}
             >
@@ -117,8 +117,8 @@ export function BlogHeader() {
             </Link>
             {session ? (
               <>
-                <Link 
-                  to="/admin" 
+                <Link
+                  to="/admin"
                   className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -131,11 +131,12 @@ export function BlogHeader() {
                     setIsMenuOpen(false);
                     handleLogout();
                   }}
-                  className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 w-full md:w-auto"
+                  className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white w-full md:w-auto"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </Button>
+
               </>
             ) : (
               <Button
@@ -145,11 +146,12 @@ export function BlogHeader() {
                   setIsMenuOpen(false);
                   navigate('/login');
                 }}
-                className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 w-full md:w-auto"
+                className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white w-full md:w-auto"
               >
                 <LogIn className="w-4 h-4 mr-2" />
                 Login
               </Button>
+
             )}
           </nav>
         </div>
