@@ -76,7 +76,7 @@ const Index = () => {
                   key={post.id}
                   title={post.title}
                   excerpt={post.excerpt || ''}
-                  date={new Date(post.created_at).toLocaleDateString()}
+                  date={post.created_at}
                   slug={post.slug}
                   tags={[]}
                 />
