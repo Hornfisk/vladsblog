@@ -95,7 +95,10 @@ export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProp
         </div>
       ) : (
         <div className="flex items-start gap-2">
-          <div className={className}>{content}</div>
+          <div className={className}>
+            {content.trim() ? content : <span className="text-gray-500">No content available.</span>}
+          </div>
+
           <Button
             variant="ghost"
             size="icon"
