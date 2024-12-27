@@ -17,12 +17,12 @@ const Index = () => {
         .order('created_at', { ascending: false })
         .limit(3)
         .throwOnError();
-      
+
       if (error) {
         console.error('Error fetching posts:', error);
         throw error;
       }
-      
+
       return data;
     },
   });
@@ -36,9 +36,10 @@ const Index = () => {
         .eq('page_name', 'home-intro')
         .maybeSingle()
         .throwOnError();
-      
+
       if (error) throw error;
-      return data?.content || "I'm Vlad, a cybersecurity nerd navigating the digital labyrinth. Here to share insights, break stuff (ethically), and maybe drop a few security breadcrumbs along the way. Grab a coffee, and let's explore the code less traveled.";
+      return data?.content ?? "";
+
     },
   });
 
@@ -62,7 +63,7 @@ const Index = () => {
             />
           )}
         </section>
-        
+
         <section>
           <h2 className="text-2xl font-bold mb-6 md:mb-8">Recent Updates</h2>
           {postsLoading ? (
