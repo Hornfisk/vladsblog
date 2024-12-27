@@ -52,22 +52,23 @@ const MainContent = ({ content }: { content: string }) => (
           pageName="about"
           className="text-lg md:text-base leading-relaxed text-white/90"
         />
-        <div className="flex flex-wrap gap-4">
-          <Button 
+          <div className="flex flex-wrap gap-4">
+            <Button 
             variant="outline"
-            className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50"
+            className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white"
             asChild
-          >
-            <a 
-              href="https://www.linkedin.com/in/vladsec" 
-              target="_blank" 
-              rel="noopener noreferrer"
             >
-              LinkedIn
-            </a>
-          </Button>
-          <ContactForm />
-        </div>
+          <a 
+          href="https://www.linkedin.com/in/vladsec" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          >
+        LinkedIn
+    </a>
+  </Button>
+  <ContactForm />
+</div>
+
       </div>
     </main>
   </div>
