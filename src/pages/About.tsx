@@ -7,11 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
 import { useEffect, Suspense } from "react";
 
-// Separate loading component for better error isolation
 const LoadingState = () => (
-  <div className="min-h-screen bg-blogBg">
+  <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
     <BlogHeader />
-    <main className="container max-w-4xl mx-auto px-4 py-8">
+    <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
       <PageTitle>About Me</PageTitle>
       <div className="animate-pulse space-y-4">
         <div className="h-4 bg-accent1/10 rounded w-3/4"></div>
@@ -22,11 +21,10 @@ const LoadingState = () => (
   </div>
 );
 
-// Separate error component for better error isolation
 const ErrorState = ({ error }: { error: Error }) => (
-  <div className="min-h-screen bg-blogBg">
+  <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
     <BlogHeader />
-    <main className="container max-w-4xl mx-auto px-4 py-8">
+    <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
       <PageTitle>About Me</PageTitle>
       <div className="p-4 rounded bg-red-500/10 text-red-500 border border-red-500/20">
         <p className="font-medium">Error loading content. Please try refreshing the page.</p>
@@ -40,11 +38,10 @@ const ErrorState = ({ error }: { error: Error }) => (
   </div>
 );
 
-// Main content component for better error isolation
 const MainContent = ({ content }: { content: string }) => (
-  <div className="min-h-screen bg-blogBg">
+  <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
     <BlogHeader />
-    <main className="container max-w-4xl mx-auto px-4 py-8">
+    <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
       <PageTitle>About Me</PageTitle>
       <div className="space-y-6">
         <InlineEdit
@@ -52,23 +49,22 @@ const MainContent = ({ content }: { content: string }) => (
           pageName="about"
           className="text-lg md:text-base leading-relaxed text-white/90"
         />
-          <div className="flex flex-wrap gap-4">
-            <Button 
+        <div className="flex flex-wrap gap-4">
+          <Button 
             variant="outline"
             className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white"
             asChild
-            >
-          <a 
-          href="https://www.linkedin.com/in/vladsec" 
-          target="_blank" 
-          rel="noopener noreferrer"
           >
-        LinkedIn
-    </a>
-  </Button>
-  <ContactForm />
-</div>
-
+            <a 
+              href="https://www.linkedin.com/in/vladsec" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              LinkedIn
+            </a>
+          </Button>
+          <ContactForm />
+        </div>
       </div>
     </main>
   </div>
