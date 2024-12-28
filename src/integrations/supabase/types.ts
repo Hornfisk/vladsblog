@@ -12,7 +12,7 @@ export type Database = {
       page_content: {
         Row: {
           author_id: string
-          content: string
+          content: string | null
           created_at: string
           id: string
           page_name: string
@@ -20,7 +20,7 @@ export type Database = {
         }
         Insert: {
           author_id: string
-          content: string
+          content?: string | null
           created_at?: string
           id?: string
           page_name: string
@@ -28,7 +28,7 @@ export type Database = {
         }
         Update: {
           author_id?: string
-          content?: string
+          content?: string | null
           created_at?: string
           id?: string
           page_name?: string
