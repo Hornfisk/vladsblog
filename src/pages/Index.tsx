@@ -4,8 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { InlineEdit } from "@/components/admin/InlineEdit";
 import { PageTitle } from "@/components/PageTitle";
+import { useEffect } from "react";
 
 const Index = () => {
+  useEffect(() => {
+    console.log('Index component mounted');
+    return () => {
+      console.log('Index component unmounted');
+    };
+  }, []);
+
   const { data: posts, isLoading: postsLoading, error } = useQuery({
     queryKey: ['latest-posts'],
     queryFn: async () => {
@@ -23,6 +31,7 @@ const Index = () => {
         throw error;
       }
 
+      console.log('Posts fetched successfully:', data?.length || 0, 'posts');
       return data;
     },
   });
@@ -30,6 +39,7 @@ const Index = () => {
   const { data: pageContent, isLoading: contentLoading } = useQuery({
     queryKey: ['page-content', 'home-intro'],
     queryFn: async () => {
+      console.log('Fetching page content...');
       const { data, error } = await supabase
         .from('page_content')
         .select('content')
@@ -38,8 +48,8 @@ const Index = () => {
         .throwOnError();
 
       if (error) throw error;
+      console.log('Page content fetched:', data?.content ? 'content present' : 'no content');
       return data?.content ?? "";
-
     },
   });
 
