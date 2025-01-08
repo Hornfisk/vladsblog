@@ -4,57 +4,69 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { InlineEdit } from "@/components/admin/InlineEdit";
 import { PageTitle } from "@/components/PageTitle";
-import { useEffect } from "react";
 
 const Index = () => {
-  useEffect(() => {
-    console.log('Index component mounted');
-    return () => {
-      console.log('Index component unmounted');
-    };
-  }, []);
-
-  const { data: posts, isLoading: postsLoading, error } = useQuery({
+  const { data: posts, isLoading: postsLoading, error: postsError } = useQuery({
     queryKey: ['latest-posts'],
     queryFn: async () => {
       console.log('Fetching latest posts...');
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('published', true)
-        .order('created_at', { ascending: false })
-        .limit(3)
-        .throwOnError();
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('published', true)
+          .order('created_at', { ascending: false })
+          .limit(3);
 
-      if (error) {
-        console.error('Error fetching posts:', error);
-        throw error;
+        if (error) {
+          console.error('Error fetching posts:', error);
+          throw error;
+        }
+
+        console.log('Posts fetched successfully:', data?.length || 0, 'posts');
+        return data;
+      } catch (err) {
+        console.error('Failed to fetch posts:', err);
+        throw err;
       }
-
-      console.log('Posts fetched successfully:', data?.length || 0, 'posts');
-      return data;
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 
-  const { data: pageContent, isLoading: contentLoading } = useQuery({
+  const { data: pageContent, isLoading: contentLoading, error: contentError } = useQuery({
     queryKey: ['page-content', 'home-intro'],
     queryFn: async () => {
       console.log('Fetching page content...');
-      const { data, error } = await supabase
-        .from('page_content')
-        .select('content')
-        .eq('page_name', 'home-intro')
-        .maybeSingle()
-        .throwOnError();
+      try {
+        const { data, error } = await supabase
+          .from('page_content')
+          .select('content')
+          .eq('page_name', 'home-intro')
+          .maybeSingle();
 
-      if (error) throw error;
-      console.log('Page content fetched:', data?.content ? 'content present' : 'no content');
-      return data?.content ?? "";
+        if (error) {
+          console.error('Error fetching page content:', error);
+          throw error;
+        }
+
+        console.log('Page content fetched:', data?.content ? 'content present' : 'no content');
+        return data?.content ?? "";
+      } catch (err) {
+        console.error('Failed to fetch page content:', err);
+        throw err;
+      }
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 
-  if (error) {
-    console.error('Error loading posts:', error);
+  if (postsError) {
+    console.error('Posts loading error:', postsError);
+  }
+
+  if (contentError) {
+    console.error('Content loading error:', contentError);
   }
 
   return (
@@ -65,6 +77,10 @@ const Index = () => {
           <PageTitle>Latest Posts</PageTitle>
           {contentLoading ? (
             <div className="animate-pulse bg-gray-700/20 h-24 rounded-md" />
+          ) : contentError ? (
+            <div className="text-red-400 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-sm">Unable to load content. Please try refreshing the page.</p>
+            </div>
           ) : (
             <InlineEdit
               content={pageContent || ""}
@@ -77,7 +93,19 @@ const Index = () => {
         <section>
           <h2 className="text-2xl font-bold mb-6 md:mb-8">Recent Updates</h2>
           {postsLoading ? (
-            <p className="text-gray-400 text-base md:text-sm">Loading posts...</p>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse space-y-3">
+                  <div className="h-6 bg-gray-700/20 rounded w-3/4" />
+                  <div className="h-4 bg-gray-700/20 rounded w-1/4" />
+                  <div className="h-20 bg-gray-700/20 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : postsError ? (
+            <div className="text-red-400 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-sm">Unable to load posts. Please try refreshing the page.</p>
+            </div>
           ) : !posts?.length ? (
             <p className="text-gray-400 text-base md:text-sm">No posts published yet.</p>
           ) : (
