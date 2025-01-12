@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -100,9 +100,9 @@ const BlogPost = () => {
                     return (
                       <div className="relative group">
                         <Button 
-                          variant="ghost" 
+                          variant="secondary"
                           size="icon"
-                          className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute right-2 top-2 bg-gray-700/50 hover:bg-gray-700/80 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleCopyCode(children as string)}
                         >
                           <Copy className="h-4 w-4" />
@@ -120,7 +120,6 @@ const BlogPost = () => {
                     </code>
                   );
                 },
-                // Keep other markdown components using Tailwind's typography plugin styles
               }}>
                 {post.content}
               </ReactMarkdown>
