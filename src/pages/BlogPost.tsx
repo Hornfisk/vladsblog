@@ -94,28 +94,37 @@ const BlogPost = () => {
             </time>
             <div className="text-lg md:text-base text-gray-300 leading-relaxed">
               <ReactMarkdown components={{
-                code: ({ children, className }) => {
-                  // If className exists, it's a code block (not inline code)
-                  if (className) {
+                code: ({ node, inline, className, children, ...props }) => {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const code = String(children).replace(/\n$/, '');
+
+                  if (!inline) {
                     return (
-                      <div className="relative group">
+                      <div className="relative group my-4">
                         <Button 
                           variant="secondary"
                           size="icon"
-                          className="absolute right-2 top-2 bg-gray-800 hover:bg-gray-700 opacity-100 transition-opacity"
-                          onClick={() => handleCopyCode(children as string)}
+                          className="absolute right-2 top-2 z-10 bg-gray-800/90 hover:bg-gray-700 transition-all"
+                          onClick={() => handleCopyCode(code)}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        <code className={`block bg-gray-800/50 p-4 rounded-lg overflow-x-auto ${className}`}>
-                          {children}
-                        </code>
+                        <pre className="!mt-0 !mb-0">
+                          <code
+                            className={`block p-4 rounded-lg overflow-x-auto bg-gray-800/50 ${
+                              match ? `language-${match[1]}` : ''
+                            }`}
+                            {...props}
+                          >
+                            {code}
+                          </code>
+                        </pre>
                       </div>
                     );
                   }
-                  // Inline code
+
                   return (
-                    <code className="bg-gray-800 px-1.5 py-0.5 rounded text-sm text-accent1">
+                    <code className="bg-gray-800/50 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
                       {children}
                     </code>
                   );
