@@ -102,12 +102,12 @@ const BlogPost = () => {
                         <Button 
                           variant="secondary"
                           size="icon"
-                          className="absolute right-2 top-2 bg-gray-700/50 hover:bg-gray-700/80 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute right-2 top-2 bg-gray-800 hover:bg-gray-700 opacity-100 transition-opacity"
                           onClick={() => handleCopyCode(children as string)}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
-                        <code className="block bg-gray-800 p-4 rounded-lg overflow-x-auto">
+                        <code className={`block bg-gray-800/50 p-4 rounded-lg overflow-x-auto ${className}`}>
                           {children}
                         </code>
                       </div>
