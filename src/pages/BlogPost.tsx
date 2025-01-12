@@ -3,9 +3,13 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from 'react-markdown';
+import { Button } from "@/components/ui/button";
+import { Copy } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const BlogPost = () => {
   const { slug } = useParams();
+  const { toast } = useToast();
 
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['post', slug],
@@ -40,6 +44,22 @@ const BlogPost = () => {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      toast({
+        title: "Copied!",
+        description: "Code snippet copied to clipboard",
+        duration: 2000,
+      });
+    }).catch(() => {
+      toast({
+        title: "Error",
+        description: "Failed to copy code",
+        variant: "destructive",
+      });
+    });
+  };
+
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
       <BlogHeader />
@@ -73,7 +93,35 @@ const BlogPost = () => {
               {new Date(post.created_at).toLocaleDateString('en-GB')}
             </time>
             <div className="text-lg md:text-base text-gray-300 leading-relaxed">
-              <ReactMarkdown>
+              <ReactMarkdown components={{
+                code: ({ children, className }) => {
+                  // If className exists, it's a code block (not inline code)
+                  if (className) {
+                    return (
+                      <div className="relative group">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleCopyCode(children as string)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <code className="block bg-gray-800 p-4 rounded-lg overflow-x-auto">
+                          {children}
+                        </code>
+                      </div>
+                    );
+                  }
+                  // Inline code
+                  return (
+                    <code className="bg-gray-800 px-1.5 py-0.5 rounded text-sm text-accent1">
+                      {children}
+                    </code>
+                  );
+                },
+                // Keep other markdown components using Tailwind's typography plugin styles
+              }}>
                 {post.content}
               </ReactMarkdown>
             </div>
