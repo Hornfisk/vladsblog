@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
 import { useEffect, Suspense } from "react";
+import { PageLayout } from '@/components/PageLayout';
 
 const LoadingState = () => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
@@ -39,35 +40,32 @@ const ErrorState = ({ error }: { error: Error }) => (
 );
 
 const MainContent = ({ content }: { content: string }) => (
-  <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
-    <BlogHeader />
-    <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
-      <PageTitle>About Me</PageTitle>
-      <div className="space-y-6">
-        <InlineEdit
-          content={content}
-          pageName="about"
-          className="text-lg md:text-base leading-relaxed text-white/90"
-        />
-        <div className="flex flex-wrap gap-4">
-          <Button 
-            variant="outline"
-            className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white"
-            asChild
+  <PageLayout>
+    <PageTitle>About Me</PageTitle>
+    <div className="space-y-6">
+      <InlineEdit
+        content={content}
+        pageName="about"
+        className="text-lg md:text-base leading-relaxed text-white/90"
+      />
+      <div className="flex flex-wrap gap-4">
+        <Button
+          variant="outline"
+          className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white"
+          asChild
+        >
+          <a
+            href="https://www.linkedin.com/in/vladsec"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            <a 
-              href="https://www.linkedin.com/in/vladsec" 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              LinkedIn
-            </a>
-          </Button>
-          <ContactForm />
-        </div>
+            LinkedIn
+          </a>
+        </Button>
+        <ContactForm />
       </div>
-    </main>
-  </div>
+    </div>
+  </PageLayout>
 );
 
 const About = () => {
@@ -79,7 +77,7 @@ const About = () => {
         .select('content')
         .eq('page_name', 'about')
         .maybeSingle();
-      
+
       if (error) throw error;
 
       return data?.content || "A cybersecurity enthusiast and cloud infrastructure specialist with a passion for building secure, scalable systems. I specialize in penetration testing, cloud security architecture, and developing robust security solutions. When I'm not breaking (or fixing) things, I'm probably writing about it here or contributing to open-source security tools.";

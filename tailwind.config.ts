@@ -12,12 +12,18 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1rem", // Changed from "2rem" to match your main element padding
       screens: {
-        "2xl": "1400px",
+        "2xl": "1048px", // Changed to match your main element max-width
       },
     },
     extend: {
+      maxWidth: {
+        container: '1048px', // Added to match main element max-width
+      },
+      padding: {
+        container: '1rem', // Added to match main element padding
+      },
       fontFamily: {
         mono: ["JetBrains Mono", "monospace"],
         sans: ["JetBrains Mono", "monospace"],
