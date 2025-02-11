@@ -6,8 +6,6 @@ import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -102,22 +100,11 @@ const BlogPost = () => {
                   const isInline = !match && !code.includes('\n');
 
                   if (!isInline) {
-                    const language = match ? match[1] : 'text';
                     return (
-                      <div className="group relative mb-4">
-                        <SyntaxHighlighter
-                          language={language}
-                          style={oneDark}
-                          customStyle={{
-                            background: 'rgba(17, 24, 39, 0.8)',
-                            padding: '1rem',
-                            borderRadius: '0.5rem',
-                            margin: 0,
-                          }}
-                          wrapLongLines={true}
-                        >
-                          {code}
-                        </SyntaxHighlighter>
+                      <div className="group relative mb-4 rounded-lg bg-gray-900/80 overflow-hidden">
+                        <pre className="overflow-x-auto p-4 text-sm">
+                          <code>{code}</code>
+                        </pre>
                         <Button 
                           variant="ghost"
                           size="icon"
