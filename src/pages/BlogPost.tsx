@@ -1,4 +1,3 @@
-
 import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -104,7 +103,7 @@ const BlogPost = () => {
 
                   if (!isInline) {
                     return (
-                      <div className="relative group">
+                      <div className="relative group mb-4">
                         <Button 
                           variant="ghost"
                           size="icon"
@@ -118,10 +117,11 @@ const BlogPost = () => {
                           style={oneDark}
                           customStyle={{
                             margin: 0,
+                            padding: '1rem',
                             borderRadius: '0.5rem',
                             background: 'rgba(17, 24, 39, 0.5)',
                           }}
-                          className="!mt-0 !mb-4"
+                          className="!mt-0"
                         >
                           {code}
                         </SyntaxHighlighter>
