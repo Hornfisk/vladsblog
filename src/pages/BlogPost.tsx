@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Define the CodeProps interface
 interface CodeProps {
   inline?: boolean;
   className?: string;
@@ -38,6 +37,11 @@ const BlogPost = () => {
         if (!data) {
           console.log('No post found with slug:', slug);
           return null;
+        }
+
+        // Process the content to handle any escaped characters
+        if (data.content) {
+          data.content = data.content.replace(/\\n/g, '\n').replace(/\\`/g, '`');
         }
 
         console.log('Successfully fetched post:', data);
@@ -105,52 +109,66 @@ const BlogPost = () => {
               })}
             </time>
             <div className="text-lg leading-relaxed space-y-6 text-gray-200">
-              <ReactMarkdown components={{
-                code: ({ inline, className, children, ...props }: CodeProps) => {
-                  const match = /language-(\w+)/.exec(className || '');
-                  const code = String(children).replace(/\n$/, '');
-                  
-                  if (inline) {
-                    return (
-                      <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm text-accent1 font-mono" {...props}>
-                        {children}
-                      </code>
-                    );
-                  }
-
-                  return (
-                    <div className="relative group my-6">
-                      <Button 
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleCopyCode(code)}
-                      >
-                        <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
-                      </Button>
-                      <pre className="!mt-0 !mb-0 overflow-hidden rounded-lg border border-gray-800">
-                        <code
-                          className={`block p-4 bg-gray-900/50 backdrop-blur-sm ${
-                            match ? `language-${match[1]}` : ''
-                          } text-sm`}
-                          {...props}
-                        >
-                          {code}
+              <ReactMarkdown
+                components={{
+                  code: ({ inline, className, children, ...props }: CodeProps) => {
+                    const match = /language-(\w+)/.exec(className || '');
+                    const code = String(children).replace(/\n$/, '');
+                    
+                    if (inline) {
+                      return (
+                        <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm text-accent1 font-mono" {...props}>
+                          {children}
                         </code>
-                      </pre>
-                    </div>
-                  );
-                },
-                p: ({ children }) => (
-                  <p className="text-gray-300 leading-relaxed mb-6">{children}</p>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-2xl md:text-3xl font-bold mt-12 mb-6 text-gray-100">{children}</h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-xl md:text-2xl font-bold mt-8 mb-4 text-gray-100">{children}</h3>
-                ),
-              }}>
+                      );
+                    }
+
+                    return (
+                      <div className="relative group my-6">
+                        <Button 
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleCopyCode(code)}
+                        >
+                          <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
+                        </Button>
+                        <pre className="!mt-0 !mb-0 overflow-hidden rounded-lg border border-gray-800">
+                          <code
+                            className={`block p-4 bg-gray-900/50 backdrop-blur-sm ${
+                              match ? `language-${match[1]}` : ''
+                            } text-sm`}
+                            {...props}
+                          >
+                            {code}
+                          </code>
+                        </pre>
+                      </div>
+                    );
+                  },
+                  p: ({ children }) => (
+                    <p className="text-gray-300 leading-relaxed mb-6">{children}</p>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-2xl md:text-3xl font-bold mt-12 mb-6 text-gray-100">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-xl md:text-2xl font-bold mt-8 mb-4 text-gray-100">{children}</h3>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="list-disc list-inside space-y-2 mb-6">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal list-inside space-y-2 mb-6">{children}</ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="text-gray-300">{children}</li>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-accent1 pl-4 italic my-6 text-gray-300">{children}</blockquote>
+                  ),
+                }}
+              >
                 {post.content}
               </ReactMarkdown>
             </div>
