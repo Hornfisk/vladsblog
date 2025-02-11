@@ -1,3 +1,4 @@
+
 import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +7,8 @@ import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -101,25 +104,27 @@ const BlogPost = () => {
 
                   if (!isInline) {
                     return (
-                      <div className="relative group my-4">
+                      <div className="relative group">
                         <Button 
                           variant="ghost"
                           size="icon"
-                          className="absolute right-3 top-3 p-1.5 hover:bg-transparent"
+                          className="absolute top-2 right-2 p-1.5 hover:bg-gray-700/50 z-10"
                           onClick={() => handleCopyCode(code)}
                         >
                           <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
                         </Button>
-                        <pre className="!mt-0 !mb-0">
-                          <code
-                            className={`block p-4 rounded-lg overflow-x-auto bg-gray-800/50 ${
-                              match ? `language-${match[1]}` : ''
-                            }`}
-                            {...props}
-                          >
-                            {code}
-                          </code>
-                        </pre>
+                        <SyntaxHighlighter
+                          language={match ? match[1] : 'text'}
+                          style={oneDark}
+                          customStyle={{
+                            margin: 0,
+                            borderRadius: '0.5rem',
+                            background: 'rgba(17, 24, 39, 0.5)',
+                          }}
+                          className="!mt-0 !mb-4"
+                        >
+                          {code}
+                        </SyntaxHighlighter>
                       </div>
                     );
                   }
