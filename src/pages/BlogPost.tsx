@@ -7,6 +7,8 @@ import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { nightOwl } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -111,9 +113,18 @@ const BlogPost = () => {
                         >
                           <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
                         </Button>
-                        <code className="block overflow-x-auto text-sm text-gray-100">
+                        <SyntaxHighlighter
+                          language={match?.[1] || 'text'}
+                          style={nightOwl}
+                          customStyle={{
+                            background: 'transparent',
+                            padding: 0,
+                            margin: 0,
+                          }}
+                          PreTag="div"
+                        >
                           {code}
-                        </code>
+                        </SyntaxHighlighter>
                       </pre>
                     );
                   }
