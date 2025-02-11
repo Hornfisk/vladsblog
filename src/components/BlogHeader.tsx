@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,7 +53,7 @@ export function BlogHeader() {
   };
 
   return (
-    <header className="sticky top-0 w-full py-6 px-4 bg-[#1E1E3F] z-50">
+    <header className="sticky top-0 w-full py-6 px-4 bg-[#1E1E3F]/80 backdrop-blur-sm z-50">
       <div className="container max-w-6xl mx-auto">
         <div className="flex justify-between items-center">
           <Link
@@ -84,7 +85,7 @@ export function BlogHeader() {
               top-[5rem] md:top-0
               left-0 md:left-auto
               right-0 md:right-auto
-              bg-[#1E1E3F] md:bg-transparent
+              bg-[#1E1E3F]/95 backdrop-blur-sm md:bg-transparent
               p-4 md:p-0
               space-y-4 md:space-y-0 md:space-x-6
               z-40
