@@ -102,11 +102,11 @@ const BlogPost = () => {
 
                   if (!isInline) {
                     return (
-                      <pre className="relative group mb-4 rounded-lg bg-gray-800/60 border border-gray-700/50 p-4">
+                      <pre className="relative group mb-6 rounded-lg bg-gray-700/40 border border-gray-600/50 p-6">
                         <Button 
                           variant="ghost"
                           size="icon"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-gray-700/50"
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-gray-700/50"
                           onClick={() => handleCopyCode(code)}
                         >
                           <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
@@ -119,7 +119,7 @@ const BlogPost = () => {
                   }
 
                   return (
-                    <code className="bg-gray-800/50 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
+                    <code className="bg-gray-700/40 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
                       {children}
                     </code>
                   );
