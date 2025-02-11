@@ -54,7 +54,7 @@ export function BlogHeader() {
 
   return (
     <header className="sticky top-0 w-full py-6 px-4 bg-[#1E1E3F]/80 backdrop-blur-sm z-50">
-      <div className="container max-w-6xl mx-auto">
+      <div className="container max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
           <Link
             to="/"
