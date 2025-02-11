@@ -1,3 +1,4 @@
+
 import { BlogHeader } from "@/components/BlogHeader";
 import { BlogPost } from "@/components/BlogPost";
 import { useQuery } from "@tanstack/react-query";
@@ -74,7 +75,7 @@ const Index = () => {
       <BlogHeader />
       <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
         <section className="mb-12 md:mb-16">
-          <PageTitle>Featured Posts</PageTitle>
+          <PageTitle>Welcome</PageTitle>
           {contentLoading ? (
             <div className="animate-pulse bg-gray-700/20 h-24 rounded-md" />
           ) : contentError ? (
@@ -91,7 +92,6 @@ const Index = () => {
         </section>
 
         <section>
-          <h2 className="text-2xl font-bold mb-6 md:mb-8">Recent Updates</h2>
           {postsLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
