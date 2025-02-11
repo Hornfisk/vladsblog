@@ -102,7 +102,7 @@ const BlogPost = () => {
 
                   if (!isInline) {
                     return (
-                      <pre className="relative group mb-6 rounded-lg bg-gray-700/40 border border-gray-600/50 p-6">
+                      <pre className="relative group mb-6 rounded-lg bg-[#1F2437] border border-accent1/10 p-6">
                         <Button 
                           variant="ghost"
                           size="icon"
@@ -119,7 +119,7 @@ const BlogPost = () => {
                   }
 
                   return (
-                    <code className="bg-gray-700/40 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
+                    <code className="bg-[#1F2437] px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
                       {children}
                     </code>
                   );
