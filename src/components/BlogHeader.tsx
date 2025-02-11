@@ -52,7 +52,7 @@ export function BlogHeader() {
   };
 
   return (
-    <header className="sticky top-0 w-full py-6 px-4 bg-gradient-to-r from-accent1/10 to-accent2/10 backdrop-blur-sm border-b border-accent1/10 z-50">
+    <header className="sticky top-0 w-full py-6 px-4 bg-[#1E1E3F] z-50">
       <div className="container max-w-6xl mx-auto">
         <div className="flex justify-between items-center">
           <Link
@@ -84,9 +84,8 @@ export function BlogHeader() {
               top-[5rem] md:top-0
               left-0 md:left-auto
               right-0 md:right-auto
-              bg-blogBg md:bg-transparent
+              bg-[#1E1E3F] md:bg-transparent
               p-4 md:p-0
-              border-b md:border-b-0 border-accent1/10
               space-y-4 md:space-y-0 md:space-x-6
               z-40
               items-start md:items-center
@@ -136,7 +135,6 @@ export function BlogHeader() {
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </Button>
-
               </>
             ) : (
               <Button
@@ -151,7 +149,6 @@ export function BlogHeader() {
                 <LogIn className="w-4 h-4 mr-2" />
                 Login
               </Button>
-
             )}
           </nav>
         </div>
