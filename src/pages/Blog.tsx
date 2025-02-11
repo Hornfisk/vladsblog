@@ -29,7 +29,7 @@ const Blog = () => {
 
   return (
     <PageLayout>
-      <PageTitle>Latest Posts</PageTitle>
+      <PageTitle>All Articles</PageTitle>
       <Suspense fallback={
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
