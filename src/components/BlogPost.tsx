@@ -1,13 +1,15 @@
 
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
+import { memo } from "react";
 
 interface BlogPostProps {
   title: string;
   excerpt: string;
-  date: string; // Ensure this is a string in ISO format (e.g., "2024-12-25")
+  date: string;
   slug: string;
   tags: string[];
+  priority?: boolean;
 }
 
 const truncateExcerpt = (text: string, maxLength: number = 150) => {
@@ -16,23 +18,25 @@ const truncateExcerpt = (text: string, maxLength: number = 150) => {
   return text.substring(0, lastSpace) + '...';
 };
 
-export function BlogPost({ title, excerpt, date, slug, tags }: BlogPostProps) {
-  // Format the date, falling back to "Unknown Date" if parsing fails
+export const BlogPost = memo(({ title, excerpt, date, slug, tags, priority = false }: BlogPostProps) => {
   let formattedDate = "Unknown Date";
   try {
-    formattedDate = format(parseISO(date), "MMMM dd, yyyy"); // e.g., "December 25, 2024"
+    formattedDate = format(parseISO(date), "MMMM dd, yyyy");
   } catch (error) {
     console.error("Error parsing date:", error);
   }
 
   return (
-    <article className="p-4 md:p-6 rounded-md bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 hover:border-accent1/30 transition-all">
-      <Link to={`/blog/${slug}`}>
+    <article 
+      className="p-4 md:p-6 rounded-md bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 hover:border-accent1/30 transition-all"
+      loading={priority ? "eager" : "lazy"}
+    >
+      <Link to={`/blog/${slug}`} className="block">
         <time className="text-sm text-gray-400">{formattedDate}</time>
         <h2 className="text-lg md:text-xl font-bold mt-2 mb-2 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
           {title}
         </h2>
-        <p className="text-base md:text-sm text-gray-300 mb-3">
+        <p className="text-base md:text-sm text-gray-300 mb-3 leading-relaxed">
           {truncateExcerpt(excerpt)}
         </p>
         <div className="flex gap-2">
@@ -48,4 +52,6 @@ export function BlogPost({ title, excerpt, date, slug, tags }: BlogPostProps) {
       </Link>
     </article>
   );
-}
+});
+
+BlogPost.displayName = 'BlogPost';
