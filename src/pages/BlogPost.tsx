@@ -1,3 +1,4 @@
+
 import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -85,7 +86,7 @@ const BlogPost = () => {
             <p>The requested post could not be found.</p>
           </div>
         ) : (
-          <article className="prose prose-invert max-w-none">
+          <article className="prose prose-invert max-w-none [&_pre]:!p-0 [&_pre]:!m-0 [&_pre]:!bg-transparent">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
               {post.title}
             </h1>
@@ -101,10 +102,7 @@ const BlogPost = () => {
 
                   if (!isInline) {
                     return (
-                      <div className="group relative mb-4 rounded-lg bg-gray-900/80 overflow-hidden">
-                        <pre className="overflow-x-auto p-4 text-sm">
-                          <code>{code}</code>
-                        </pre>
+                      <pre className="relative group mb-4 rounded-lg bg-gray-900/80 p-4">
                         <Button 
                           variant="ghost"
                           size="icon"
@@ -113,7 +111,10 @@ const BlogPost = () => {
                         >
                           <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
                         </Button>
-                      </div>
+                        <code className="block overflow-x-auto text-sm">
+                          {code}
+                        </code>
+                      </pre>
                     );
                   }
 
