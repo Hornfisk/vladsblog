@@ -107,6 +107,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      should_be_code_block: {
+        Args: {
+          text_content: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
