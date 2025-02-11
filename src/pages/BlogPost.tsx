@@ -96,7 +96,7 @@ const BlogPost = () => {
             </time>
             <div className="text-lg md:text-base text-gray-300 leading-relaxed">
               <ReactMarkdown components={{
-                code: ({ node, inline, className, children, ...props }: Components['code']) => {
+                code: ({ inline, className, children, ...props }) => {
                   const match = /language-(\w+)/.exec(className || '');
                   const code = String(children).replace(/\n$/, '');
                   
