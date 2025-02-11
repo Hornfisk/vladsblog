@@ -102,33 +102,30 @@ const BlogPost = () => {
                   const isInline = !match && !code.includes('\n');
 
                   if (!isInline) {
+                    const language = match ? match[1] : 'text';
                     return (
-                      <div className="relative mb-4">
+                      <div className="group relative mb-4">
+                        <SyntaxHighlighter
+                          language={language}
+                          style={oneDark}
+                          customStyle={{
+                            background: 'rgba(17, 24, 39, 0.8)',
+                            padding: '1rem',
+                            borderRadius: '0.5rem',
+                            margin: 0,
+                          }}
+                          wrapLongLines={true}
+                        >
+                          {code}
+                        </SyntaxHighlighter>
                         <Button 
                           variant="ghost"
                           size="icon"
-                          className="absolute top-2 right-2 p-1.5 hover:bg-gray-700/50 z-10"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-gray-700/50"
                           onClick={() => handleCopyCode(code)}
                         >
                           <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
                         </Button>
-                        <SyntaxHighlighter
-                          language={match ? match[1] : 'text'}
-                          style={{
-                            ...oneDark,
-                            'pre[class*="language-"]': {
-                              ...oneDark['pre[class*="language-"]'],
-                              background: 'rgba(17, 24, 39, 0.8)',
-                              margin: 0,
-                              padding: '1rem',
-                              borderRadius: '0.5rem',
-                            }
-                          }}
-                          PreTag="pre"
-                          useInlineStyles={true}
-                        >
-                          {code}
-                        </SyntaxHighlighter>
                       </div>
                     );
                   }
