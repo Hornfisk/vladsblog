@@ -1,11 +1,11 @@
+
 import { BlogHeader } from "@/components/BlogHeader";
 import { Button } from "@/components/ui/button";
-import { ContactForm } from "@/components/ContactForm";
 import { InlineEdit } from "@/components/admin/InlineEdit";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
-import { useEffect, Suspense } from "react";
+import { Suspense } from "react";
 import { PageLayout } from '@/components/PageLayout';
 import { Github } from "lucide-react";
 
@@ -63,7 +63,6 @@ const MainContent = ({ content }: { content: string }) => (
             LinkedIn
           </a>
         </Button>
-        <ContactForm />
         <Button
           variant="outline"
           className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white w-[140px] h-10"
