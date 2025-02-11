@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { CodeProps } from 'react-markdown/lib/ast-to-react';
+import type { Components } from 'react-markdown';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -96,7 +96,7 @@ const BlogPost = () => {
             </time>
             <div className="text-lg md:text-base text-gray-300 leading-relaxed">
               <ReactMarkdown components={{
-                code: ({ inline, className, children, ...props }: CodeProps) => {
+                code: ({ inline, className, children, ...props }: Components['code']) => {
                   const match = /language-(\w+)/.exec(className || '');
                   const code = String(children).replace(/\n$/, '');
                   
