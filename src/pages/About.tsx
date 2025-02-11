@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
 import { useEffect, Suspense } from "react";
 import { PageLayout } from '@/components/PageLayout';
+import { Github } from "lucide-react";
 
 const LoadingState = () => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
@@ -51,7 +52,7 @@ const MainContent = ({ content }: { content: string }) => (
       <div className="flex flex-wrap gap-4">
         <Button
           variant="outline"
-          className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white"
+          className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white w-[140px] h-10"
           asChild
         >
           <a
@@ -63,6 +64,20 @@ const MainContent = ({ content }: { content: string }) => (
           </a>
         </Button>
         <ContactForm />
+        <Button
+          variant="outline"
+          className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white w-[140px] h-10"
+          asChild
+        >
+          <a
+            href="https://github.com/Hornfisk/vladsblog"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Github className="mr-2 h-4 w-4" />
+            Steal This
+          </a>
+        </Button>
       </div>
     </div>
   </PageLayout>
