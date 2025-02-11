@@ -1,0 +1,30 @@
+
+{
+  "name": "vlads.blog",
+  "short_name": "vlads.blog",
+  "description": "A personal tech blog focusing on cybersecurity and software engineering",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#151821",
+  "theme_color": "#151821",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/favicon-196.png",
+      "sizes": "196x196",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
