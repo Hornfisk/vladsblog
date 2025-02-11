@@ -1,4 +1,3 @@
-
 import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,12 +6,6 @@ import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface CodeProps {
-  inline?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -39,10 +32,6 @@ const BlogPost = () => {
           return null;
         }
 
-        if (data.content) {
-          data.content = data.content.replace(/\\n/g, '\n').replace(/\\`/g, '`');
-        }
-
         console.log('Successfully fetched post:', data);
         return data;
       } catch (err) {
@@ -52,7 +41,7 @@ const BlogPost = () => {
     },
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   const handleCopyCode = (code: string) => {
@@ -86,57 +75,46 @@ const BlogPost = () => {
             </div>
           </div>
         ) : error ? (
-          <div className="text-red-400 p-4 rounded-lg bg-red-500/10">
+          <div className="text-red-400 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
             <h2 className="text-lg font-semibold mb-2">Error Loading Post</h2>
             <p className="text-sm">Unable to load the post. Please try refreshing the page.</p>
           </div>
         ) : !post ? (
-          <div className="text-gray-400 p-4 rounded-lg bg-gray-700/20">
+          <div className="text-gray-400 p-4 rounded-lg bg-gray-700/20 border border-gray-600/20">
             <h2 className="text-lg font-semibold mb-2">Post Not Found</h2>
             <p>The requested post could not be found.</p>
           </div>
         ) : (
-          <article className="prose prose-invert prose-lg max-w-none">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
+          <article className="prose prose-invert max-w-none">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
               {post.title}
             </h1>
             <time className="text-sm text-gray-400 block mb-8">
-              {new Date(post.created_at).toLocaleDateString('en-GB', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              {new Date(post.created_at).toLocaleDateString('en-GB')}
             </time>
-            <div className="text-lg leading-relaxed space-y-6 text-gray-200">
-              <ReactMarkdown
-                components={{
-                  code: ({ inline, className, children, ...props }: CodeProps) => {
-                    const match = /language-(\w+)/.exec(className || '');
-                    const code = String(children).replace(/\n$/, '');
-                    
-                    if (inline) {
-                      return (
-                        <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
-                          {children}
-                        </code>
-                      );
-                    }
+            <div className="text-lg md:text-base text-gray-300 leading-relaxed">
+              <ReactMarkdown components={{
+                code: ({ node, className, children, ...props }) => {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const code = String(children).replace(/\n$/, '');
+                  const isInline = !match && !code.includes('\n');
 
+                  if (!isInline) {
                     return (
-                      <div className="relative group">
+                      <div className="relative group my-4">
                         <Button 
                           variant="ghost"
                           size="icon"
-                          className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute right-3 top-3 p-1.5 hover:bg-transparent"
                           onClick={() => handleCopyCode(code)}
                         >
                           <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
                         </Button>
-                        <pre className="!mt-0 !mb-0 overflow-hidden rounded-lg bg-gray-900/50 backdrop-blur-sm">
+                        <pre className="!mt-0 !mb-0">
                           <code
-                            className={`block p-4 ${
+                            className={`block p-4 rounded-lg overflow-x-auto bg-gray-800/50 ${
                               match ? `language-${match[1]}` : ''
-                            } text-sm`}
+                            }`}
                             {...props}
                           >
                             {code}
@@ -144,30 +122,15 @@ const BlogPost = () => {
                         </pre>
                       </div>
                     );
-                  },
-                  p: ({ children }) => (
-                    <p className="text-gray-300 leading-relaxed mb-6">{children}</p>
-                  ),
-                  h2: ({ children }) => (
-                    <h2 className="text-2xl md:text-3xl font-bold mt-12 mb-6 text-gray-100">{children}</h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="text-xl md:text-2xl font-bold mt-8 mb-4 text-gray-100">{children}</h3>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="list-disc list-inside space-y-2 mb-6">{children}</ul>
-                  ),
-                  ol: ({ children }) => (
-                    <ol className="list-decimal list-inside space-y-2 mb-6">{children}</ol>
-                  ),
-                  li: ({ children }) => (
-                    <li className="text-gray-300">{children}</li>
-                  ),
-                  blockquote: ({ children }) => (
-                    <blockquote className="pl-4 italic my-6 text-gray-300 border-l-2 border-accent1">{children}</blockquote>
-                  ),
-                }}
-              >
+                  }
+
+                  return (
+                    <code className="bg-gray-800/50 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+              }}>
                 {post.content}
               </ReactMarkdown>
             </div>
