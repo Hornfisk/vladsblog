@@ -39,7 +39,6 @@ const BlogPost = () => {
           return null;
         }
 
-        // Process the content to handle any escaped characters
         if (data.content) {
           data.content = data.content.replace(/\\n/g, '\n').replace(/\\`/g, '`');
         }
@@ -53,7 +52,7 @@ const BlogPost = () => {
     },
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * (2 ** attemptIndex), 10000),
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const handleCopyCode = (code: string) => {
@@ -87,12 +86,12 @@ const BlogPost = () => {
             </div>
           </div>
         ) : error ? (
-          <div className="text-red-400 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="text-red-400 p-4 rounded-lg bg-red-500/10">
             <h2 className="text-lg font-semibold mb-2">Error Loading Post</h2>
             <p className="text-sm">Unable to load the post. Please try refreshing the page.</p>
           </div>
         ) : !post ? (
-          <div className="text-gray-400 p-4 rounded-lg bg-gray-700/20 border border-gray-600/20">
+          <div className="text-gray-400 p-4 rounded-lg bg-gray-700/20">
             <h2 className="text-lg font-semibold mb-2">Post Not Found</h2>
             <p>The requested post could not be found.</p>
           </div>
@@ -101,7 +100,7 @@ const BlogPost = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
               {post.title}
             </h1>
-            <time className="text-sm text-gray-400 block mb-8 border-b border-gray-800 pb-8">
+            <time className="text-sm text-gray-400 block mb-8">
               {new Date(post.created_at).toLocaleDateString('en-GB', {
                 year: 'numeric',
                 month: 'long',
@@ -117,14 +116,14 @@ const BlogPost = () => {
                     
                     if (inline) {
                       return (
-                        <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm text-accent1 font-mono" {...props}>
+                        <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
                           {children}
                         </code>
                       );
                     }
 
                     return (
-                      <div className="relative group my-6">
+                      <div className="relative group">
                         <Button 
                           variant="ghost"
                           size="icon"
@@ -133,9 +132,9 @@ const BlogPost = () => {
                         >
                           <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
                         </Button>
-                        <pre className="!mt-0 !mb-0 overflow-hidden rounded-lg border border-gray-800">
+                        <pre className="!mt-0 !mb-0 overflow-hidden rounded-lg bg-gray-900/50 backdrop-blur-sm">
                           <code
-                            className={`block p-4 bg-gray-900/50 backdrop-blur-sm ${
+                            className={`block p-4 ${
                               match ? `language-${match[1]}` : ''
                             } text-sm`}
                             {...props}
@@ -165,7 +164,7 @@ const BlogPost = () => {
                     <li className="text-gray-300">{children}</li>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-accent1 pl-4 italic my-6 text-gray-300">{children}</blockquote>
+                    <blockquote className="pl-4 italic my-6 text-gray-300 border-l-2 border-accent1">{children}</blockquote>
                   ),
                 }}
               >
