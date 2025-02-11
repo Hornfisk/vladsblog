@@ -103,30 +103,29 @@ const BlogPost = () => {
 
                   if (!isInline) {
                     return (
-                      <div className="mb-4">
-                        <div className="relative">
-                          <Button 
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 p-1.5 hover:bg-gray-700/50 z-10"
-                            onClick={() => handleCopyCode(code)}
-                          >
-                            <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
-                          </Button>
-                          <SyntaxHighlighter
-                            language={match ? match[1] : 'text'}
-                            style={oneDark}
-                            customStyle={{
-                              margin: 0,
-                              padding: '1rem',
-                              borderRadius: '0.5rem',
-                              background: 'rgba(17, 24, 39, 0.8)',
-                            }}
-                            PreTag="div"
-                          >
-                            {code}
-                          </SyntaxHighlighter>
-                        </div>
+                      <div className="relative mb-4">
+                        <Button 
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 p-1.5 hover:bg-gray-700/50 z-10"
+                          onClick={() => handleCopyCode(code)}
+                        >
+                          <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
+                        </Button>
+                        <SyntaxHighlighter
+                          language={match ? match[1] : 'text'}
+                          style={oneDark}
+                          customStyle={{
+                            margin: 0,
+                            padding: '1rem',
+                            borderRadius: '0.5rem',
+                            background: 'rgba(17, 24, 39, 0.8)',
+                          }}
+                          wrapLongLines={true}
+                          PreTag="div"
+                        >
+                          {code}
+                        </SyntaxHighlighter>
                       </div>
                     );
                   }
