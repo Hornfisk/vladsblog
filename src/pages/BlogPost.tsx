@@ -102,7 +102,7 @@ const BlogPost = () => {
 
                   if (!isInline) {
                     return (
-                      <pre className="relative group mb-6 rounded-lg bg-[#1E1E3F] border-2 border-[#483D8B] p-6 shadow-xl">
+                      <pre className="relative group mb-6 rounded-lg bg-[#1E1E3F] border border-purple-500/30 p-6">
                         <Button 
                           variant="ghost"
                           size="icon"
