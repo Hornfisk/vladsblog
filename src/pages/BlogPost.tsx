@@ -1,3 +1,4 @@
+
 import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -94,40 +95,40 @@ const BlogPost = () => {
             </time>
             <div className="text-lg md:text-base text-gray-300 leading-relaxed">
               <ReactMarkdown components={{
-                code: ({ node, className, children, ...props }) => {
+                code: ({ node, inline, className, children, ...props }) => {
                   const match = /language-(\w+)/.exec(className || '');
                   const code = String(children).replace(/\n$/, '');
-                  const isInline = !match && !code.includes('\n');
-
-                  if (!isInline) {
+                  
+                  // Handle inline code differently
+                  if (inline) {
                     return (
-                      <div className="relative group my-4">
-                        <Button 
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-3 top-3 p-1.5 hover:bg-transparent"
-                          onClick={() => handleCopyCode(code)}
-                        >
-                          <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
-                        </Button>
-                        <pre className="!mt-0 !mb-0">
-                          <code
-                            className={`block p-4 rounded-lg overflow-x-auto bg-gray-800/50 ${
-                              match ? `language-${match[1]}` : ''
-                            }`}
-                            {...props}
-                          >
-                            {code}
-                          </code>
-                        </pre>
-                      </div>
+                      <code className="bg-gray-800/50 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
+                        {children}
+                      </code>
                     );
                   }
 
                   return (
-                    <code className="bg-gray-800/50 px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
-                      {children}
-                    </code>
+                    <div className="relative group my-4">
+                      <Button 
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-3 top-3 p-1.5 hover:bg-transparent"
+                        onClick={() => handleCopyCode(code)}
+                      >
+                        <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
+                      </Button>
+                      <pre className="!mt-0 !mb-0">
+                        <code
+                          className={`block p-4 rounded-lg overflow-x-auto bg-gray-800/50 ${
+                            match ? `language-${match[1]}` : ''
+                          }`}
+                          {...props}
+                        >
+                          {code}
+                        </code>
+                      </pre>
+                    </div>
                   );
                 },
               }}>
