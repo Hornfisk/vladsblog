@@ -3,14 +3,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>vlads.blog</title>
     <meta name="description" content="A personal tech blog focusing on cybersecurity and software engineering" />
     <meta name="author" content="Vlad" />
+    <meta name="theme-color" content="#151821" />
     <meta property="og:title" content="vlads.blog" />
     <meta property="og:description" content="A personal tech blog focusing on cybersecurity and software engineering" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/lovable-uploads/8211337d-823f-48f8-912e-9f8df60f48ec.png" />
+    
+    <!-- PWA support -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="196x196" href="/icons/favicon-196.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-startup-image" href="/icons/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
     <!-- Preload self-hosted fonts -->
     <link 
