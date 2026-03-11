@@ -11,7 +11,7 @@ const LoadingState = () => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
     <BlogHeader />
     <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
-      <PageTitle>About Me</PageTitle>
+      <PageTitle>whoami</PageTitle>
       <div className="animate-pulse space-y-4">
         <div className="h-4 bg-accent1/10 rounded w-3/4"></div>
         <div className="h-4 bg-accent1/10 rounded w-1/2"></div>
@@ -25,7 +25,7 @@ const ErrorState = ({ error }: { error: Error }) => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
     <BlogHeader />
     <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
-      <PageTitle>About Me</PageTitle>
+      <PageTitle>whoami</PageTitle>
       <div className="p-4 rounded bg-red-500/10 text-red-500 border border-red-500/20">
         <p className="font-medium">Error loading content. Please try refreshing the page.</p>
         {process.env.NODE_ENV === 'development' && (
@@ -40,7 +40,7 @@ const ErrorState = ({ error }: { error: Error }) => (
 
 const MainContent = ({ content }: { content: string }) => (
   <PageLayout>
-    <PageTitle>About Me</PageTitle>
+    <PageTitle>whoami</PageTitle>
     <div className="space-y-6">
       <InlineEdit
         content={content}

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import CodeBlock from "@/components/CodeBlock";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -85,7 +86,7 @@ const BlogPost = () => {
               {new Date(post.created_at).toLocaleDateString('en-GB')}
             </time>
             <div className="text-lg md:text-base text-gray-300 leading-relaxed">
-              <ReactMarkdown components={markdownComponents}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                 {post.content}
               </ReactMarkdown>
             </div>

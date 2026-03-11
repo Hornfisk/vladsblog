@@ -99,21 +99,21 @@ export function BlogHeader() {
               className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
               onClick={() => setIsMenuOpen(false)}
             >
-              Home
+              home
             </Link>
             <Link
               to="/blog"
               className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
               onClick={() => setIsMenuOpen(false)}
             >
-              Blog
+              blog
             </Link>
             <Link
               to="/about"
               className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
               onClick={() => setIsMenuOpen(false)}
             >
-              About
+              whoami
             </Link>
             {session ? (
               <>
