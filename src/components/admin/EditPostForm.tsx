@@ -3,6 +3,7 @@ import { FormField } from "./FormField";
 import { PublishToggle } from "./PublishToggle";
 import { useEditPostForm } from "@/hooks/useEditPostForm";
 import { EditPostHeader } from "./EditPostHeader";
+import ContentEditor from "./ContentEditor";
 
 interface EditPostFormProps {
   post: any;
@@ -57,14 +58,10 @@ export const EditPostForm = ({ post, onClose, onSuccess }: EditPostFormProps) =>
           placeholder="Brief description"
         />
 
-        <FormField
+        <ContentEditor
           id="edit-content"
-          label="Content"
           value={content}
           onChange={setContent}
-          type="textarea"
-          placeholder="Write your post content here..."
-          required
         />
 
         <PublishToggle isPublished={isPublished} onChange={setIsPublished} />
