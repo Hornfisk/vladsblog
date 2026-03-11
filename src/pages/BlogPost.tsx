@@ -7,6 +7,14 @@ import CodeBlock from "@/components/CodeBlock";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const markdownComponents = {
+  img: ({ src, alt }: any) => (
+    <img
+      src={src}
+      alt={alt}
+      className="rounded-lg max-w-full h-auto my-6 border border-white/10"
+      loading="lazy"
+    />
+  ),
   code: ({ className, children }: any) => {
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");

@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { FormField } from "./FormField";
 import { PublishToggle } from "./PublishToggle";
 import { usePostForm } from "@/hooks/usePostForm";
+import ContentEditor from "./ContentEditor";
 
 export const BlogPostForm = ({ onPostCreated }: { onPostCreated: () => void }) => {
   const {
@@ -49,14 +50,10 @@ export const BlogPostForm = ({ onPostCreated }: { onPostCreated: () => void }) =
           placeholder="Brief description"
         />
 
-        <FormField
+        <ContentEditor
           id="content"
-          label="Content"
           value={content}
           onChange={setContent}
-          type="textarea"
-          placeholder="Write your post content here..."
-          required
         />
 
         <PublishToggle isPublished={isPublished} onChange={setIsPublished} />
