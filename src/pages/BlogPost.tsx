@@ -1,58 +1,24 @@
-
 import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from 'react-markdown';
-import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { nightOwl } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import CodeBlock from "@/components/CodeBlock";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Pre-fetch the SyntaxHighlighter styles
-const preloadSyntaxStyles = () => {
-  const style = nightOwl;
-  return style;
-};
-
-// Memoize the markdown components configuration
 const markdownComponents = {
-  code: ({ node, className, children, ...props }: any) => {
-    const match = /language-(\w+)/.exec(className || '');
-    const code = String(children).replace(/\n$/, '');
-    const isInline = !match && !code.includes('\n');
+  code: ({ className, children }: any) => {
+    const match = /language-(\w+)/.exec(className || "");
+    const code = String(children).replace(/\n$/, "");
+    const isInline = !match && !code.includes("\n");
 
     if (!isInline) {
-      return (
-        <pre className="relative group mb-6 rounded-lg bg-[#332F63] p-6">
-          <Button 
-            variant="ghost"
-            size="icon"
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-gray-700/50"
-            onClick={() => navigator.clipboard.writeText(code)}
-          >
-            <Copy className="h-4 w-4 text-gray-400 hover:text-accent1 transition-colors" />
-          </Button>
-          <SyntaxHighlighter
-            language={match?.[1] || 'text'}
-            style={nightOwl}
-            customStyle={{
-              background: 'transparent',
-              padding: 0,
-              margin: 0,
-            }}
-            PreTag="div"
-          >
-            {code}
-          </SyntaxHighlighter>
-        </pre>
-      );
+      return <CodeBlock language={match?.[1] || "text"} code={code} />;
     }
 
+    // Inline code — intentionally omits ...props spread (no AST attributes needed here)
     return (
-      <code className="bg-[#151821] px-1.5 py-0.5 rounded text-sm text-accent1" {...props}>
+      <code className="bg-[#151821] px-1.5 py-0.5 rounded text-sm text-accent1">
         {children}
       </code>
     );
@@ -73,28 +39,22 @@ const LoadingSkeleton = () => (
 
 const BlogPost = () => {
   const { slug } = useParams();
-  const { toast } = useToast();
-
-  // Preload syntax highlighting styles
-  preloadSyntaxStyles();
 
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', slug],
     queryFn: async () => {
-      console.log('Attempting to fetch post with slug:', slug);
       const { data, error } = await supabase
         .from('posts')
         .select('*')
         .eq('slug', slug)
         .maybeSingle();
-      
+
       if (error) throw error;
-      
-      console.log('Successfully fetched post:', data);
+
       return data;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    gcTime: 1000 * 60 * 30, // Keep unused data for 30 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 
   return (
