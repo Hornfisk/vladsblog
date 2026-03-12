@@ -102,13 +102,6 @@ export function BlogHeader() {
               home
             </Link>
             <Link
-              to="/blog"
-              className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              blog
-            </Link>
-            <Link
               to="/about"
               className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
               onClick={() => setIsMenuOpen(false)}

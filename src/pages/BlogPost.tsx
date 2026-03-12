@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BlogHeader } from "@/components/BlogHeader";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -49,6 +50,16 @@ const LoadingSkeleton = () => (
 const BlogPost = () => {
   const { slug } = useParams();
 
+  const setMeta = (attr: "name" | "property", key: string, content: string) => {
+    let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+    if (!el) {
+      el = document.createElement("meta");
+      el.setAttribute(attr, key);
+      document.head.appendChild(el);
+    }
+    el.setAttribute("content", content);
+  };
+
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', slug],
     queryFn: async () => {
@@ -65,6 +76,39 @@ const BlogPost = () => {
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
   });
+
+  useEffect(() => {
+    if (!post) return;
+
+    document.title = `${post.title} | vlads.blog`;
+    setMeta("name", "description", post.excerpt || post.title);
+    setMeta("property", "og:title", `${post.title} | vlads.blog`);
+    setMeta("property", "og:description", post.excerpt || post.title);
+
+    const scriptId = "json-ld-blogpost";
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.excerpt || "",
+      datePublished: post.created_at,
+      dateModified: post.updated_at || post.created_at,
+      author: { "@type": "Person", name: "Vlad" },
+      url: `https://vlads.blog/blog/${post.slug}`,
+    });
+
+    return () => {
+      document.title = "vlads.blog";
+      document.getElementById(scriptId)?.remove();
+    };
+  }, [post]);
 
   return (
     <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
