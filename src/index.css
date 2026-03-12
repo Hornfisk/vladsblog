@@ -57,22 +57,6 @@
     background-size: 28px 28px;
   }
 
-  /* Scanline overlay */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(0, 0, 0, 0.04) 3px,
-      rgba(0, 0, 0, 0.04) 4px
-    );
-    pointer-events: none;
-    z-index: 9999;
-  }
-
   /* Terminal-style scrollbar */
   ::-webkit-scrollbar {
     width: 5px;
