@@ -1,8 +1,11 @@
 
-/* Define self-hosted fonts */
+/* Define self-hosted fonts — prefer Nerd Font if installed locally */
 @font-face {
   font-family: 'JetBrains Mono';
-  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
+  src: local('JetBrainsMono Nerd Font'),
+       local('JetBrains Mono NF'),
+       local('JetBrainsMono NF'),
+       url('/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
        local('JetBrains Mono');
   font-weight: 400;
   font-style: normal;
@@ -11,7 +14,10 @@
 
 @font-face {
   font-family: 'JetBrains Mono';
-  src: url('/fonts/JetBrainsMono-Medium.woff2') format('woff2'),
+  src: local('JetBrainsMono Nerd Font Med'),
+       local('JetBrains Mono NF'),
+       local('JetBrainsMono NF'),
+       url('/fonts/JetBrainsMono-Medium.woff2') format('woff2'),
        local('JetBrains Mono');
   font-weight: 500;
   font-style: normal;
@@ -20,7 +26,10 @@
 
 @font-face {
   font-family: 'JetBrains Mono';
-  src: url('/fonts/JetBrainsMono-Bold.woff2') format('woff2'),
+  src: local('JetBrainsMono Nerd Font Bold'),
+       local('JetBrains Mono NF'),
+       local('JetBrainsMono NF'),
+       url('/fonts/JetBrainsMono-Bold.woff2') format('woff2'),
        local('JetBrains Mono');
   font-weight: 700;
   font-style: normal;
@@ -31,9 +40,53 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 @layer base {
   html {
     overflow-y: scroll;
+  }
+
+  /* Subtle dot-grid background */
+  body {
+    @apply bg-background text-foreground;
+    background-image: radial-gradient(rgba(155, 135, 245, 0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.04) 3px,
+      rgba(0, 0, 0, 0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Terminal-style scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0e0e14;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(155, 135, 245, 0.4);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9b87f5;
   }
 
   /* Consolidated main element styles */
@@ -60,8 +113,8 @@
   * {
     @apply border-border;
   }
+}
 
-  body {
-    @apply bg-background text-foreground;
-  }
+.blink-cursor {
+  animation: blink 1.1s step-end infinite;
 }

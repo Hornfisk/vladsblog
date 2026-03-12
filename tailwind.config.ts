@@ -38,6 +38,7 @@ export default {
         blogBg: "#1A1F2C",
         accent1: "#9b87f5",
         accent2: "#D946EF",
+        termGreen: "#4af626",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -93,25 +94,30 @@ export default {
               },
             },
             code: {
-              color: '#9b87f5',
-              backgroundColor: 'rgba(155, 135, 245, 0.1)',
+              color: '#4af626',
+              backgroundColor: 'rgba(74, 246, 38, 0.07)',
               padding: '0.2em 0.4em',
-              borderRadius: '0.25rem',
+              borderRadius: '0',
+              border: '1px solid rgba(74, 246, 38, 0.15)',
             },
             pre: {
-              backgroundColor: 'rgba(155, 135, 245, 0.1)',
+              backgroundColor: '#0e0e14',
+              border: '1px solid rgba(155, 135, 245, 0.2)',
+              borderRadius: '0',
               code: {
                 backgroundColor: 'transparent',
                 padding: 0,
+                border: 'none',
+                color: '#4af626',
               },
             },
           },
         },
       },
       borderRadius: {
-        lg: "0.5rem",
-        md: "0.375rem",
-        sm: "0.25rem",
+        lg: "0.25rem",
+        md: "0.125rem",
+        sm: "0.0625rem",
       },
       keyframes: {
         "accordion-down": {
@@ -122,10 +128,15 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        blink: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        blink: "blink 1.1s step-end infinite",
       },
     },
   },
