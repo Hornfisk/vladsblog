@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { BlogHeader } from "@/components/BlogHeader";
 import { InlineEdit } from "@/components/admin/InlineEdit";
 import { useQuery } from "@tanstack/react-query";
@@ -52,6 +53,11 @@ const MainContent = ({ content }: { content: string }) => (
 );
 
 const About = () => {
+  useEffect(() => {
+    document.title = "whoami | vlads.blog";
+    return () => { document.title = "vlads.blog"; };
+  }, []);
+
   const { data: pageContent, isLoading, error } = useQuery({
     queryKey: ['page-content', 'about'],
     queryFn: async () => {

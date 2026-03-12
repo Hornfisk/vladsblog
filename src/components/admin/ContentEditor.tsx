@@ -10,7 +10,7 @@ interface ContentEditorProps {
 
 const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const cursorPos = useRef<number>(value.length);
+  const cursorPos = useRef<number>(0);
 
   const saveCursor = () => {
     if (textareaRef.current) {
@@ -28,7 +28,7 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
     const newPos = pos + markdown.length + 2;
     requestAnimationFrame(() => {
       if (textareaRef.current) {
-        textareaRef.current.focus();
+        textareaRef.current.focus({ preventScroll: true });
         textareaRef.current.setSelectionRange(newPos, newPos);
       }
     });
@@ -45,6 +45,7 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={saveCursor}
+        onClick={saveCursor}
         onMouseUp={saveCursor}
         onKeyUp={saveCursor}
         className="min-h-[300px] bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200 font-mono text-sm"
