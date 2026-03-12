@@ -101,4 +101,6 @@
 
 .blink-cursor {
   animation: blink 1.1s step-end infinite;
+  color: #9b87f5;
+  -webkit-text-fill-color: #9b87f5;
 }

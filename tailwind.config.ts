@@ -38,7 +38,6 @@ export default {
         blogBg: "#1A1F2C",
         accent1: "#9b87f5",
         accent2: "#D946EF",
-        termGreen: "#4af626",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -94,11 +93,11 @@ export default {
               },
             },
             code: {
-              color: '#4af626',
-              backgroundColor: 'rgba(74, 246, 38, 0.07)',
+              color: '#9b87f5',
+              backgroundColor: 'rgba(155, 135, 245, 0.08)',
               padding: '0.2em 0.4em',
               borderRadius: '0',
-              border: '1px solid rgba(74, 246, 38, 0.15)',
+              border: '1px solid rgba(155, 135, 245, 0.2)',
             },
             pre: {
               backgroundColor: '#0e0e14',
@@ -108,7 +107,7 @@ export default {
                 backgroundColor: 'transparent',
                 padding: 0,
                 border: 'none',
-                color: '#4af626',
+                color: 'inherit',
               },
             },
           },
