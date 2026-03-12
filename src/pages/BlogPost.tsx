@@ -84,6 +84,13 @@ const BlogPost = () => {
     setMeta("name", "description", post.excerpt || post.title);
     setMeta("property", "og:title", `${post.title} | vlads.blog`);
     setMeta("property", "og:description", post.excerpt || post.title);
+    const ogImageUrl = new URL("https://owwhvpjerkjdbmfexfii.supabase.co/functions/v1/og-image");
+    ogImageUrl.searchParams.set("title", post.title);
+    if (post.excerpt) ogImageUrl.searchParams.set("description", post.excerpt);
+    setMeta("property", "og:image", ogImageUrl.toString());
+    setMeta("property", "og:image:type", "image/svg+xml");
+    setMeta("property", "og:image:width", "1200");
+    setMeta("property", "og:image:height", "630");
 
     const scriptId = "json-ld-blogpost";
     let script = document.getElementById(scriptId) as HTMLScriptElement | null;
