@@ -21,19 +21,19 @@ const truncateExcerpt = (text: string, maxLength: number = 150) => {
 export const BlogPost = memo(({ title, excerpt, date, slug, tags, priority = false }: BlogPostProps) => {
   let formattedDate = "Unknown Date";
   try {
-    formattedDate = format(parseISO(date), "MMMM dd, yyyy");
+    formattedDate = format(parseISO(date), "yyyy-MM-dd");
   } catch (error) {
     console.error("Error parsing date:", error);
   }
 
   return (
-    <article 
-      className={`p-4 md:p-6 rounded-md bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 hover:border-accent1/30 transition-all ${
+    <article
+      className={`p-4 md:p-6 rounded-none bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 hover:border-accent1/30 border-l-2 border-l-accent1/40 hover:border-l-accent1 transition-all ${
         priority ? 'contents-visibility-visible' : 'contents-visibility-auto'
       }`}
     >
       <Link to={`/blog/${slug}`} className="block">
-        <time className="text-sm text-gray-400">{formattedDate}</time>
+        <time className="text-sm text-gray-500 tabular-nums">{formattedDate}</time>
         <h2 className="text-lg md:text-xl font-bold mt-2 mb-2 bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text">
           {title}
         </h2>

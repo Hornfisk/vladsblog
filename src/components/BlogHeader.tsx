@@ -53,14 +53,14 @@ export function BlogHeader() {
   };
 
   return (
-    <header className="sticky top-0 w-full py-6 px-4 bg-[#1E1E3F]/80 backdrop-blur-sm z-50">
+    <header className="sticky top-0 w-full py-6 px-4 bg-[#1E1E3F]/80 backdrop-blur-sm z-50 border-b border-accent1/20">
       <div className="container max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
           <Link
             to="/"
             className="text-2xl font-bold bg-gradient-to-r from-accent1 to-accent2 text-transparent bg-clip-text hover:opacity-80 transition-opacity font-mono"
           >
-            vlads.blog
+            ~/vlads.blog
           </Link>
 
           <button
