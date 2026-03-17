@@ -29,6 +29,7 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
   }, [open, initialText]);
 
   const handleConfirm = () => {
+    console.log("[LinkDialog] handleConfirm called", { caption, url });
     if (!url) return;
     onConfirm(caption, url);
     onOpenChange(false);
@@ -40,13 +41,7 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
         <DialogHeader>
           <DialogTitle className="text-gray-100">Insert link</DialogTitle>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleConfirm();
-          }}
-          className="space-y-3"
-        >
+        <div className="space-y-3">
           {hasSelection ? (
             <div className="space-y-1">
               <p className="text-xs text-gray-400">Link text</p>
@@ -92,14 +87,15 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
               Cancel
             </Button>
             <Button
-              type="submit"
+              type="button"
               disabled={!url}
+              onClick={handleConfirm}
               className="bg-accent1 hover:bg-accent1/80 text-black"
             >
               Insert
             </Button>
           </DialogFooter>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

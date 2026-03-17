@@ -51,6 +51,7 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
     const { start, end } = insertionRef.current;
     const markdown = `[${text}](${url})`;
     const newValue = value.slice(0, start) + markdown + value.slice(end);
+    console.log("[ContentEditor] handleInsertLink", { text, url, start, end, valueLen: value.length, newValue });
     onChange(newValue);
     const newPos = start + markdown.length;
     requestAnimationFrame(() => {
