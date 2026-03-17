@@ -18,6 +18,7 @@ interface ContentEditorProps {
 const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const insertionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkText, setLinkText] = useState("");
 
@@ -41,12 +42,13 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
 
   const openLinkDialog = () => {
     const { start, end } = selectionRef.current;
+    insertionRef.current = { start, end };
     setLinkText(value.slice(start, end));
     setLinkDialogOpen(true);
   };
 
   const handleInsertLink = (text: string, url: string) => {
-    const { start, end } = selectionRef.current;
+    const { start, end } = insertionRef.current;
     const markdown = `[${text}](${url})`;
     const newValue = value.slice(0, start) + markdown + value.slice(end);
     onChange(newValue);
