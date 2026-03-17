@@ -115,7 +115,7 @@ export function BlogHeader() {
                   className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Admin
+                  admin
                 </Link>
                 <Button
                   variant="outline"
@@ -127,7 +127,7 @@ export function BlogHeader() {
                   className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white w-full md:w-auto"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  logout
                 </Button>
               </>
             ) : (
@@ -141,7 +141,7 @@ export function BlogHeader() {
                 className="bg-accent1/10 hover:bg-accent1/20 border-accent1/50 text-white w-full md:w-auto"
               >
                 <LogIn className="w-4 h-4 mr-2" />
-                Login
+                login
               </Button>
             )}
           </nav>
