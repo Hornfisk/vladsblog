@@ -29,7 +29,6 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
   }, [open, initialText]);
 
   const handleConfirm = () => {
-    console.log("[LinkDialog] handleConfirm called", { caption, url });
     if (!url) return;
     onConfirm(caption, url);
     onOpenChange(false);
@@ -37,7 +36,7 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm bg-blogBg border-accent1/20 text-gray-200">
+      <DialogContent className="max-w-sm bg-blogBg border-accent1/20 text-gray-200" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle className="text-gray-100">Insert link</DialogTitle>
         </DialogHeader>

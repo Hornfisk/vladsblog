@@ -19,6 +19,10 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const insertionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkText, setLinkText] = useState("");
 
@@ -50,9 +54,8 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
   const handleInsertLink = (text: string, url: string) => {
     const { start, end } = insertionRef.current;
     const markdown = `[${text}](${url})`;
-    const newValue = value.slice(0, start) + markdown + value.slice(end);
-    console.log("[ContentEditor] handleInsertLink", { text, url, start, end, valueLen: value.length, newValue });
-    onChange(newValue);
+    const newValue = valueRef.current.slice(0, start) + markdown + valueRef.current.slice(end);
+    onChangeRef.current(newValue);
     const newPos = start + markdown.length;
     requestAnimationFrame(() => {
       if (textareaRef.current) {
