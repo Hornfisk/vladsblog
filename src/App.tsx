@@ -5,8 +5,40 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { Suspense, lazy } from 'react';
+import { Component, Suspense, lazy } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { PageTitle } from "@/components/PageTitle";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Render error:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-blogBg text-gray-100 font-mono flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-accent1 text-lg">something went wrong</p>
+            <button
+              className="text-sm text-gray-400 underline hover:text-gray-200"
+              onClick={() => this.setState({ hasError: false })}
+            >
+              try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Lazy load route components
 const Blog = lazy(() => import("./pages/Blog"));
@@ -39,6 +71,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter basename={import.meta.env.BASE_URL}>
+            <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
                 <Route path="/" element={<Blog />} />
@@ -49,6 +82,7 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
               </Routes>
             </Suspense>
+            </ErrorBoundary>
           </BrowserRouter>
         </div>
       </TooltipProvider>
