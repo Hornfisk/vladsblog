@@ -73,7 +73,7 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://"
-              type="url"
+              type="text"
               className="bg-black/30 border-accent1/20 text-gray-200 focus:border-accent1"
             />
           </div>
