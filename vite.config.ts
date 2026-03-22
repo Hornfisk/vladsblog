@@ -4,20 +4,37 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// Remove modulepreload for large chunks that are only needed on sub-pages.
-// Vite adds modulepreload for all manualChunks, but markdown-vendor (748KB) is
-// only used on blog post pages — preloading it on the homepage wastes ~1.3s of
-// Slow 4G bandwidth.
-function filterModulePreload(): import("vite").Plugin {
+// Vite's default modulePreload aggressively preloads ALL lazy route dependencies
+// at module execution time via injected __vite__preload() calls. This causes the
+// 263KB gzip markdown-vendor to download on every homepage visit even though it's
+// only needed on blog post pages (~1.3s wasted on Slow 4G).
+//
+// Fix: disable Vite's modulePreload entirely (stops JS-level __vite__preload calls),
+// then manually add back <link rel="modulepreload"> only for chunks that are
+// statically imported on every page (react, query, ui vendors).
+function smartModulePreload(): import("vite").Plugin {
+  const criticalPrefixes = ["react-vendor", "query-vendor", "ui-vendor"];
+  const criticalChunks: string[] = [];
+
   return {
-    name: "filter-module-preload",
+    name: "smart-module-preload",
+    generateBundle(_opts, bundle) {
+      for (const filename of Object.keys(bundle)) {
+        if (
+          criticalPrefixes.some((p) => filename.includes(p)) &&
+          filename.endsWith(".js")
+        ) {
+          criticalChunks.push(`/${filename}`);
+        }
+      }
+    },
     transformIndexHtml: {
       order: "post",
       handler(html: string) {
-        return html.replace(
-          /<link rel="modulepreload" crossorigin href="\/assets\/markdown-[^"]+\.js">\n?/g,
-          ""
-        );
+        const tags = criticalChunks
+          .map((f) => `<link rel="modulepreload" crossorigin href="${f}">`)
+          .join("\n    ");
+        return html.replace("</head>", `    ${tags}\n  </head>`);
       },
     },
   };
@@ -44,10 +61,15 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000,
     minify: true,
     sourcemap: false,
+    // Disable JS-level modulepreload injection (__vite__preload calls).
+    // Without this, Vite eagerly fetches ALL lazy route dependencies (including
+    // the 263KB gzip markdown-vendor) at homepage load time, killing mobile perf.
+    // Static imports still download in parallel via normal ES module resolution.
+    modulePreload: false,
   },
   plugins: [
     react(),
-    filterModulePreload(),
+    smartModulePreload(),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
