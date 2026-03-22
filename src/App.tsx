@@ -49,7 +49,7 @@ const About = lazy(() => import("./pages/About"));
 const Login = lazy(() => import("./pages/Login"));
 const Work = lazy(() => import("./pages/Work"));
 const Admin = lazy(() => import("./pages/Admin"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+import NotFound from "./pages/NotFound";
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono flex items-center justify-center">
