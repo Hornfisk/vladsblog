@@ -13,11 +13,23 @@ const ImageUpload = ({ onInsert }: ImageUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+  const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!inputRef.current) return;
     inputRef.current.value = "";
     if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Only JPEG, PNG, GIF, WebP, and SVG images are allowed.", variant: "destructive" });
+      return;
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      toast({ title: "File too large", description: "Maximum image size is 5 MB.", variant: "destructive" });
+      return;
+    }
 
     setUploading(true);
     try {
