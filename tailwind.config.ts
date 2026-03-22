@@ -96,13 +96,13 @@ export default {
               color: '#9b87f5',
               backgroundColor: 'rgba(155, 135, 245, 0.08)',
               padding: '0.2em 0.4em',
-              borderRadius: '0',
+              borderRadius: '0.25rem',
               border: '1px solid rgba(155, 135, 245, 0.2)',
             },
             pre: {
               backgroundColor: '#0e0e14',
               border: '1px solid rgba(155, 135, 245, 0.2)',
-              borderRadius: '0',
+              borderRadius: '0.5rem',
               code: {
                 backgroundColor: 'transparent',
                 padding: 0,
@@ -114,9 +114,9 @@ export default {
         },
       },
       borderRadius: {
-        lg: "0.25rem",
-        md: "0.125rem",
-        sm: "0.0625rem",
+        lg: "0.5rem",
+        md: "0.375rem",
+        sm: "0.25rem",
       },
       keyframes: {
         "accordion-down": {
