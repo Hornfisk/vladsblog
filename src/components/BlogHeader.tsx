@@ -108,6 +108,13 @@ export function BlogHeader() {
             >
               whoami
             </Link>
+            <Link
+              to="/work"
+              className="text-gray-300 hover:text-accent1 transition-colors w-full md:w-auto"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              work
+            </Link>
             {session ? (
               <>
                 <Link

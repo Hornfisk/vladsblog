@@ -45,6 +45,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const About = lazy(() => import("./pages/About"));
 const Login = lazy(() => import("./pages/Login"));
+const Work = lazy(() => import("./pages/Work"));
 const Admin = lazy(() => import("./pages/Admin"));
 
 const LoadingFallback = () => (
@@ -78,6 +79,7 @@ const App = () => (
                 <Route path="/blog" element={<Navigate to="/" replace />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/work" element={<Work />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={<Admin />} />
               </Routes>
