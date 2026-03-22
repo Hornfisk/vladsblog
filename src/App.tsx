@@ -40,8 +40,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-// Lazy load route components
-const Blog = lazy(() => import("./pages/Blog"));
+// Blog (homepage) is eagerly loaded to avoid Suspense cascade on first paint
+import Blog from "./pages/Blog";
+
+// Lazy load less-frequent route components
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const About = lazy(() => import("./pages/About"));
 const Login = lazy(() => import("./pages/Login"));
