@@ -20,16 +20,24 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
   const hasSelection = initialText.length > 0;
   const [caption, setCaption] = useState(initialText);
   const [url, setUrl] = useState("");
+  const [urlError, setUrlError] = useState("");
 
   useEffect(() => {
     if (open) {
       setCaption(initialText);
       setUrl("");
+      setUrlError("");
     }
   }, [open, initialText]);
 
   const handleConfirm = () => {
     if (!url) return;
+    const allowedScheme = /^(https?:\/\/|\/|#|mailto:)/i;
+    if (!allowedScheme.test(url)) {
+      setUrlError("URL must start with https://, http://, /, #, or mailto:");
+      return;
+    }
+    setUrlError("");
     onConfirm(caption, url);
     onOpenChange(false);
   };
@@ -65,11 +73,12 @@ const LinkDialog = ({ open, onOpenChange, initialText, onConfirm }: LinkDialogPr
             <Input
               autoFocus={hasSelection}
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => { setUrl(e.target.value); setUrlError(""); }}
               placeholder="https://"
               type="text"
               className="bg-black/30 border-accent1/20 text-gray-200 focus:border-accent1"
             />
+            {urlError && <p className="text-xs text-red-400">{urlError}</p>}
           </div>
           {(caption || url) && (
             <p className="font-mono text-xs text-accent1/60 bg-black/20 px-2 py-1.5 rounded border border-accent1/10 truncate">
