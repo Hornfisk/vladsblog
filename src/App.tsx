@@ -49,6 +49,7 @@ const About = lazy(() => import("./pages/About"));
 const Login = lazy(() => import("./pages/Login"));
 const Work = lazy(() => import("./pages/Work"));
 const Admin = lazy(() => import("./pages/Admin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono flex items-center justify-center">
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/work" element={<Work />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
             </ErrorBoundary>
