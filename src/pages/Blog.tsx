@@ -67,23 +67,27 @@ const Blog = () => {
     <PageLayout>
       <section className="mb-10 md:mb-12">
         <PageTitle>posts</PageTitle>
-        {pageContent !== undefined && (
-          <InlineEdit
-            content={pageContent}
-            pageName="home-intro"
-            className="text-lg md:text-base text-gray-400 max-w-2xl leading-relaxed"
-          />
-        )}
+        <div className="min-h-[1.75rem]">
+          {pageContent !== undefined && (
+            <InlineEdit
+              content={pageContent}
+              pageName="home-intro"
+              className="text-lg md:text-base text-gray-400 max-w-2xl leading-relaxed"
+            />
+          )}
+        </div>
       </section>
 
       <section>
         {isLoading && page === 0 ? (
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse space-y-3">
-                <div className="h-6 bg-gray-700/20 rounded w-3/4" />
-                <div className="h-4 bg-gray-700/20 rounded w-1/4" />
-                <div className="h-20 bg-gray-700/20 rounded" />
+              <div key={i} className="animate-pulse p-4 md:p-6 border border-gray-700/20 border-l-2">
+                <div className="h-4 bg-gray-700/20 rounded w-1/4 mb-3" />
+                <div className="h-6 bg-gray-700/20 rounded w-3/4 mb-3" />
+                <div className="h-4 bg-gray-700/20 rounded mb-2" />
+                <div className="h-4 bg-gray-700/20 rounded mb-2" />
+                <div className="h-4 bg-gray-700/20 rounded w-2/3" />
               </div>
             ))}
           </div>
@@ -100,7 +104,6 @@ const Blog = () => {
                   date={post.created_at}
                   slug={post.slug}
                   tags={[]}
-                  priority={index === 0}
                 />
               ))}
             </div>

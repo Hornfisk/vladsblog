@@ -56,11 +56,20 @@
       crossorigin
     />
     
-    <!-- Preload critical CSS -->
-    <link rel="preload" href="/src/index.css" as="style">
-    
+    <!-- Preconnect to Supabase to reduce API latency -->
+    <link rel="preconnect" href="https://owwhvpjerkjdbmfexfii.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://owwhvpjerkjdbmfexfii.supabase.co">
+
+    <!-- Inline critical CSS: eliminates render-blocking CSS for above-the-fold paint -->
+    <style>
+      *,::before,::after{box-sizing:border-box}
+      html{overflow-y:scroll}
+      body{margin:0;background-color:#151821;background-image:radial-gradient(rgba(155,135,245,.04) 1px,transparent 1px);background-size:28px 28px;font-family:'JetBrains Mono',ui-monospace,monospace;color:#f3f4f6;min-height:100vh}
+      #root{min-height:100vh}
+    </style>
+
     <!-- Lovable script for new features -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module" defer></script>
     
     <script>
       (function() {
