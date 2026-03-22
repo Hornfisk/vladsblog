@@ -11,7 +11,7 @@ const NotFound = () => {
     <PageLayout>
       <section className="flex flex-col items-center text-center py-8">
         <img
-          src="/404-nobg.webp"
+          src="/404.png"
           alt="A confused pixel art cat staring at a cracked monitor displaying 404"
           className="w-64 md:w-80 mb-8 select-none"
           draggable={false}
