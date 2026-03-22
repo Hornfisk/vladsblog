@@ -16,7 +16,7 @@ const Work = () => {
 
       <div className="space-y-6">
         {/* InsanaSonido */}
-        <div className="bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 border-l-2 border-l-accent1/40 hover:border-accent1/30 hover:border-l-accent1 transition-all p-4 md:p-6 rounded-none">
+        <div className="bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 border-l-2 border-l-accent1/40 hover:border-accent1/30 hover:border-l-accent1 transition-all p-4 md:p-6 rounded-md">
           <div className="flex flex-wrap items-baseline gap-3 mb-2">
             <a
               href="https://insanasonido.es/"
