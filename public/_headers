@@ -1,5 +1,25 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  Expires: Thu, 31 Dec 2037 23:55:55 GMT
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  Expires: Thu, 31 Dec 2037 23:55:55 GMT
+
+/*.svg
+  Cache-Control: public, max-age=86400
+  Expires: Thu, 31 Dec 2037 23:55:55 GMT
+
+/*.png
+  Cache-Control: public, max-age=86400
+  Expires: Thu, 31 Dec 2037 23:55:55 GMT
+
+/*.ico
+  Cache-Control: public, max-age=86400
+  Expires: Thu, 31 Dec 2037 23:55:55 GMT
+
+/manifest.json
+  Cache-Control: public, max-age=86400
 
 /*
   X-Frame-Options: DENY
@@ -7,4 +27,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://owwhvpjerkjdbmfexfii.supabase.co; font-src 'self' data:; frame-ancestors 'none';
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://owwhvpjerkjdbmfexfii.supabase.co; font-src 'self' data: https://fonts.gstatic.com; frame-ancestors 'none';
