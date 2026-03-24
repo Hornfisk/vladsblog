@@ -50,11 +50,32 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-toast', '@radix-ui/react-tooltip'],
-          'query-vendor': ['@tanstack/react-query'],
-          'markdown-vendor': ['react-markdown', 'react-syntax-highlighter'],
+        // Function form required so we can pin Vite's __vite__preload helper into
+        // react-vendor. With the object form, Rollup placed the helper inside
+        // markdown-vendor, which forced a static import from index.js →
+        // markdown-vendor (263 KB) on every page load — even on the homepage.
+        manualChunks(id) {
+          // Pin Vite's preload helper to react-vendor (already a critical chunk).
+          // This breaks the index.js → markdown-vendor static import.
+          if (id === '\0vite/preload-helper.js') return 'react-vendor';
+
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/react-router-dom/')
+          ) return 'react-vendor';
+
+          if (
+            id.includes('node_modules/@radix-ui/react-toast') ||
+            id.includes('node_modules/@radix-ui/react-tooltip')
+          ) return 'ui-vendor';
+
+          if (id.includes('node_modules/@tanstack/react-query')) return 'query-vendor';
+
+          if (
+            id.includes('node_modules/react-markdown') ||
+            id.includes('node_modules/react-syntax-highlighter')
+          ) return 'markdown-vendor';
         },
       },
     },

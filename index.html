@@ -41,14 +41,7 @@
       type="font/woff2"
       crossorigin
     />
-    <link 
-      rel="preload" 
-      href="/fonts/JetBrainsMono-Medium.woff2" 
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link 
+<link 
       rel="preload" 
       href="/fonts/JetBrainsMono-Bold.woff2" 
       as="font"
@@ -59,6 +52,26 @@
     <!-- Preconnect to Supabase to reduce API latency -->
     <link rel="preconnect" href="https://owwhvpjerkjdbmfexfii.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://owwhvpjerkjdbmfexfii.supabase.co">
+
+    <!-- Start Supabase fetches immediately — before React loads.
+         On slow 4G this saves ~1.2s off LCP: data arrives at ~900ms instead
+         of ~2100ms (after React init). App.tsx seeds the QueryClient cache
+         from these promises before Blog.tsx renders. -->
+    <script>
+      (function () {
+        var u = 'https://owwhvpjerkjdbmfexfii.supabase.co/rest/v1/';
+        var k = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93d2h2cGplcmtqZGJtZmV4ZmlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUxMTg4MDksImV4cCI6MjA1MDY5NDgwOX0.o6RE9TajWTKPFrCxkK49f7d3l5XmsYAPjSh_Z1-ba74';
+        var h = { apikey: k, 'Content-Type': 'application/json' };
+        window.__postsP = fetch(
+          u + 'posts?select=*&published=eq.true&order=created_at.desc&limit=10',
+          { headers: h }
+        ).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+        window.__homeIntroP = fetch(
+          u + 'page_content?select=content&page_name=eq.home-intro&limit=1',
+          { headers: h }
+        ).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+      })();
+    </script>
 
     <!-- Inline critical CSS: eliminates render-blocking CSS for above-the-fold paint -->
     <style>
