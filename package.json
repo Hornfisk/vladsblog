@@ -70,7 +70,9 @@
   },
   "overrides": {
     "prismjs": ">=1.30.0",
-    "esbuild": ">=0.25.0"
+    "esbuild": ">=0.25.0",
+    "yaml": ">=2.8.3",
+    "brace-expansion": ">=2.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
