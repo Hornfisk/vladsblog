@@ -1,69 +1,64 @@
-# Welcome to your Lovable project
+# vlads.blog
 
-## Project info
+Personal blog and portfolio — covering cybersecurity, AI, and software.
 
-**URL**: https://lovable.dev/projects/ce588876-5fa0-4945-9d3e-8b612843e602
+**Live site:** [vlads.blog](https://vlads.blog)
 
-## How can I edit this code?
+## Stack
 
-There are several ways of editing your application.
+- **React 18** + **TypeScript** — frontend
+- **Vite** — build tool with custom performance optimizations
+- **Tailwind CSS** + **shadcn/ui** (Radix UI) — styling and components
+- **TanStack Query** — server state and caching
+- **React Router v6** — SPA routing with lazy-loaded routes
+- **Supabase** — PostgreSQL database, auth, and edge functions
+- **react-markdown** + **react-syntax-highlighter** — markdown rendering with syntax highlighting
 
-**Use Lovable**
+## Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ce588876-5fa0-4945-9d3e-8b612843e602) and start prompting.
+- Blog with markdown posts, syntax highlighting, and publish/draft control
+- Admin dashboard (auth-gated) for creating and editing posts
+- Editable page content (homepage intro, about page) via admin
+- Portfolio/work showcase section
+- Contact form via Supabase Edge Function + Resend
+- Post backup via Supabase Edge Function
 
-Changes made via Lovable will be committed automatically to this repo.
+## Running locally
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+**Prerequisites:** Node.js 18+, a Supabase project
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/Hornfisk/vladsblog.git
+cd vladsblog
+npm install
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Create a `.env` file at the project root:
 
-# Step 3: Install the necessary dependencies.
-npm i
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app runs at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Build
 
-**Use GitHub Codespaces**
+```sh
+npm run build      # production build
+npm run preview    # preview the production build locally
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Deployment
 
-## What technologies are used for this project?
+Deployed as a static site (Netlify or similar). The `public/_headers` file sets long-lived cache headers for assets and security headers (`CSP`, `HSTS`, `X-Frame-Options`, etc.).
 
-This project is built with:
+## Performance notes
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The Vite config includes a custom `smartModulePreload` plugin that replaces Vite's default aggressive `__vite__preload()` injection. This prevents forcing a 263KB markdown vendor chunk download on every page load. Only critical chunks (react, query, UI) are preloaded; markdown rendering is deferred until a post page is actually visited.
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/ce588876-5fa0-4945-9d3e-8b612843e602) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+`index.html` also starts Supabase REST fetches in `<head>` before React initializes, pre-seeding the React Query cache and cutting roughly 1–1.2s off LCP on slow connections.
