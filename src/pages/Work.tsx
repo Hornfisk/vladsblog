@@ -1,8 +1,54 @@
-
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { PageLayout } from "@/components/PageLayout";
+import { useEffect, Suspense } from "react";
+import { BlogHeader } from "@/components/BlogHeader";
+import { InlineEdit } from "@/components/admin/InlineEdit";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
+import { PageLayout } from "@/components/PageLayout";
+
+const LoadingState = () => (
+  <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
+    <BlogHeader />
+    <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
+      <PageTitle>work</PageTitle>
+      <div className="animate-pulse space-y-4">
+        <div className="h-4 bg-accent1/10 rounded w-3/4"></div>
+        <div className="h-4 bg-accent1/10 rounded w-1/2"></div>
+        <div className="h-4 bg-accent1/10 rounded w-2/3"></div>
+      </div>
+    </main>
+  </div>
+);
+
+const ErrorState = ({ error }: { error: Error }) => (
+  <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
+    <BlogHeader />
+    <main className="container max-w-4xl mx-auto px-4 py-8 md:py-12">
+      <PageTitle>work</PageTitle>
+      <div className="p-4 rounded bg-red-500/10 text-red-500 border border-red-500/20">
+        <p className="font-medium">Error loading content. Please try refreshing the page.</p>
+        {process.env.NODE_ENV === 'development' && (
+          <pre className="mt-2 text-sm overflow-auto">
+            {error.message}
+          </pre>
+        )}
+      </div>
+    </main>
+  </div>
+);
+
+const MainContent = ({ content }: { content: string }) => (
+  <PageLayout>
+    <PageTitle>work</PageTitle>
+    <div className="space-y-6">
+      <InlineEdit
+        content={content}
+        pageName="work"
+        className="text-lg md:text-base leading-relaxed text-white/90 whitespace-pre-wrap"
+      />
+    </div>
+  </PageLayout>
+);
 
 const Work = () => {
   useEffect(() => {
@@ -10,73 +56,36 @@ const Work = () => {
     return () => { document.title = "vlads.blog"; };
   }, []);
 
+  const { data: pageContent, isLoading, error } = useQuery({
+    queryKey: ['page-content', 'work'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('page_content')
+        .select('content')
+        .eq('page_name', 'work')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return data?.content || "";
+    },
+    retry: 1,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+  });
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState error={error as Error} />;
+  }
+
   return (
-    <PageLayout>
-      <PageTitle>work</PageTitle>
-
-      <div className="space-y-6">
-        {/* InsanaSonido */}
-        <div className="bg-gradient-to-r from-accent1/5 to-accent2/5 border border-accent1/10 border-l-2 border-l-accent1/40 hover:border-accent1/30 hover:border-l-accent1 transition-all p-4 md:p-6 rounded-md">
-          <div className="flex flex-wrap items-baseline gap-3 mb-2">
-            <a
-              href="https://insanasonido.es/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-lg font-bold text-accent1 hover:opacity-80 transition-opacity"
-            >
-              insanasonido.es
-            </a>
-            <span className="text-gray-400 text-sm">2026</span>
-          </div>
-
-          <p className="text-gray-300 mb-4">
-            Bilingual event site for an underground electronic music promoter on Spain's South Coast.
-          </p>
-
-          <ul className="text-gray-300 text-sm space-y-1 mb-4 list-none">
-            <li className="before:content-['→'] before:text-accent1/60 before:mr-2">Bilingual ES/EN with hreflang + geo-redirect edge function</li>
-            <li className="before:content-['→'] before:text-accent1/60 before:mr-2">GDPR-compliant — Consent Mode v2, CSP hardening</li>
-            <li className="before:content-['→'] before:text-accent1/60 before:mr-2">SEO-optimised — JSON-LD MusicEvent schema, sitemap, OG tags</li>
-            <li className="before:content-['→'] before:text-accent1/60 before:mr-2">Zero infra cost — Netlify free tier, Cloudflare free tier</li>
-          </ul>
-
-          <div className="flex flex-wrap gap-2 mb-5">
-            {["astro", "netlify", "cloudflare", "decap-cms", "ga4"].map((tag) => (
-              <span key={tag} className="px-2 py-1 text-xs rounded-md bg-accent1/10 text-accent1">
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          <p className="text-gray-500 text-xs mb-4">~120h · est. value €5,000–7,000</p>
-
-          <div className="flex flex-wrap gap-4 text-sm">
-            <a
-              href="https://insanasonido.es/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-accent1 transition-colors"
-            >
-              insanasonido.es ↗
-            </a>
-            <a
-              href="https://github.com/Hornfisk/insanasonido"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-accent1 transition-colors"
-            >
-              github ↗
-            </a>
-            <Link
-              to="/blog/insanasonido-case-study"
-              className="text-accent1 hover:opacity-80 transition-opacity"
-            >
-              → read the case study
-            </Link>
-          </div>
-        </div>
-      </div>
-    </PageLayout>
+    <Suspense fallback={<LoadingState />}>
+      <MainContent content={pageContent || ""} />
+    </Suspense>
   );
 };
 
