@@ -67,7 +67,7 @@ const Work = () => {
 
       if (error) throw error;
 
-      return data?.content || "";
+      return data?.content || "Nothing published here at the moment, come back later.";
     },
     retry: 1,
     staleTime: 1000 * 60 * 5,
