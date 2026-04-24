@@ -23,4 +23,12 @@ go into the admin UI.
 ## Images
 
 Post images go under `public/posts/`. Referenced paths in draft
-markdown assume that location.
+markdown assume that location. Convert to lossless WebP and strip
+metadata before committing:
+
+```sh
+convert input.png -strip -define webp:lossless=true \
+  -define webp:method=6 -define webp:exact=true \
+  public/posts/slug.webp
+```
+
