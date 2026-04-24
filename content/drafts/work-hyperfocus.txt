@@ -1,0 +1,13 @@
+hyperfocus dsp — hyperfocusdsp.com
+
+Home base for my audio-tool habit. I've been writing DSP plugins on and
+off for a while: a TB-303-style acid synth, a three-layer kick with a
+909 clap voice, a plugin-UI mockup tool, and a few still cooking. At
+some point it stopped feeling like a pile of scattered repos and started
+feeling like a project — so it got a site.
+
+Most of it is open source, and the rest will be too where it makes
+sense. The plumbing: Astro 6 + Tailwind v4, Cloudflare Pages for
+hosting, R2 for binaries. The site pulls live plugin versions from
+GitHub at build time, so a release ships on one git tag and the version
+badge updates itself. Small trick, big relief.
