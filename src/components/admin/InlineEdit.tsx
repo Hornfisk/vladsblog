@@ -6,14 +6,34 @@ import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useQueryClient } from "@tanstack/react-query";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface InlineEditProps {
   content: string;
   pageName: string;
   className?: string;
+  renderAsMarkdown?: boolean;
 }
 
-export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProps) => {
+const markdownComponents = {
+  a: ({ href, children }: any) => (
+    <a
+      href={href}
+      target={href?.startsWith("http") ? "_blank" : undefined}
+      rel={href?.startsWith("http") ? "noreferrer noopener" : undefined}
+      className="text-accent1 hover:underline"
+    >
+      {children}
+    </a>
+  ),
+  p: ({ children }: any) => <p className="mb-4 last:mb-0">{children}</p>,
+  ul: ({ children }: any) => <ul className="list-disc pl-6 mb-4 space-y-1">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal pl-6 mb-4 space-y-1">{children}</ol>,
+  strong: ({ children }: any) => <strong className="text-white">{children}</strong>,
+};
+
+export const InlineEdit = ({ content, pageName, className = "", renderAsMarkdown = false }: InlineEditProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const { session } = useAuth();
@@ -61,8 +81,16 @@ export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProp
     }
   };
 
+  const renderedContent = renderAsMarkdown ? (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {content}
+    </ReactMarkdown>
+  ) : (
+    content
+  );
+
   if (!session?.user) {
-    return <div className={className}>{content}</div>;
+    return <div className={className}>{renderedContent}</div>;
   }
 
   return (
@@ -96,7 +124,7 @@ export const InlineEdit = ({ content, pageName, className = "" }: InlineEditProp
       ) : (
         <div className="flex items-start gap-2">
           <div className={className}>
-            {content.trim() ? content : <span className="text-gray-500">No content available.</span>}
+            {content.trim() ? renderedContent : <span className="text-gray-500">No content available.</span>}
           </div>
 
           <Button

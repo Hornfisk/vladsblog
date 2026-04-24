@@ -44,7 +44,8 @@ const MainContent = ({ content }: { content: string }) => (
       <InlineEdit
         content={content}
         pageName="work"
-        className="text-lg md:text-base leading-relaxed text-white/90 whitespace-pre-wrap"
+        className="text-lg md:text-base leading-relaxed text-white/90"
+        renderAsMarkdown
       />
     </div>
   </PageLayout>
