@@ -15,10 +15,11 @@ go into the admin UI.
    paths in the content if they differ from what's written here.
 4. Save as draft, preview, publish.
 
-**Work page section** (`work-*.txt`):
-- The `/work` page is a single plain-text blob (no markdown). Paste the
-  contents inline into the existing work copy via the admin editor,
-  positioned wherever reads best.
+**Work page section** (`work-*.md`):
+- The `/work` page renders markdown (via `InlineEdit` with
+  `renderAsMarkdown`). Paste the contents inline into the existing work
+  copy via the admin editor, positioned wherever reads best. Links,
+  lists, bold, and headings all work.
 
 ## Images
 

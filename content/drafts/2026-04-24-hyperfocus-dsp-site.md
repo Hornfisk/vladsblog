@@ -24,3 +24,6 @@ The posture: most of what's there stays open source. The free plugins will alway
 I wanted the tools to have a home before they had a marketing push. That's all this is.
 
 ![hyperfocusdsp.com — the homepage, with Slammer as the first plugin card](/posts/hyperfocus-screenshot.webp)
+
+There's also a shorter version of this on the [/work](/work) page.
+
