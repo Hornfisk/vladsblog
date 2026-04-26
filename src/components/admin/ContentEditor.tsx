@@ -1,11 +1,7 @@
 import { useRef, useState } from "react";
+import { Link as LinkIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+import { Button } from "@/components/ui/button";
 import ImageUpload from "./ImageUpload";
 import LinkDialog from "./LinkDialog";
 
@@ -27,15 +23,6 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
   const [linkText, setLinkText] = useState("");
 
   const saveSelection = () => {
-    if (textareaRef.current) {
-      selectionRef.current = {
-        start: textareaRef.current.selectionStart,
-        end: textareaRef.current.selectionEnd,
-      };
-    }
-  };
-
-  const handleContextMenu = () => {
     if (textareaRef.current) {
       selectionRef.current = {
         start: textareaRef.current.selectionStart,
@@ -86,33 +73,30 @@ const ContentEditor = ({ id, value, onChange }: ContentEditorProps) => {
       <label htmlFor={id} className="block text-sm font-medium text-gray-200">
         Content
       </label>
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <Textarea
-            id={id}
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={saveSelection}
-            onClick={saveSelection}
-            onMouseUp={saveSelection}
-            onKeyUp={saveSelection}
-            onContextMenu={handleContextMenu}
-            className="min-h-[300px] bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200 font-mono text-sm"
-            placeholder="Write your post content in markdown..."
-            required
-          />
-        </ContextMenuTrigger>
-        <ContextMenuContent className="w-44 bg-blogBg border-accent1/20">
-          <ContextMenuItem
-            onSelect={openLinkDialog}
-            className="cursor-pointer text-gray-200 focus:bg-accent1/10 focus:text-gray-100"
-          >
-            Insert link
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
-      <div className="flex justify-end">
+      <Textarea
+        id={id}
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={saveSelection}
+        onClick={saveSelection}
+        onMouseUp={saveSelection}
+        onKeyUp={saveSelection}
+        className="min-h-[300px] bg-blogBg border-accent1/20 focus:border-accent1 text-gray-200 font-mono text-sm"
+        placeholder="Write your post content in markdown..."
+        required
+      />
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={openLinkDialog}
+          className="border-accent1/20 text-gray-200 hover:bg-accent1/10 hover:text-gray-100"
+        >
+          <LinkIcon className="mr-2 h-4 w-4" />
+          Insert link
+        </Button>
         <ImageUpload onInsert={handleInsert} />
       </div>
       <LinkDialog
