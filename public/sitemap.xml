@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Static fallback. The actual sitemap shipped to dist/ is generated at build
+  time by the `sitemapPlugin` in vite.config.ts, which fetches published posts
+  from Supabase and emits one <url> per slug. This file only ships if the
+  build plugin's fetch fails — see plugin's catch block.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://vlads.blog/</loc>
@@ -7,6 +13,11 @@
   </url>
   <url>
     <loc>https://vlads.blog/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vlads.blog/work</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

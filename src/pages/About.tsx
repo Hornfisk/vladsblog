@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
 import { Suspense } from "react";
 import { PageLayout } from '@/components/PageLayout';
+import { setPageMeta, setCanonical } from "@/lib/seo";
 
 const LoadingState = () => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
@@ -54,8 +55,15 @@ const MainContent = ({ content }: { content: string }) => (
 
 const About = () => {
   useEffect(() => {
-    document.title = "whoami | vlads.blog";
-    return () => { document.title = "vlads.blog"; };
+    setPageMeta({
+      title: "whoami | vlads.blog",
+      description: "vlad. cybersecurity, AI, linux. I build audio plugins (Hyperfocus DSP) because I make techno (REXIST) and the tools I wanted didn't exist.",
+      path: "/about",
+    });
+    return () => {
+      document.title = "vlads.blog";
+      setCanonical("/");
+    };
   }, []);
 
   const { data: pageContent, isLoading, error } = useQuery({
@@ -69,7 +77,7 @@ const About = () => {
 
       if (error) throw error;
 
-      return data?.content || "A cybersecurity enthusiast and cloud infrastructure specialist with a passion for building secure, scalable systems. I specialize in penetration testing, cloud security architecture, and developing robust security solutions. When I'm not breaking (or fixing) things, I'm probably writing about it here or contributing to open-source security tools.";
+      return data?.content || "I'm Vlad. I write about cybersecurity, AI, and the linux systems I run. I also build audio plugins as Hyperfocus DSP — mostly because I make techno as REXIST, and at some point making my own tools became cheaper than buying them. this is where the long version lives.\n\nMost of what I ship is open source. The plugins and the blog itself are vibe-coded — Claude Code in the loop, me steering — and the source is the receipt. If a post is interesting, the repo is usually one click away.\n\nI post when I have something to say. No newsletter, no signup wall. If you want to follow along, the RSS feed is at `/rss.xml`.";
     },
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes

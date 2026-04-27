@@ -2,7 +2,73 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { writeFileSync } from "fs";
 import { componentTagger } from "lovable-tagger";
+
+// Build-time sitemap generation. Fetches published posts from Supabase using the
+// public anon key (same one already exposed in index.html) and writes a full
+// sitemap.xml with static routes + per-post URLs. Runs in `closeBundle` so it
+// overwrites the static fallback that Vite copies from public/.
+//
+// Failure mode: log the error and write a minimal sitemap (homepage only) so a
+// transient Supabase outage doesn't kill the deploy. Verify the dist output in CI
+// if you want a hard gate.
+function sitemapPlugin(): import("vite").Plugin {
+  const SITE = "https://vlads.blog";
+  const SB_URL = "https://owwhvpjerkjdbmfexfii.supabase.co";
+  const SB_ANON =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93d2h2cGplcmtqZGJtZmV4ZmlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUxMTg4MDksImV4cCI6MjA1MDY5NDgwOX0.o6RE9TajWTKPFrCxkK49f7d3l5XmsYAPjSh_Z1-ba74";
+
+  const STATIC_ROUTES = [
+    { loc: "/", priority: "1.0", changefreq: "weekly" },
+    { loc: "/about", priority: "0.7", changefreq: "monthly" },
+    { loc: "/work", priority: "0.7", changefreq: "monthly" },
+  ];
+
+  const buildXml = (urls: { loc: string; lastmod?: string; priority: string; changefreq: string }[]) => {
+    const body = urls
+      .map((u) => {
+        const lastmod = u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : "";
+        return `  <url>
+    <loc>${SITE}${u.loc}</loc>${lastmod}
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`;
+      })
+      .join("\n");
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
+  };
+
+  return {
+    name: "sitemap",
+    apply: "build",
+    async closeBundle() {
+      const outPath = path.resolve(__dirname, "dist", "sitemap.xml");
+      try {
+        const r = await fetch(
+          `${SB_URL}/rest/v1/posts?select=slug,created_at,updated_at&published=eq.true&order=created_at.desc`,
+          { headers: { apikey: SB_ANON, Authorization: `Bearer ${SB_ANON}` } }
+        );
+        if (!r.ok) throw new Error(`Supabase ${r.status}: ${await r.text()}`);
+        const posts: { slug: string; created_at: string; updated_at: string | null }[] =
+          await r.json();
+        const postUrls = posts.map((p) => ({
+          loc: `/blog/${p.slug}`,
+          lastmod: (p.updated_at ?? p.created_at).slice(0, 10),
+          priority: "0.8",
+          changefreq: "monthly",
+        }));
+        const xml = buildXml([...STATIC_ROUTES, ...postUrls]);
+        writeFileSync(outPath, xml);
+        console.log(`[sitemap] wrote ${postUrls.length} post URL(s) + ${STATIC_ROUTES.length} static routes`);
+      } catch (err) {
+        const xml = buildXml(STATIC_ROUTES);
+        writeFileSync(outPath, xml);
+        console.warn(`[sitemap] fetch failed (${(err as Error).message}); wrote static-only fallback`);
+      }
+    },
+  };
+}
 
 // Vite's default modulePreload aggressively preloads ALL lazy route dependencies
 // at module execution time via injected __vite__preload() calls. This causes the
@@ -91,6 +157,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     smartModulePreload(),
+    sitemapPlugin(),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
