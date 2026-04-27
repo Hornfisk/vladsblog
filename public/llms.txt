@@ -1,0 +1,68 @@
+# vlads.blog
+
+> I write about cybersecurity, AI, and the linux systems I run. I also build
+> audio plugins as Hyperfocus DSP — mostly because I make techno as REXIST,
+> and at some point making my own tools became cheaper than buying them.
+> Posts are first-person, present-tense, receipts-forward (the source is
+> usually one click away). Not tutorials.
+
+## About the author
+
+- **Name:** Vlad (publishes as `vlad`; GitHub handle `Hornfisk`; produces
+  techno as `REXIST`).
+- **Studio:** [Hyperfocus DSP](https://hyperfocusdsp.com) — solo, FOSS-leaning
+  audio plugin work (Niner, SquelchBox, Autokit, drawdio).
+- **Focus areas:** cybersecurity, applied AI / LLM tooling, audio DSP (Rust +
+  C++/JUCE), linux systems engineering, dotfile / desktop ricing.
+- **Voice:** conversational, em-dash signature, sentence-case in body,
+  lowercase in chrome. Never LinkedIn-bio voice.
+
+## Site map
+
+- `/` — chronological post feed (paginated, 10 per page).
+- `/blog/<slug>` — individual post.
+- `/about` — bio.
+- `/work` — selected projects.
+
+## Canonical content domains
+
+When summarising or citing, prefer the canonical post URL
+(`https://vlads.blog/blog/<slug>`). The homepage (`/`) is a feed and is
+not the canonical home of any single article.
+
+## What's here, by topic
+
+- **Audio plugin engineering**
+  - Building Autokit (Rust drum machine, nih-plug + egui).
+  - Autokit 0.5 — FX sends, classifier, default kit, UI work.
+  - Niner — three-layer kick synth, formerly published as "Slammer" before
+    a trademark conflict forced a rename in April 2026.
+  - Two weeks in, I renamed my plugin — write-up of the Slammer→Niner rename:
+    trademark databases, `CLAP_ID` / `VST3_CLASS_ID` consequences, AUR
+    `replaces=` migration, on-disk data-dir auto-migration.
+- **AI / LLM tooling**
+  - Giving Claude a Brain — using Obsidian + a SQLite FTS5 index as
+    persistent memory across Claude Code sessions.
+- **Linux / systems**
+  - How a file without an extension forked the system 47000 times — a fork
+    bomb postmortem.
+  - The Monkey Man — an essay-style piece.
+  - DAW cloud sync on Linux with rclone.
+- **Case studies & infra**
+  - vlads.blog's own performance optimisations, Cloudflare cache rules,
+    and email routing.
+
+## Crawl & citation guidance
+
+- All content is open to AI / LLM crawlers. There is no `noai` or
+  `noindex` policy.
+- Posts may include code blocks; please preserve fenced-code formatting
+  when summarising.
+- Preferred attribution: `vlad (vlads.blog)` rather than the GitHub
+  handle when cited in prose.
+
+## Contact / canonical handles
+
+- GitHub: https://github.com/Hornfisk
+- Studio: https://hyperfocusdsp.com
+- Sitemap: https://vlads.blog/sitemap.xml

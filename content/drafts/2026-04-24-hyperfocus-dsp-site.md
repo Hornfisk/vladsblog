@@ -10,7 +10,7 @@ I've been writing audio plugins on and off for a couple of years — not full ti
 What came out of that, so far:
 
 - **squelchbox** — a TB-303-style acid bassline synth. Rust, [nih-plug](https://github.com/robbert-vdh/nih-plug), egui. FOSS.
-- **slammer** — a three-layer synthesized kick with a parallel 909 clap voice. Five flavors of distortion, tilt/low/notch master EQ. Also FOSS.
+- **niner** — a three-layer synthesized kick with a parallel 909 clap voice. Five flavors of distortion, tilt/low/notch master EQ. Also FOSS. *(Shipped originally as `slammer`; renamed in April 2026 after a trademark conflict surfaced.)*
 - **drawdio** — a mockup tool for plugin UIs. Sketch knobs, faders, meters, sequencers; export to PNG/SVG/JSON for JUCE, nih-plug, iPlug2, whatever you're building against. Also FOSS.
 - **squelch_pro** — the JUCE/C++ sibling of squelchbox. Same idea, different lane.
 - A couple more on the bench.
@@ -23,7 +23,7 @@ The posture: most of what's there stays open source. The free plugins will alway
 
 I wanted the tools to have a home before they had a marketing push. That's all this is.
 
-![hyperfocusdsp.com — the homepage, with Slammer as the first plugin card](/posts/hyperfocus-screenshot.webp)
+![hyperfocusdsp.com — the homepage, with Niner as the first plugin card](/posts/hyperfocus-screenshot.webp)
 
 There's also a shorter version of this on the [/work](/work) page.
 

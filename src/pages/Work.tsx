@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTitle } from "@/components/PageTitle";
 import { PageLayout } from "@/components/PageLayout";
+import { setPageMeta, setCanonical } from "@/lib/seo";
 
 const LoadingState = () => (
   <div className="min-h-screen bg-blogBg text-gray-100 font-mono">
@@ -53,8 +54,15 @@ const MainContent = ({ content }: { content: string }) => (
 
 const Work = () => {
   useEffect(() => {
-    document.title = "work | vlads.blog";
-    return () => { document.title = "vlads.blog"; };
+    setPageMeta({
+      title: "work | vlads.blog",
+      description: "Projects, plugins, and writing by vlad — audio DSP under Hyperfocus DSP, cybersecurity tooling, and the linux systems behind both.",
+      path: "/work",
+    });
+    return () => {
+      document.title = "vlads.blog";
+      setCanonical("/");
+    };
   }, []);
 
   const { data: pageContent, isLoading, error } = useQuery({

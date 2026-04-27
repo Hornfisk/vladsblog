@@ -60,6 +60,16 @@ const BlogPost = () => {
     el.setAttribute("content", content);
   };
 
+  const setCanonical = (href: string) => {
+    let el = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!el) {
+      el = document.createElement("link");
+      el.setAttribute("rel", "canonical");
+      document.head.appendChild(el);
+    }
+    el.setAttribute("href", href);
+  };
+
   const { data: post, isLoading } = useQuery({
     queryKey: ['post', slug],
     queryFn: async () => {
@@ -80,10 +90,14 @@ const BlogPost = () => {
   useEffect(() => {
     if (!post) return;
 
+    const postUrl = `https://vlads.blog/blog/${post.slug}`;
     document.title = `${post.title} | vlads.blog`;
     setMeta("name", "description", post.excerpt || post.title);
+    setCanonical(postUrl);
     setMeta("property", "og:title", `${post.title} | vlads.blog`);
     setMeta("property", "og:description", post.excerpt || post.title);
+    setMeta("property", "og:url", postUrl);
+    setMeta("property", "og:type", "article");
     const ogImageUrl = new URL("https://owwhvpjerkjdbmfexfii.supabase.co/functions/v1/og-image");
     ogImageUrl.searchParams.set("title", post.title);
     if (post.excerpt) ogImageUrl.searchParams.set("description", post.excerpt);
@@ -91,6 +105,9 @@ const BlogPost = () => {
     setMeta("property", "og:image:type", "image/svg+xml");
     setMeta("property", "og:image:width", "1200");
     setMeta("property", "og:image:height", "630");
+    setMeta("name", "twitter:title", `${post.title} | vlads.blog`);
+    setMeta("name", "twitter:description", post.excerpt || post.title);
+    setMeta("name", "twitter:image", ogImageUrl.toString());
 
     const scriptId = "json-ld-blogpost";
     let script = document.getElementById(scriptId) as HTMLScriptElement | null;
@@ -103,17 +120,23 @@ const BlogPost = () => {
     script.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "BlogPosting",
+      mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
       headline: post.title,
       description: post.excerpt || "",
       datePublished: post.created_at,
       dateModified: post.updated_at || post.created_at,
-      author: { "@type": "Person", name: "Vlad" },
-      url: `https://vlads.blog/blog/${post.slug}`,
+      author: { "@id": "https://vlads.blog/#person" },
+      publisher: { "@id": "https://vlads.blog/#person" },
+      image: ogImageUrl.toString(),
+      url: postUrl,
+      isPartOf: { "@id": "https://vlads.blog/#website" },
     });
 
     return () => {
       document.title = "vlads.blog";
       document.getElementById(scriptId)?.remove();
+      setCanonical("https://vlads.blog/");
+      setMeta("property", "og:type", "website");
     };
   }, [post]);
 

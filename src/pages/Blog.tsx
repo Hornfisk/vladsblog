@@ -7,6 +7,7 @@ import { PageTitle } from "@/components/PageTitle";
 import { PageLayout } from "@/components/PageLayout";
 import { InlineEdit } from "@/components/admin/InlineEdit";
 import { Button } from "@/components/ui/button";
+import { setCanonical } from "@/lib/seo";
 
 const PAGE_SIZE = 10;
 
@@ -16,6 +17,7 @@ const Blog = () => {
 
   useEffect(() => {
     document.title = "vlads.blog";
+    setCanonical("/");
   }, []);
 
   const { data: pageContent } = useQuery({

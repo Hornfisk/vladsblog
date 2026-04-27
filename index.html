@@ -4,17 +4,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>vlads.blog</title>
-    <meta name="description" content="A personal tech blog focusing on cybersecurity and AI" />
+    <title>vlads.blog — cybersecurity, AI, and the systems I run</title>
+    <meta name="description" content="I write about cybersecurity, AI, and the linux systems I run. I also build audio plugins as Hyperfocus DSP — mostly because I make techno as REXIST." />
     <meta name="author" content="Vlad" />
     <meta name="theme-color" content="#151821" />
-    <meta property="og:title" content="vlads.blog" />
-    <meta property="og:description" content="A personal tech blog focusing on cybersecurity and AI" />
+
+    <!-- Canonical: BlogPost.tsx rewrites this per-post; About/Work do the same -->
+    <link rel="canonical" href="https://vlads.blog/" />
+
+    <meta property="og:site_name" content="vlads.blog" />
+    <meta property="og:title" content="vlads.blog — cybersecurity, AI, and the systems I run" />
+    <meta property="og:description" content="vlad. cybersecurity, AI, linux. I build audio plugins (Hyperfocus DSP) because I make techno (REXIST) and the tools I wanted didn't exist." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vlads.blog/" />
     <meta property="og:image" content="https://owwhvpjerkjdbmfexfii.supabase.co/functions/v1/og-image" />
     <meta property="og:image:type" content="image/svg+xml" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="vlads.blog — cybersecurity, AI, and the systems I run" />
+    <meta name="twitter:description" content="vlad. cybersecurity, AI, linux. I build audio plugins (Hyperfocus DSP) because I make techno (REXIST) and the tools I wanted didn't exist." />
+    <meta name="twitter:image" content="https://owwhvpjerkjdbmfexfii.supabase.co/functions/v1/og-image" />
+
+    <!-- LLM / AI-agent crawl hint -->
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
     
     <!-- PWA support -->
     <link rel="manifest" href="/manifest.json" />
@@ -81,9 +96,37 @@
       #root{min-height:100vh}
     </style>
 
-    <!-- Lovable script for new features -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module" defer></script>
-    
+    <!-- JSON-LD: site identity + author. BlogPost.tsx adds BlogPosting per article. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://vlads.blog/#website",
+          "url": "https://vlads.blog/",
+          "name": "vlads.blog",
+          "description": "vlad. cybersecurity, AI, linux. I build audio plugins (Hyperfocus DSP) because I make techno (REXIST) and the tools I wanted didn't exist.",
+          "publisher": { "@id": "https://vlads.blog/#person" },
+          "inLanguage": "en"
+        },
+        {
+          "@type": "Person",
+          "@id": "https://vlads.blog/#person",
+          "name": "Vlad",
+          "alternateName": ["Hornfisk", "REXIST"],
+          "url": "https://vlads.blog/",
+          "description": "I'm Vlad. I write about cybersecurity, AI, and the linux systems I run. I also build audio plugins as Hyperfocus DSP — mostly because I make techno as REXIST, and at some point making my own tools became cheaper than buying them.",
+          "sameAs": [
+            "https://github.com/Hornfisk",
+            "https://hyperfocusdsp.com"
+          ],
+          "knowsAbout": ["Cybersecurity", "Artificial Intelligence", "Audio DSP", "Rust", "Linux"]
+        }
+      ]
+    }
+    </script>
+
     <script>
       (function() {
         const redirect = sessionStorage.redirect;
