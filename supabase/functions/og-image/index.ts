@@ -31,7 +31,7 @@ serve(async (req: Request): Promise<Response> => {
   // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: { "Access-Control-Allow-Origin": "https://vlads.blog" },
     });
   }
 
@@ -97,7 +97,7 @@ serve(async (req: Request): Promise<Response> => {
     headers: {
       "Content-Type": "image/svg+xml",
       "Cache-Control": "public, max-age=3600, s-maxage=86400",
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": "https://vlads.blog",
     },
   });
 });
