@@ -2,7 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { writeFileSync } from "fs";
+import { existsSync, writeFileSync } from "fs";
 import { componentTagger } from "lovable-tagger";
 
 // Build-time sitemap generation. Fetches published posts from Supabase using the
@@ -106,6 +106,21 @@ function smartModulePreload(): import("vite").Plugin {
   };
 }
 
+function assertFontsExist(): import('vite').Plugin {
+  const required = ['public/fonts/JetBrainsMono[wght].woff2'];
+  return {
+    name: 'assert-fonts-exist',
+    apply: 'build',
+    buildStart() {
+      for (const f of required) {
+        if (!existsSync(path.resolve(__dirname, f))) {
+          throw new Error(`[assert-fonts-exist] Missing font asset: ${f} — add it to public/fonts/ before building`);
+        }
+      }
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: '/',
@@ -156,6 +171,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    assertFontsExist(),
     smartModulePreload(),
     sitemapPlugin(),
     mode === 'development' &&
