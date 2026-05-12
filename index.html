@@ -40,29 +40,8 @@
     <link rel="apple-touch-startup-image" href="/icons/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
-    <!-- Google Fonts as backup (non-blocking) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap"
-          rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    </noscript>
-    
-    <!-- Preload self-hosted fonts -->
-    <link 
-      rel="preload" 
-      href="/fonts/JetBrainsMono-Regular.woff2" 
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-<link 
-      rel="preload" 
-      href="/fonts/JetBrainsMono-Bold.woff2" 
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
+    <!-- JetBrains Mono v2.304 variable font — self-hosted, no external CDN -->
+    <link rel="preload" href="/fonts/JetBrainsMono[wght].woff2" as="font" type="font/woff2" crossorigin />
     
     <!-- Preconnect to Supabase to reduce API latency -->
     <link rel="preconnect" href="https://owwhvpjerkjdbmfexfii.supabase.co" crossorigin>
@@ -90,6 +69,7 @@
 
     <!-- Inline critical CSS: eliminates render-blocking CSS for above-the-fold paint -->
     <style>
+      @font-face{font-family:'JetBrains Mono';src:url('/fonts/JetBrainsMono[wght].woff2') format('woff2-variations');font-weight:100 900;font-style:normal;font-display:swap}
       *,::before,::after{box-sizing:border-box}
       html{overflow-y:scroll}
       body{margin:0;background-color:#151821;background-image:radial-gradient(rgba(155,135,245,.04) 1px,transparent 1px);background-size:28px 28px;font-family:'JetBrains Mono',ui-monospace,monospace;color:#f3f4f6;min-height:100vh}

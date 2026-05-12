@@ -1,37 +1,9 @@
 
-/* Define self-hosted fonts — prefer Nerd Font if installed locally */
+/* JetBrains Mono v2.304 variable font — self-hosted, no external CDN */
 @font-face {
   font-family: 'JetBrains Mono';
-  src: local('JetBrainsMono Nerd Font'),
-       local('JetBrains Mono NF'),
-       local('JetBrainsMono NF'),
-       url('/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
-       local('JetBrains Mono');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'JetBrains Mono';
-  src: local('JetBrainsMono Nerd Font Med'),
-       local('JetBrains Mono NF'),
-       local('JetBrainsMono NF'),
-       url('/fonts/JetBrainsMono-Medium.woff2') format('woff2'),
-       local('JetBrains Mono');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'JetBrains Mono';
-  src: local('JetBrainsMono Nerd Font Bold'),
-       local('JetBrains Mono NF'),
-       local('JetBrainsMono NF'),
-       url('/fonts/JetBrainsMono-Bold.woff2') format('woff2'),
-       local('JetBrains Mono');
-  font-weight: 700;
+  src: url('/fonts/JetBrainsMono[wght].woff2') format('woff2-variations');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
