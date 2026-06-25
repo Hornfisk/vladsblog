@@ -129,6 +129,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   build: {
+    target: 'es2022',
     rollupOptions: {
       output: {
         // Function form required so we can pin Vite's __vite__preload helper into
