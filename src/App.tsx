@@ -49,6 +49,9 @@ const About = lazy(() => import("./pages/About"));
 const Login = lazy(() => import("./pages/Login"));
 const Work = lazy(() => import("./pages/Work"));
 const Admin = lazy(() => import("./pages/Admin"));
+// Hidden easter-egg game — unlinked, kept out of nav + sitemap. Lazy so it never
+// touches the main bundle for normal visitors.
+const Arcade = lazy(() => import("./pages/Arcade"));
 import NotFound from "./pages/NotFound";
 
 const LoadingFallback = () => (
@@ -110,6 +113,7 @@ const App = () => (
                 <Route path="/work" element={<Work />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/arcade" element={<Arcade />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

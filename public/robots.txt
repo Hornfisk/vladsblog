@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+# nothing to see here... unless you like crabs. keep crawlers out, wink at humans.
+Disallow: /arcade
 
 Sitemap: https://vlads.blog/sitemap.xml
