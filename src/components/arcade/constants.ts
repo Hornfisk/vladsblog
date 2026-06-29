@@ -22,7 +22,8 @@ export const GRAVITY = 1500;
 export const JUMP_VELOCITY = -470;
 export const JUMP_CUT = 0.45; // velocity kept when jump released early (variable height)
 export const MAX_FALL = 760;
-export const FAST_FALL = 900; // extra downward accel while ducking mid-air
+export const FAST_FALL = 1700; // extra downward accel from down/swipe-down in the air (slam)
+export const FAST_FALL_MAX = 1350; // raised fall-speed cap while slamming, so it actually bites
 export const COYOTE_TIME = 0.09; // grace window to still jump just after leaving ground
 export const JUMP_BUFFER = 0.12; // grace window to register a jump pressed just before landing
 

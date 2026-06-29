@@ -300,10 +300,13 @@ export function step(s: GameState, dt: number): void {
   const wasDucking = p.ducking;
   p.ducking = s.input.duck && p.onGround;
   if (p.ducking && !wasDucking) s.events.push("duck");
-  const fastFall = s.input.duck && !p.onGround ? C.FAST_FALL : 0;
+  // down / swipe-down in the air = slam back to the ground fast (vital at high speed)
+  const fastFalling = s.input.duck && !p.onGround;
+  const fastFall = fastFalling ? C.FAST_FALL : 0;
 
   // --- gravity / vertical integrate ---
-  p.vy = Math.min(C.MAX_FALL, p.vy + (C.GRAVITY + fastFall) * dt);
+  const fallCap = fastFalling ? C.FAST_FALL_MAX : C.MAX_FALL;
+  p.vy = Math.min(fallCap, p.vy + (C.GRAVITY + fastFall) * dt);
   p.y += p.vy * dt;
   const floor = C.GROUND_Y - C.PLAYER_H;
   if (p.y >= floor) {

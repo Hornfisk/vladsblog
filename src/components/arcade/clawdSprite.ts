@@ -90,14 +90,13 @@ export function drawClawd(ctx: Ctx, bx: number, by: number, opts: ClawdOpts): vo
   r(ctx, bx - 1, by + 6, 2, 4, B);
   r(ctx, bx + 21, by + 6, 2, 4, B);
 
-  // --- body (rounded-rectangle silhouette) ---
-  r(ctx, bx + 4, by + 1, 14, 1, B); // rounded top
-  r(ctx, bx + 2, by + 2, 18, 1, B);
-  r(ctx, bx + 1, by + 3, 20, 11, B); // main mass y3..y14
+  // --- body (near-square silhouette: hard edges like the real Clawd, 1px corner chamfer) ---
+  r(ctx, bx + 2, by + 1, 18, 1, B); // top row, just a 1px corner trim
+  r(ctx, bx + 1, by + 2, 20, 12, B); // full-width mass y2..y14
   // shading band along the bottom + dim the leg join
-  r(ctx, bx + 2, by + 12, 18, 2, S);
+  r(ctx, bx + 1, by + 12, 20, 2, S);
   // subtle top rim-light (stands in for the sticker's white outline)
-  r(ctx, bx + 4, by + 1, 14, 1, COLORS.clawdEdge);
+  r(ctx, bx + 2, by + 1, 18, 1, COLORS.clawdEdge);
 
   // --- eyes (wide-set black squares, like the sticker) ---
   drawEye(ctx, bx + 3, by + 5, expression, blinking, true);
