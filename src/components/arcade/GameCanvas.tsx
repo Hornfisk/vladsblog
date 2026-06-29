@@ -112,6 +112,11 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
 
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* not supported — fine */
+    }
     initAudio();
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
@@ -154,6 +159,13 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
   const onJumpBtnDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    // capture the pointer so a long hold can't be hijacked by the OS (Android
+    // long-press, scroll-intent, etc.) and fire a spurious cancel mid-jump
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* not supported — fine */
+    }
     initAudio();
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
@@ -163,7 +175,12 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
   const onJumpBtnUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    onJumpUp(stateRef.current!); // releasing early cuts the jump → variable height
+    onJumpUp(stateRef.current!); // a genuine release cuts the jump → variable height
+  };
+  const onJumpBtnCancel = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // Android may fire pointercancel during a long hold. Do NOT cut the jump here
+    // (that's what was shortening it) — leaving the jump "held" = full height.
   };
 
   // --- main loop ---
@@ -230,6 +247,7 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
         onPointerUp={endPointer}
         onPointerCancel={endPointer}
         onPointerLeave={endPointer}
+        onContextMenu={(e) => e.preventDefault()}
         aria-label="Clawd Runner game canvas"
       />
       {touch && (
@@ -238,8 +256,8 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
           aria-label="Jump (hold for a higher jump)"
           onPointerDown={onJumpBtnDown}
           onPointerUp={onJumpBtnUp}
-          onPointerCancel={onJumpBtnUp}
-          onPointerLeave={onJumpBtnUp}
+          onPointerCancel={onJumpBtnCancel}
+          onContextMenu={(e) => e.preventDefault()}
           className="absolute bottom-6 right-6 z-20 h-20 w-20 select-none touch-none rounded-full border-2 border-accent1/60 bg-accent1/15 text-accent1 font-mono text-[10px] leading-tight active:bg-accent1/35"
         >
           ▲<br />JUMP

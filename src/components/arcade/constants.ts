@@ -21,6 +21,8 @@ export const PLAYER_DUCK_H = 11; // crouched height
 export const GRAVITY = 1500;
 export const JUMP_VELOCITY = -470;
 export const JUMP_CUT = 0.45; // velocity kept when jump released early (variable height)
+export const MAX_AIR_JUMPS = 1; // mid-air jumps after leaving the ground (1 = double jump)
+export const DOUBLE_JUMP_VELOCITY = -430; // second-jump impulse (a touch under the first)
 export const MAX_FALL = 760;
 export const FAST_FALL = 1700; // extra downward accel from down/swipe-down in the air (slam)
 export const FAST_FALL_MAX = 1350; // raised fall-speed cap while slamming, so it actually bites

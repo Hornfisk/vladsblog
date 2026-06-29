@@ -123,10 +123,10 @@ const Arcade = () => {
         {/* controls + back */}
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500">
           <p>
-            <span className="text-gray-400">space / ↑</span> jump&nbsp;&nbsp;
+            <span className="text-gray-400">space / ↑</span> jump (×2 mid-air)&nbsp;&nbsp;
             <span className="text-gray-400">↓</span> duck&nbsp;&nbsp;
             <span className="text-gray-400">esc</span> menu&nbsp;&nbsp;
-            <span className="text-gray-600">(mobile: tap = jump · hold ▲ for higher · swipe ↓ to drop)</span>
+            <span className="text-gray-600">(mobile: tap = jump · hold ▲ higher · double-tap = double jump · swipe ↓ drop)</span>
           </p>
           <Link
             to="/"

@@ -46,6 +46,7 @@ export interface Player {
   jumpBuffer: number;
   jumpHeld: boolean;
   wantCut: boolean;
+  airJumps: number; // mid-air jumps used since leaving the ground (for double jump)
   squash: number; // -1 squashed (landing) .. +1 stretched (rising)
   runPhase: number; // animation accumulator
   blink: number; // countdown to next blink
@@ -90,6 +91,7 @@ function makePlayer(): Player {
     jumpBuffer: 0,
     jumpHeld: false,
     wantCut: false,
+    airJumps: 0,
     squash: 0,
     runPhase: 0,
     blink: 2.5,
@@ -290,6 +292,13 @@ export function step(s: GameState, dt: number): void {
     p.jumpBuffer = 0;
     p.squash = 1; // stretch up
     s.events.push("jump");
+  } else if (p.jumpBuffer > 0 && !p.onGround && p.airJumps < C.MAX_AIR_JUMPS) {
+    // double jump — a fresh upward boost mid-air (resets any fall velocity)
+    p.vy = C.DOUBLE_JUMP_VELOCITY;
+    p.airJumps += 1;
+    p.jumpBuffer = 0;
+    p.squash = 1;
+    s.events.push("jump");
   }
   if (p.wantCut && p.vy < 0) {
     p.vy *= C.JUMP_CUT;
@@ -314,6 +323,7 @@ export function step(s: GameState, dt: number): void {
     p.y = floor;
     p.vy = 0;
     p.onGround = true;
+    p.airJumps = 0; // landing refreshes the double jump
   } else {
     p.onGround = false;
   }
