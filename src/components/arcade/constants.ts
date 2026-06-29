@@ -11,15 +11,11 @@ export const VIRTUAL_H = 216;
 export const GROUND_Y = 178; // y of the ground surface (top of the floor)
 
 // --- player ---
-export const PLAYER_X_START = 96;
-export const PLAYER_X_MIN = 28;
-export const PLAYER_X_MAX = 240;
+// Clawd is pinned to a fixed x on the left (Chrome-dino style); no horizontal control.
+export const PLAYER_X_START = 64;
 export const PLAYER_W = 22;
 export const PLAYER_H = 18; // standing height
 export const PLAYER_DUCK_H = 11; // crouched height
-export const PLAYER_MOVE_ACCEL = 900; // horizontal accel from ← →
-export const PLAYER_MOVE_MAX = 150; // max horizontal speed
-export const PLAYER_FRICTION = 8; // how fast horizontal speed bleeds off
 
 // --- jump / gravity ---
 export const GRAVITY = 1500;
@@ -56,9 +52,10 @@ export const COMBO_MAX = 9;
 
 // --- juice ---
 export const SHAKE_DECAY = 6;
-export const ALERT_RANGE = 78; // obstacle distance at which Clawd's eyes go wide
+export const ALERT_RANGE = 78; // obstacle distance at which Clawd's eyes go >  < (squint)
+export const BORED_AFTER = 3.2; // seconds with nothing nearby before his eyes go -  - (bored)
 
-// --- palette (matches vlads.blog; Clawd in peach so the hero pops) ---
+// --- palette (matches vlads.blog; Clawd in his real Anthropic terracotta #D97757) ---
 export const COLORS = {
   bg: "#151821",
   grid: "rgba(155,135,245,0.05)",
@@ -68,11 +65,12 @@ export const COLORS = {
   accent2: "#D946EF",
   text: "#f3f4f6",
   dim: "#8b8ba7",
-  clawdBody: "#F4B89A",
-  clawdShade: "#D98C6A",
-  clawdDark: "#9c5b3f",
-  eyeWhite: "#fdf6f0",
-  eyePupil: "#1a1420",
+  clawdBody: "#D97757", // the real Clawd clay
+  clawdShade: "#B26247", // bottom shading band
+  clawdDark: "#874A36", // leg undersides / notch
+  clawdEdge: "#F0A487", // subtle top highlight (stands in for the sticker's outline)
+  eyePupil: "#15110d", // solid black square eyes
+  eyeWhite: "#fdf6f0", // (bug sprite eyes)
   bug: "#E0556E",
   bugDark: "#8f2a3e",
   err: "#D946EF",
@@ -82,3 +80,4 @@ export const COLORS = {
 } as const;
 
 export const HIGHSCORE_KEY = "clawd.arcade.highscore.v1";
+export const MUTED_KEY = "clawd.arcade.muted.v1";

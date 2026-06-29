@@ -162,6 +162,7 @@ export function render(ctx: Ctx, s: GameState): void {
     runPhase: p.runPhase,
     squash: p.squash,
     ducking: p.ducking,
+    airborne: !p.onGround,
     blinking: p.blink < 0.12,
   });
 
@@ -178,13 +179,13 @@ export function render(ctx: Ctx, s: GameState): void {
       { s: "CLAWD RUNNER", size: 18, color: C.COLORS.accent1, dy: -28 },
       { s: "debugging dash", size: 9, color: C.COLORS.accent2, dy: -10 },
       { s: "SPACE / TAP to start", size: 10, color: C.COLORS.text, dy: 18 },
-      { s: "← → move   SPACE jump   ↓ duck   ESC menu", size: 7, color: C.COLORS.dim, dy: 38 },
+      { s: "↑ / swipe up = JUMP    ↓ / swipe down = DUCK", size: 7, color: C.COLORS.dim, dy: 38 },
     ]);
   } else if (s.phase === "paused") {
     panel(ctx, [
       { s: "PAUSED", size: 18, color: C.COLORS.accent1, dy: -20 },
       { s: "SPACE / ESC to resume", size: 9, color: C.COLORS.text, dy: 6 },
-      { s: "← → move   SPACE jump   ↓ duck", size: 7, color: C.COLORS.dim, dy: 24 },
+      { s: "↑ jump    ↓ duck", size: 7, color: C.COLORS.dim, dy: 24 },
     ]);
   } else if (s.phase === "dead") {
     panel(ctx, [

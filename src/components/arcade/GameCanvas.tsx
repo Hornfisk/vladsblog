@@ -1,5 +1,7 @@
-// Clawd Runner — wires the pure engine to a <canvas>, input, and the render loop.
+// Clawd Runner — wires the pure engine to a <canvas>, input, sound, and the render loop.
 // Everything is client-side and self-contained; no network, no shared state.
+// Controls are jump/duck only (Clawd is pinned to the left): keyboard on desktop, vertical
+// swipes on touch (swipe up = jump, swipe down = duck, quick tap = jump).
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import * as C from "./constants";
 import {
@@ -13,8 +15,10 @@ import {
 } from "./engine";
 import { render } from "./render";
 import { useGameLoop } from "./useGameLoop";
+import { initAudio, playSfx } from "./sfx";
 
 const STEP = 1 / 120; // fixed physics timestep
+const SWIPE = 22; // px of vertical travel before a drag counts as a swipe
 
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -36,7 +40,7 @@ export function GameCanvas() {
     offCtxRef.current = octx;
   }
 
-  // --- input ---
+  // --- keyboard input (jump / duck / pause / restart only) ---
   useEffect(() => {
     const s = () => stateRef.current!;
 
@@ -47,21 +51,13 @@ export function GameCanvas() {
         case "ArrowUp":
         case "KeyW":
           e.preventDefault();
+          initAudio();
           if (!pressed.current.has(code)) onJumpDown(s());
-          break;
-        case "ArrowLeft":
-        case "KeyA":
-          e.preventDefault();
-          s().input.left = true;
-          break;
-        case "ArrowRight":
-        case "KeyD":
-          e.preventDefault();
-          s().input.right = true;
           break;
         case "ArrowDown":
         case "KeyS":
           e.preventDefault();
+          initAudio();
           s().input.duck = true;
           break;
         case "Escape":
@@ -85,14 +81,6 @@ export function GameCanvas() {
         case "KeyW":
           onJumpUp(s());
           break;
-        case "ArrowLeft":
-        case "KeyA":
-          s().input.left = false;
-          break;
-        case "ArrowRight":
-        case "KeyD":
-          s().input.right = false;
-          break;
         case "ArrowDown":
         case "KeyS":
           s().input.duck = false;
@@ -108,26 +96,52 @@ export function GameCanvas() {
     };
   }, []);
 
-  // --- touch / pointer ---
-  const touchDuck = useRef(false);
+  // --- touch / pointer: vertical swipes ---
+  const swipe = useRef<
+    { y: number; t: number; jumped: boolean; ducking: boolean; wasPlaying: boolean } | null
+  >(null);
+
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
+    initAudio();
     const s = stateRef.current!;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const yFrac = (e.clientY - rect.top) / rect.height;
-    if (s.phase === "playing" && yFrac > 0.6) {
-      s.input.duck = true;
-      touchDuck.current = true;
-    } else {
-      onJumpDown(s);
+    const wasPlaying = s.phase === "playing";
+    swipe.current = { y: e.clientY, t: performance.now(), jumped: false, ducking: false, wasPlaying };
+    if (!wasPlaying) onJumpDown(s); // tap to start / resume / restart (without also jumping)
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const sw = swipe.current;
+    const s = stateRef.current!;
+    if (!sw || s.phase !== "playing") return;
+    const dy = e.clientY - sw.y;
+    if (dy < -SWIPE && !sw.jumped) {
+      onJumpDown(s); // swipe up = jump
+      sw.jumped = true;
+    }
+    if (dy > SWIPE && !sw.ducking) {
+      s.input.duck = true; // swipe down = duck (held until release / swipe back up)
+      sw.ducking = true;
+    } else if (dy < SWIPE * 0.4 && sw.ducking) {
+      s.input.duck = false;
+      sw.ducking = false;
     }
   };
-  const endPointer = () => {
+
+  const endPointer = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const sw = swipe.current;
     const s = stateRef.current!;
-    if (touchDuck.current) {
-      s.input.duck = false;
-      touchDuck.current = false;
+    if (sw) {
+      const moved = Math.abs(e.clientY - sw.y);
+      const quick = performance.now() - sw.t < 300;
+      // a clean tap (no drag) jumps — but only if we were already mid-game, so the
+      // tap that *starts* a run doesn't burn an immediate jump
+      if (sw.wasPlaying && s.phase === "playing" && !sw.jumped && !sw.ducking && moved < SWIPE && quick) {
+        onJumpDown(s);
+      }
+      if (sw.ducking) s.input.duck = false;
     }
+    swipe.current = null;
     onJumpUp(s);
   };
 
@@ -140,6 +154,11 @@ export function GameCanvas() {
       step(s, STEP);
       accRef.current -= STEP;
       steps++;
+    }
+    // drain queued one-shot events into sound effects
+    if (s.events.length) {
+      for (const ev of s.events) playSfx(ev);
+      s.events.length = 0;
     }
     blit();
   }, () => {
@@ -185,6 +204,7 @@ export function GameCanvas() {
       className="w-full h-full block touch-none cursor-pointer"
       style={{ imageRendering: "pixelated" }}
       onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
       onPointerUp={endPointer}
       onPointerCancel={endPointer}
       onPointerLeave={endPointer}

@@ -4,8 +4,11 @@ import * as C from "./constants";
 import { loadHighScore, saveHighScore } from "./highScore";
 
 export type Phase = "ready" | "playing" | "paused" | "dead";
-export type Expression = "idle" | "focused" | "alert" | "dead";
+export type Expression = "idle" | "focused" | "alert" | "bored" | "dead";
 export type ObstacleType = "bug" | "err";
+
+/** One-shot events the loop drains each frame to fire sound effects. */
+export type SfxEvent = "jump" | "duck" | "token" | "die" | "start";
 
 export interface Obstacle {
   id: number;
@@ -36,7 +39,6 @@ export interface Particle {
 export interface Player {
   x: number;
   y: number; // top edge
-  vx: number;
   vy: number;
   onGround: boolean;
   ducking: boolean;
@@ -50,8 +52,6 @@ export interface Player {
 }
 
 export interface Input {
-  left: boolean;
-  right: boolean;
   duck: boolean;
 }
 
@@ -73,7 +73,9 @@ export interface GameState {
   shake: number;
   bgScroll: number;
   expression: Expression;
+  calm: number; // seconds since anything was nearby (drives the bored face)
   input: Input;
+  events: SfxEvent[]; // drained by the render loop each frame
   nextId: number;
 }
 
@@ -81,7 +83,6 @@ function makePlayer(): Player {
   return {
     x: C.PLAYER_X_START,
     y: C.GROUND_Y - C.PLAYER_H,
-    vx: 0,
     vy: 0,
     onGround: true,
     ducking: false,
@@ -114,7 +115,9 @@ export function createGameState(): GameState {
     shake: 0,
     bgScroll: 0,
     expression: "idle",
-    input: { left: false, right: false, duck: false },
+    calm: 0,
+    input: { duck: false },
+    events: [],
     nextId: 1,
   };
 }
@@ -127,6 +130,7 @@ export function startGame(s: GameState): void {
   s.highScore = high;
   s.input = input;
   s.phase = "playing";
+  s.events.push("start");
 }
 
 export function togglePause(s: GameState): void {
@@ -227,6 +231,7 @@ function die(s: GameState): void {
   s.phase = "dead";
   s.shake = 1;
   s.expression = "dead";
+  s.events.push("die");
   burst(s, s.player.x + C.PLAYER_W / 2, s.player.y + C.PLAYER_H / 2, C.COLORS.clawdBody, 18, 220);
   if (s.score > s.highScore) {
     s.highScore = s.score;
@@ -260,6 +265,11 @@ export function step(s: GameState, dt: number): void {
     s.bgScroll += (s.phase === "dead" ? 0 : 24) * dt;
     p.runPhase += dt * 6;
     p.squash *= Math.max(0, 1 - dt * 8);
+    // on the ready/paused screen Clawd gets bored after a few seconds
+    if (s.phase !== "dead") {
+      s.calm += dt;
+      s.expression = s.calm > C.BORED_AFTER ? "bored" : "idle";
+    }
     return;
   }
 
@@ -268,14 +278,7 @@ export function step(s: GameState, dt: number): void {
   s.distance += s.speed * dt;
   s.bgScroll += s.speed * dt;
 
-  // --- horizontal movement (← →) ---
-  const dir = (s.input.right ? 1 : 0) - (s.input.left ? 1 : 0);
-  if (dir !== 0) p.vx += dir * C.PLAYER_MOVE_ACCEL * dt;
-  p.vx -= p.vx * Math.min(1, C.PLAYER_FRICTION * dt);
-  p.vx = Math.max(-C.PLAYER_MOVE_MAX, Math.min(C.PLAYER_MOVE_MAX, p.vx));
-  p.x += p.vx * dt;
-  if (p.x < C.PLAYER_X_MIN) { p.x = C.PLAYER_X_MIN; p.vx = 0; }
-  if (p.x > C.PLAYER_X_MAX) { p.x = C.PLAYER_X_MAX; p.vx = 0; }
+  // Clawd holds a fixed x (no horizontal control); the world scrolls past him.
 
   // --- jump (buffer + coyote) ---
   p.coyote = p.onGround ? C.COYOTE_TIME : Math.max(0, p.coyote - dt);
@@ -286,6 +289,7 @@ export function step(s: GameState, dt: number): void {
     p.coyote = 0;
     p.jumpBuffer = 0;
     p.squash = 1; // stretch up
+    s.events.push("jump");
   }
   if (p.wantCut && p.vy < 0) {
     p.vy *= C.JUMP_CUT;
@@ -293,7 +297,9 @@ export function step(s: GameState, dt: number): void {
   }
 
   // --- duck / fast-fall ---
+  const wasDucking = p.ducking;
   p.ducking = s.input.duck && p.onGround;
+  if (p.ducking && !wasDucking) s.events.push("duck");
   const fastFall = s.input.duck && !p.onGround ? C.FAST_FALL : 0;
 
   // --- gravity / vertical integrate ---
@@ -348,6 +354,7 @@ export function step(s: GameState, dt: number): void {
       tk.collected = true;
       s.combo = Math.min(C.COMBO_MAX, s.combo + 1);
       s.tokenTally += C.TOKEN_POINTS * s.combo;
+      s.events.push("token");
       burst(s, tk.x, tk.y, C.COLORS.token, 8, 130);
     }
   }
@@ -356,7 +363,11 @@ export function step(s: GameState, dt: number): void {
   s.score = Math.floor(s.distance * C.SCORE_PER_PX) + s.tokenTally;
 
   // --- expression ---
-  if (!p.onGround) s.expression = "focused";
-  else if (nearest < C.ALERT_RANGE) s.expression = "alert";
+  // calm counts up while nothing's near; resets the moment danger shows up
+  if (nearest < C.ALERT_RANGE * 2.2) s.calm = 0;
+  else s.calm += dt;
+  if (!p.onGround) s.expression = "focused"; // wide-eyed mid-air
+  else if (nearest < C.ALERT_RANGE) s.expression = "alert"; // >  < squint
+  else if (s.calm > C.BORED_AFTER) s.expression = "bored"; // -  -
   else s.expression = "idle";
 }

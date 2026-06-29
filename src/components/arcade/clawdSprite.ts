@@ -1,6 +1,8 @@
-// Procedural pixel-art Clawd — the Claude Code crab. Drawn with plain fillRects in the
-// virtual (low-res) space so it stays crisp when the whole canvas is integer-scaled up.
-// Designed inside a 22x18 box (PLAYER_W x PLAYER_H); feet sit at the box bottom.
+// Procedural pixel-art Clawd — the real Anthropic mascot (terracotta #D97757). Drawn with
+// plain fillRects in the virtual (low-res) space so it stays crisp when the whole canvas is
+// integer-scaled up. Designed inside a 22x18 box (PLAYER_W x PLAYER_H); feet sit at the box
+// bottom. Shape mirrors the sticker: chunky rounded body, two side nubs, four legs around a
+// center notch, two solid black square eyes — no claws, no mouth.
 import { COLORS, PLAYER_W, PLAYER_H } from "./constants";
 import type { Expression } from "./engine";
 
@@ -11,30 +13,38 @@ function r(ctx: Ctx, x: number, y: number, w: number, h: number, color: string):
   ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
 }
 
-function drawEye(ctx: Ctx, x: number, y: number, expr: Expression, blinking: boolean): void {
+/** One eye, drawn from its top-left (ex, ey) in a 3-wide cell. `left` flips asymmetric faces. */
+function drawEye(
+  ctx: Ctx, ex: number, ey: number, expr: Expression, blinking: boolean, left: boolean,
+): void {
+  const D = COLORS.eyePupil;
+  const dot = (dx: number, dy: number) => r(ctx, ex + dx, ey + dy, 1, 1, D);
+
   if (expr === "dead") {
-    // X_X
-    r(ctx, x, y, 1, 1, COLORS.eyePupil);
-    r(ctx, x + 1, y + 1, 1, 1, COLORS.eyePupil);
-    r(ctx, x + 2, y + 2, 1, 1, COLORS.eyePupil);
-    r(ctx, x + 2, y, 1, 1, COLORS.eyePupil);
-    r(ctx, x + 1, y + 1, 1, 1, COLORS.eyePupil);
-    r(ctx, x, y + 2, 1, 1, COLORS.eyePupil);
+    // x X — left eye a light little "x" (corners only), right a bold "X" (corners + center)
+    dot(0, 0); dot(2, 0); dot(0, 2); dot(2, 2);
+    if (!left) dot(1, 1); // the uppercase one gets a center pixel so it reads heavier
     return;
   }
   if (blinking) {
-    r(ctx, x, y + 2, 4, 1, COLORS.eyePupil); // closed line
+    r(ctx, ex, ey + 1, 3, 1, D); // closed line
     return;
   }
-  const wide = expr === "alert";
-  const ew = wide ? 5 : 4;
-  const eh = wide ? 5 : 4;
-  r(ctx, x - (wide ? 1 : 0), y - (wide ? 1 : 0), ew, eh, COLORS.eyeWhite);
-  // pupil position by mood: focused looks up, alert small+centered, idle forward
-  const px = expr === "focused" ? x + 1 : x + 1;
-  const py = expr === "focused" ? y : expr === "alert" ? y + 1 : y + 1;
-  const ps = expr === "alert" ? 1 : 2;
-  r(ctx, px, py, ps, ps, COLORS.eyePupil);
+  if (expr === "bored") {
+    r(ctx, ex, ey + 1, 3, 1, D); // -  - flat, unimpressed
+    return;
+  }
+  if (expr === "alert") {
+    // >  < squint, points facing inward toward the danger
+    if (left) { dot(0, 0); dot(0, 2); dot(1, 1); dot(2, 1); } // ">"
+    else { dot(2, 0); dot(2, 2); dot(1, 1); dot(0, 1); } // "<"
+    return;
+  }
+  if (expr === "focused") {
+    r(ctx, ex, ey - 1, 3, 4, D); // wide-eyed mid-air
+    return;
+  }
+  r(ctx, ex, ey, 3, 3, D); // idle — solid square
 }
 
 export interface ClawdOpts {
@@ -42,18 +52,19 @@ export interface ClawdOpts {
   runPhase: number;
   squash: number; // -1 squashed .. +1 stretched
   ducking: boolean;
+  airborne: boolean;
   blinking: boolean;
 }
 
 /** Draw Clawd with top-left of his bounding box at (bx, by). */
 export function drawClawd(ctx: Ctx, bx: number, by: number, opts: ClawdOpts): void {
-  const { expression, runPhase, squash, ducking, blinking } = opts;
+  const { expression, runPhase, squash, ducking, airborne, blinking } = opts;
   const cx = bx + PLAYER_W / 2;
   const feet = by + PLAYER_H;
 
   let sqx = 1 - squash * 0.16;
   let sqy = 1 + squash * 0.16;
-  if (ducking) { sqx = 1.16; sqy = 0.6; }
+  if (ducking) { sqx = 1.18; sqy = 0.58; }
 
   ctx.save();
   ctx.translate(cx, feet);
@@ -62,45 +73,35 @@ export function drawClawd(ctx: Ctx, bx: number, by: number, opts: ClawdOpts): vo
 
   const B = COLORS.clawdBody;
   const S = COLORS.clawdShade;
-  const D = COLORS.clawdDark;
+  const Dk = COLORS.clawdDark;
 
-  // legs (run cycle) — 3 per side, alternating
+  // --- legs (run cycle): 4 legs around a center notch, alternating planted/lifted ---
   const phase = Math.floor(runPhase) % 2;
-  const legY = by + 14;
-  const legSets = phase === 0 ? [0, 2, 0, 2, 0, 2] : [2, 0, 2, 0, 2, 0];
-  const legXs = [bx + 3, bx + 6, bx + 9, bx + 12, bx + 15, bx + 18];
-  legXs.forEach((lx, i) => r(ctx, lx, legY + legSets[i] * 0.5, 1, 3 - legSets[i] * 0.4, D));
+  const legXs = [bx + 3, bx + 7, bx + 13, bx + 17];
+  legXs.forEach((lx, i) => {
+    let bottom: number;
+    if (airborne) bottom = by + 15; // tucked up while jumping
+    else bottom = (phase + i) % 2 === 0 ? by + 18 : by + 16; // planted vs mid-stride
+    r(ctx, lx, by + 13, 2, bottom - (by + 13), B);
+    r(ctx, lx, bottom - 1, 2, 1, Dk); // contact shadow at the foot
+  });
 
-  // claws (bob with stride)
-  const bob = Math.sin(runPhase * Math.PI) * 1;
-  // left claw
-  r(ctx, bx - 1, by + 7 + bob, 4, 5, B);
-  r(ctx, bx - 1, by + 7 + bob, 4, 1, S);
-  r(ctx, bx - 1, by + 9 + bob, 2, 1, D); // pincer slit
-  // right claw (bigger)
-  r(ctx, bx + 19, by + 6 - bob, 5, 6, B);
-  r(ctx, bx + 19, by + 6 - bob, 5, 1, S);
-  r(ctx, bx + 22, by + 8 - bob, 2, 1, D); // pincer slit
+  // --- side nubs (little stub arms) ---
+  r(ctx, bx - 1, by + 6, 2, 4, B);
+  r(ctx, bx + 21, by + 6, 2, 4, B);
 
-  // shell
-  r(ctx, bx + 6, by + 3, 10, 1, B);
-  r(ctx, bx + 4, by + 4, 14, 1, B);
-  r(ctx, bx + 2, by + 5, 18, 8, B);
-  r(ctx, bx + 2, by + 12, 18, 1, S);
-  r(ctx, bx + 3, by + 13, 16, 1, S);
-  r(ctx, bx + 5, by + 14, 12, 1, D);
-  // shell speckles (subtle texture)
-  r(ctx, bx + 7, by + 7, 1, 1, S);
-  r(ctx, bx + 13, by + 9, 1, 1, S);
-  r(ctx, bx + 10, by + 6, 1, 1, S);
+  // --- body (rounded-rectangle silhouette) ---
+  r(ctx, bx + 4, by + 1, 14, 1, B); // rounded top
+  r(ctx, bx + 2, by + 2, 18, 1, B);
+  r(ctx, bx + 1, by + 3, 20, 11, B); // main mass y3..y14
+  // shading band along the bottom + dim the leg join
+  r(ctx, bx + 2, by + 12, 18, 2, S);
+  // subtle top rim-light (stands in for the sticker's white outline)
+  r(ctx, bx + 4, by + 1, 14, 1, COLORS.clawdEdge);
 
-  // eyes
-  drawEye(ctx, bx + 6, by + 6, expression, blinking);
-  drawEye(ctx, bx + 13, by + 6, expression, blinking);
-
-  // tiny mouth
-  if (expression === "dead") r(ctx, bx + 9, by + 11, 4, 1, COLORS.clawdDark);
-  else r(ctx, bx + 10, by + 11, 2, 1, COLORS.clawdDark);
+  // --- eyes (wide-set black squares, like the sticker) ---
+  drawEye(ctx, bx + 3, by + 5, expression, blinking, true);
+  drawEye(ctx, bx + 16, by + 5, expression, blinking, false);
 
   ctx.restore();
 }
