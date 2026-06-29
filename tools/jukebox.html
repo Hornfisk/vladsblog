@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Clawd Runner — full theme WIP</title>
+<style>
+  :root { --bg:#151821; --p:#9b87f5; --m:#D946EF; --t:#f3f4f6; --d:#8b8ba7; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0c0e14; color:var(--t); font-family:'JetBrains Mono',ui-monospace,monospace;
+         min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px; gap:14px; }
+  h1 { color:var(--p); margin:0; font-size:19px; letter-spacing:1px; }
+  p.sub { color:var(--d); margin:0; font-size:12px; text-align:center; max-width:560px; }
+  #section { color:var(--m); font-size:13px; height:16px; letter-spacing:1px; }
+  .grid { display:flex; flex-direction:column; gap:10px; width:100%; max-width:560px; }
+  .theme { display:flex; align-items:center; gap:12px; background:var(--bg); border:1px solid rgba(155,135,245,0.3);
+           border-radius:10px; padding:11px 14px; }
+  .theme.playing { border-color:var(--m); box-shadow:0 0 28px -10px var(--m); }
+  .theme.full { border-color:var(--m); }
+  .theme .meta { flex:1; }
+  .theme .name { color:var(--p); font-weight:600; font-size:14px; }
+  .theme.playing .name { color:var(--m); }
+  .theme .desc { color:var(--d); font-size:11px; margin-top:2px; }
+  button { font-family:inherit; cursor:pointer; border-radius:8px; border:1px solid rgba(155,135,245,0.5);
+           background:rgba(155,135,245,0.14); color:var(--p); padding:8px 14px; font-size:13px; }
+  button:active { background:rgba(155,135,245,0.3); }
+  .stopbtn { border-color:rgba(217,70,239,0.5); background:rgba(217,70,239,0.14); color:var(--m); }
+  .row { display:flex; gap:12px; align-items:center; }
+  label { color:var(--d); font-size:11px; }
+</style>
+</head>
+<body>
+  <h1>CLAWD RUNNER — full theme (WIP)</h1>
+  <p class="sub">A-minor journey w/ descending bass, ii&deg; + V7 colour, circle-of-fifths motion. 2nd pass modulates up a half-step (bass climbs on beat 4 of the turnaround). Crystal lead; duotone chorus.</p>
+  <div id="section"></div>
+  <div class="row">
+    <button class="stopbtn" id="stop">&#9632; stop</button>
+    <label>vol <input id="vol" type="range" min="0" max="100" value="58" /></label>
+  </div>
+  <div class="grid" id="grid"></div>
+
+<script>
+let ctx=null, master=null, timer=null, current=null, nextTime=0, step=0, glidePrev=0;
+let TR=1, curPass=0;
+const SEMI=1.0594630943592953; // 2^(1/12), one half-step
+
+const N = {
+  E1:41.20, A1n:55.00,
+  D2:73.42, E2:82.41, F2:87.31, G2:98.00, A2:110.00, B2:123.47, C3:130.81, D3:146.83,
+  E3:164.81, F3:174.61, G3:196.00, Ab3:207.65, A3:220.00, B3:246.94,
+  C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, Ab4:415.30, A4:440.00, B4:493.88,
+  C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, Ab5:830.61, A5:880.00, B5:987.77,
+  C6:1046.50, D6:1174.66, E6:1318.51, F6:1396.91, G6:1567.98
+};
+const PENT = [N.A3,N.C4,N.D4,N.E4,N.G4,N.A4,N.C5,N.D5,N.E5];
+
+// chord library (incl slash chords for descending bass lines, ii-dim and a dominant 7th)
+const CH = {
+  Am:    { arp:[N.A3,N.C4,N.E4,N.A4], bass:N.A2, root:N.A3, third:N.C4, fifth:N.E4 },
+  'Am/G':{ arp:[N.A3,N.C4,N.E4,N.A4], bass:N.G2, root:N.A3, third:N.C4, fifth:N.E4 },
+  Em:    { arp:[N.E3,N.G3,N.B3,N.E4], bass:N.E2, root:N.E3, third:N.G3, fifth:N.B3 },
+  Dm:    { arp:[N.D3,N.F3,N.A3,N.D4], bass:N.D2, root:N.D3, third:N.F3, fifth:N.A3 },
+  'Dm/F':{ arp:[N.D3,N.F3,N.A3,N.D4], bass:N.F2, root:N.D3, third:N.F3, fifth:N.A3 },
+  F:     { arp:[N.F3,N.A3,N.C4,N.F4], bass:N.F2, root:N.F3, third:N.A3, fifth:N.C4 },
+  C:     { arp:[N.C4,N.E4,N.G4,N.C5], bass:N.C3, root:N.C4, third:N.E4, fifth:N.G4 },
+  'C/G': { arp:[N.C4,N.E4,N.G4,N.C5], bass:N.G2, root:N.C4, third:N.E4, fifth:N.G4 },
+  G:     { arp:[N.G3,N.B3,N.D4,N.G4], bass:N.G2, root:N.G3, third:N.B3, fifth:N.D4 },
+  'G/B': { arp:[N.G3,N.B3,N.D4,N.G4], bass:N.B2, root:N.G3, third:N.B3, fifth:N.D4 },
+  E:     { arp:[N.E3,N.Ab3,N.B3,N.E4], bass:N.E2, root:N.E3, third:N.Ab3, fifth:N.B3 },
+  E7:    { arp:[N.E3,N.Ab3,N.B3,N.D4], bass:N.E2, root:N.E3, third:N.Ab3, fifth:N.B3 },
+  Bdim:  { arp:[N.B3,N.D4,N.F4,N.B4], bass:N.B2, root:N.B3, third:N.D4, fifth:N.F4 }
+};
+
+// THE SONG. lead notation: "Name:dur" (16ths), "-:dur" rest, "Name:dur:Harm" duotone harmony.
+const SONG = [
+  { name:'Intro', back:'intro', preset:'none',
+    chords:'Am Am/G Dm/F E Am Am/G Dm/F E', lead:'' },
+
+  { name:'A - Drive', back:'arcade', preset:'crystal',
+    chords:'Am Em F C',
+    lead:'E5:6 A5:2 G5:4 E5:4  D5:4 E5:2 G5:2 E5:4 D5:4  F5:4 A5:4 G5:2 F5:2 C5:4  E5:4 G5:2 E5:2 C5:4 D5:4' },
+  { name:'A - Drive (ii-dim cadence)', back:'arcade', preset:'crystal',
+    chords:'Dm Bdim E7 Am',
+    lead:'F5:4 A5:4 G5:2 F5:2 D5:4  F5:4 D5:2 B4:2 D5:4 F5:4  E5:4 Ab5:4 B5:2 Ab5:2 E5:4  A5:6 E5:2 C5:4 A4:4' },
+
+  { name:'B - Memory (descending bass)', back:'gentle', preset:'crystal',
+    chords:'C G/B Am Em',
+    lead:'G5:4 C6:4 B5:2 G5:2 E5:4  D6:4 B5:2 G5:2 B5:4 D6:4  C6:4 A5:2 E5:2 A5:4 C6:4  B5:4 G5:2 E5:2 G5:4 B5:4' },
+  { name:'B - Memory (turn to V7)', back:'gentle', preset:'crystal',
+    chords:'F C/G Dm E7',
+    lead:'A5:4 C6:4 A5:4 F5:4  E5:4 G5:4 C6:4 G5:4  F5:4 A5:4 D6:4 A5:4  B5:4 Ab5:4 E5:4 B4:4' },
+
+  { name:'C - Surge (circle of 5ths)', back:'build', preset:'crystal',
+    chords:'Dm G C F',
+    lead:'A5:4 F5:2 A5:2 D6:4 A5:4  B5:4 D6:2 B5:2 G5:4 B5:4  C6:4 G5:2 E5:2 G5:4 C6:4  A5:4 C6:4 F6:4 C6:4' },
+  { name:'C - Surge (dominant build)', back:'build', preset:'crystal',
+    chords:'Bdim E7 E7 E7',
+    lead:'F5:4 D5:4 F5:4 B5:4  E6:4 B5:4 Ab5:4 B5:4  E6:8 D6:4 B5:4  B5:2 D6:2 E6:2 D6:2 B5:4 -:4' },
+
+  { name:'Chorus - Apex', back:'chorus', preset:'duotone',
+    chords:'Dm E7 Am C',
+    lead:'A5:4:F5 G5:4:E5 F5:4:D5 A5:4:F5  Ab5:4:E5 B5:4:Ab5 E5:4:B4 Ab5:4:E5  A5:6:E5 C6:2:A5 E5:4:C5 A5:4:E5  G5:4:E5 C6:4:G5 E5:4:C5 G5:4:E5' },
+  { name:'Chorus - Apex (VI-VII-i + pivot)', back:'chorus', preset:'duotone',
+    chords:'F G Am E7',
+    lead:'A5:4:F5 C6:4:A5 A5:4:F5 G5:4:E5  B5:4:G5 D6:4:B5 B5:4:G5 G5:4:D5  C6:4:A5 A5:4:E5 E5:4:C5 A5:4:E5  B5:4:Ab5 Ab5:4:E5 E5:8:B4' }
+];
+const LOOP_FROM = 1; // intro plays once, then loops from "A - Drive"
+
+function parseChords(s){ return s.trim().split(/\s+/).map(function(n){ return CH[n]; }); }
+function parseLead(s){
+  if(!s) return [];
+  return s.trim().split(/\s+/).map(function(tok){
+    var p=tok.split(':'); return { f: p[0]==='-'?0:N[p[0]], d:+p[1], h: p[2]?N[p[2]]:0 };
+  });
+}
+function buildOnsets(notes, len){
+  var a=new Array(len).fill(null), pos=0;
+  notes.forEach(function(nt){ if(pos<len && nt.f) a[pos]={f:nt.f,d:nt.d,h:nt.h}; pos+=nt.d; });
+  return a;
+}
+var songOff=0, loopStart=0, loopLen=0;
+SONG.forEach(function(sec,i){
+  sec.chordArr=parseChords(sec.chords); sec.bars=sec.chordArr.length;
+  sec.leadArr=buildOnsets(parseLead(sec.lead), sec.bars*16);
+  sec.start=songOff; songOff+=sec.bars*16;
+  if(i===LOOP_FROM) loopStart=sec.start;
+});
+var SONG_END=songOff; loopLen=SONG_END-loopStart;
+
+// ---- synth ----
+function voice(freq,dur,type,vol,opts,at){
+  opts=opts||{};
+  freq=freq*TR;
+  var glideFrom = opts.glideFrom ? opts.glideFrom*TR : 0;
+  var osc=ctx.createOscillator(), g=ctx.createGain();
+  osc.type=type;
+  if(opts.detune) osc.detune.setValueAtTime(opts.detune,at);
+  if(glideFrom){ osc.frequency.setValueAtTime(glideFrom,at); osc.frequency.exponentialRampToValueAtTime(Math.max(1,freq),at+0.05); }
+  else osc.frequency.setValueAtTime(Math.max(1,freq),at);
+  var atk=opts.attack!=null?opts.attack:0.005, rel=opts.release!=null?opts.release:0.04;
+  var sus=Math.max(0.02,dur-rel);
+  g.gain.setValueAtTime(0.0001,at);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002,vol),at+atk);
+  g.gain.setValueAtTime(Math.max(0.0002,vol),at+sus);
+  g.gain.exponentialRampToValueAtTime(0.0001,at+sus+rel);
+  var node=osc;
+  if(opts.filter){ var f=ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.setValueAtTime(opts.filter,at); f.Q.setValueAtTime(opts.filterQ||1,at); osc.connect(f); node=f; }
+  node.connect(g).connect(master);
+  if(opts.vibRate && opts.vibDepth){
+    var lfo=ctx.createOscillator(), lg=ctx.createGain();
+    lfo.type='sine'; lfo.frequency.setValueAtTime(opts.vibRate,at);
+    lg.gain.setValueAtTime(0,at); lg.gain.setValueAtTime(0,at+Math.min(0.13,sus*0.3)); lg.gain.linearRampToValueAtTime(opts.vibDepth,at+sus);
+    lfo.connect(lg).connect(osc.frequency); lfo.start(at); lfo.stop(at+sus+rel+0.02);
+  }
+  osc.start(at); osc.stop(at+sus+rel+0.02);
+}
+function noise(dur,vol,hp,at){
+  var n=Math.floor(ctx.sampleRate*dur), buf=ctx.createBuffer(1,n,ctx.sampleRate), d=buf.getChannelData(0);
+  for(var i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  var src=ctx.createBufferSource(); src.buffer=buf;
+  var g=ctx.createGain(); g.gain.setValueAtTime(vol,at); g.gain.exponentialRampToValueAtTime(0.0001,at+dur);
+  var node=src;
+  if(hp){ var f=ctx.createBiquadFilter(); f.type='highpass'; f.frequency.setValueAtTime(hp,at); src.connect(f); node=f; }
+  node.connect(g).connect(master); src.start(at); src.stop(at+dur+0.02);
+}
+function kick(at){ var o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(150,at); o.frequency.exponentialRampToValueAtTime(46,at+0.11); g.gain.setValueAtTime(0.9,at); g.gain.exponentialRampToValueAtTime(0.0001,at+0.14); o.connect(g).connect(master); o.start(at); o.stop(at+0.16); }
+function snare(at){ noise(0.13,0.4,1800,at); var o=ctx.createOscillator(), g=ctx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(190,at); g.gain.setValueAtTime(0.2,at); g.gain.exponentialRampToValueAtTime(0.0001,at+0.09); o.connect(g).connect(master); o.start(at); o.stop(at+0.1); }
+function hat(at,v){ noise(0.025,v||0.09,7000,at); }
+
+// ---- backing ----
+function backing(styleName, ch, s16, bar, sd, at, turn){
+  if(styleName==='intro'){
+    if(s16%2===0) voice(ch.arp[[0,1,2,3,3,2,1,0][s16/2]], sd*1.7,'square',0.2,{},at);
+    if(bar>=2 && (s16===0||s16===8)) voice(ch.bass, sd*3.6,'triangle',0.5,{attack:0.004,release:0.06},at);
+    if(bar>=4){ if(s16===0||s16===8) kick(at); if(s16===4||s16===12) snare(at); if(s16%2===0) hat(at,0.07); }
+    return;
+  }
+  if(styleName==='arcade'){
+    if(s16===0||s16===7||s16===11) kick(at);
+    if(s16===4||s16===12) snare(at);
+    if([1,3,5,9,13,15].indexOf(s16)>=0) hat(at,0.08);
+    if(s16===2||s16===6||s16===10||s16===14){ voice(ch.root*2, sd*1.6,'square',0.09,{filter:3600,filterQ:2},at); voice(ch.fifth*2, sd*1.6,'square',0.07,{filter:3600,filterQ:2,detune:6},at); }
+    if(s16===0) voice(ch.bass, sd*1.5,'triangle',0.3,{attack:0.003,release:0.05},at);
+    else if(s16===4) voice(ch.bass*2, sd*0.7,'triangle',0.2,{attack:0.003,release:0.04},at);
+    else if(s16===6) voice(ch.bass, sd*1.5,'triangle',0.3,{attack:0.003,release:0.05},at);
+    else if(s16===10) voice(ch.bass*2, sd,'triangle',0.2,{glideFrom:ch.bass,attack:0.003,release:0.04},at);
+    else if(s16===12) voice(ch.fifth, sd*1.5,'triangle',0.26,{attack:0.003,release:0.05},at);
+    return;
+  }
+  if(styleName==='gentle'){
+    if(s16===0) voice(ch.bass, sd*4,'triangle',0.28,{attack:0.01,release:0.12},at);
+    if(s16===8) voice(ch.fifth, sd*4,'triangle',0.22,{attack:0.01,release:0.12},at);
+    if(s16===0||s16===4||s16===8||s16===12) hat(at,0.05);
+    if(s16%2===1){ var bi=Math.floor(s16/2)%4; voice(ch.arp[bi]*2, sd*0.5,'sine',0.1,{attack:0.005,release:0.05},at); }
+    return;
+  }
+  if(styleName==='build'){
+    if(s16===0||s16===8) kick(at);
+    if(s16===4||s16===12) snare(at);
+    if(s16%2===0) hat(at, 0.06 + bar*0.01);
+    if(s16%4===0) voice(ch.bass, sd*4,'sawtooth',0.26,{filter:700+bar*120,filterQ:4,attack:0.004,release:0.05},at);
+    if(s16%4===0) voice(ch.bass/2, sd*4,'sine',0.18,{attack:0.01,release:0.06},at);
+    return;
+  }
+  if(styleName==='chorus'){
+    if(s16===0||s16===8) kick(at);
+    if(s16===4||s16===12) snare(at);
+    if(s16%2===0) hat(at,0.08);
+    if(turn){
+      // turnaround: the bass climbs a half-step on beat 4 to pivot UP into the next pass
+      if(s16===0) voice(ch.bass, sd*4,'triangle',0.32,{attack:0.004,release:0.06},at);
+      if(s16===8) voice(ch.bass, sd*3,'triangle',0.3,{attack:0.004,release:0.05},at);
+      if(s16===12) voice(ch.bass*SEMI, sd*3,'triangle',0.36,{glideFrom:ch.bass,attack:0.004,release:0.07},at);
+    } else {
+      if(s16===0||s16===8) voice(ch.bass, sd*4,'triangle',0.32,{attack:0.004,release:0.06},at);
+      if(s16===4||s16===12) voice(ch.bass*1.5, sd*1.5,'triangle',0.24,{attack:0.004,release:0.05},at);
+    }
+    if(s16%4===0) voice(ch.fifth, sd*4,'square',0.05,{filter:2000,filterQ:2,attack:0.02,release:0.1},at);
+    return;
+  }
+}
+
+// ---- lead voices ----
+function lead(preset, f, dur, d, harm, sd, at){
+  if(preset==='fmlead'){
+    var o={ filter:3000, filterQ:3, attack:0.002, release: d>=4?0.06:0.03 };
+    if(glidePrev>0) o.glideFrom=glidePrev;
+    if(d>=4){ o.vibRate=5.5; o.vibDepth=16; }
+    voice(f, dur, 'square', 0.18, o, at); glidePrev=f;
+  } else if(preset==='crystal'){
+    var c={ attack:0.01, release: d>=4?0.09:0.05 };
+    if(d>=4){ c.vibRate=5.5; c.vibDepth=20; }
+    voice(f, dur, 'square', 0.22, c, at); glidePrev=f;
+  } else if(preset==='duotone'){
+    var hh=harm||f*0.6674;
+    var m={ filter:3200, filterQ:2.5, attack:0.004, release: d>=4?0.07:0.04 };
+    if(d>=4){ m.vibRate=5.4; m.vibDepth=14; }
+    voice(f, dur, 'square', 0.16, m, at);
+    voice(hh, dur, 'square', 0.12, { filter:2800, filterQ:2.5, attack:0.004, release:(d>=4?0.07:0.04), vibRate:(d>=4?5.4:0), vibDepth:(d>=4?10:0) }, at);
+    glidePrev=f;
+  }
+}
+
+function fullStep(gs, sd, at){
+  var sec=null;
+  for(var i=0;i<SONG.length;i++){ if(gs>=SONG[i].start && gs<SONG[i].start+SONG[i].bars*16){ sec=SONG[i]; break; } }
+  if(!sec) return;
+  var secStep=gs-sec.start, bar=Math.floor(secStep/16), s16=secStep%16, ch=sec.chordArr[bar];
+  var turn=(sec===SONG[SONG.length-1] && bar===sec.bars-1); // last bar of the final chorus = the pivot
+  backing(sec.back, ch, s16, bar, sd, at, turn);
+  if(sec.preset!=='none'){ var on=sec.leadArr[secStep]; if(on) lead(sec.preset, on.f, on.d*sd*0.97, on.d, on.h, sd, at); }
+}
+
+// ---- timbre demos ----
+function demoVamp(preset, gs, sd, at){
+  var prog=[CH.Am,CH.F,CH.G,CH.Em], bar=Math.floor(gs/16)%4, s16=gs%16, ch=prog[bar];
+  if(s16===0||s16===8) kick(at); if(s16===4||s16===12) snare(at); if(s16%2===0) hat(at,0.06);
+  if(s16===0) voice(ch.bass, sd*4,'triangle',0.28,{attack:0.005,release:0.06},at);
+  var motif=[{f:N.E5,d:4},{f:N.A5,d:2},{f:N.G5,d:2},{f:N.E5,d:4},{f:N.D5,d:4}], pos=0;
+  for(var k=0;k<motif.length;k++){ if(pos===s16){ lead(preset, motif[k].f, motif[k].d*sd*0.95, motif[k].d, preset==='duotone'?motif[k].f*0.6674:0, sd, at); } pos+=motif[k].d; }
+}
+
+const THEMES = [
+  { name:'★ FULL THEME', full:true, desc:'Intro → A Drive → B Memory → C Surge → Chorus Apex; 2nd pass +½ step', bpm:122,
+    step:function(s,sd,at){
+      var gs,pass;
+      if(s<SONG_END){ gs=s; pass=0; }
+      else { var rel=s-loopStart; pass=Math.floor(rel/loopLen)%2; gs=loopStart+(rel%loopLen); }
+      curPass=pass; TR=Math.pow(2, pass/12);
+      fullStep(gs,sd,at);
+    } },
+  { name:'sound: Crystal Lead', desc:'bright square+vibrato (the main voice)', bpm:118, step:function(s,sd,at){ TR=1; demoVamp('crystal', s%64, sd, at); } },
+  { name:'sound: Duotone Lead', desc:'two-tone harmonized (chorus)', bpm:118, step:function(s,sd,at){ TR=1; demoVamp('duotone', s%64, sd, at); } },
+  { name:'sound: FM Lead', desc:'glassy square (alt voice)', bpm:118, step:function(s,sd,at){ TR=1; demoVamp('fmlead', s%64, sd, at); } }
+];
+
+function scheduler(){
+  if(!ctx||!current) return;
+  var sd=15/(current.bpm||120);
+  while(nextTime < ctx.currentTime + 0.14){
+    var gsLabel = current.full ? (step<SONG_END?step:loopStart+((step-loopStart)%loopLen)) : -1;
+    try { current.step(step, sd, nextTime); } catch(e){ console.error(e); }
+    if(current.full) updateLabel(gsLabel);
+    nextTime += sd; step += 1;
+  }
+}
+function updateLabel(gs){
+  for(var i=0;i<SONG.length;i++){ if(gs>=SONG[i].start && gs<SONG[i].start+SONG[i].bars*16){ document.getElementById('section').textContent='♪  '+SONG[i].name+(curPass?'   (+½ step)':''); return; } }
+}
+function play(th,el){
+  if(!ctx){ ctx=new (window.AudioContext||window.webkitAudioContext)(); master=ctx.createGain(); master.gain.value=(+document.getElementById('vol').value)/100*0.5; master.connect(ctx.destination); }
+  if(ctx.state==='suspended') ctx.resume();
+  stop();
+  current=th; step=0; glidePrev=0; TR=1; curPass=0; nextTime=ctx.currentTime+0.08;
+  timer=setInterval(scheduler,25);
+  document.querySelectorAll('.theme').forEach(function(x){x.classList.remove('playing');});
+  if(el) el.classList.add('playing');
+}
+function stop(){ if(timer){clearInterval(timer); timer=null;} current=null; document.getElementById('section').textContent=''; document.querySelectorAll('.theme').forEach(function(x){x.classList.remove('playing');}); }
+document.getElementById('stop').onclick=stop;
+document.getElementById('vol').oninput=function(e){ if(master) master.gain.value=(+e.target.value)/100*0.5; };
+
+(function build(){
+  var grid=document.getElementById('grid');
+  THEMES.forEach(function(th){
+    var row=document.createElement('div'); row.className='theme'+(th.full?' full':'');
+    row.innerHTML='<div class="meta"><div class="name">'+th.name+'</div><div class="desc">'+th.desc+' &middot; '+(th.bpm||120)+' bpm</div></div>';
+    var b=document.createElement('button'); b.textContent='play';
+    b.onclick=function(){ if(current===th){stop();} else {play(th,row);} };
+    row.appendChild(b); grid.appendChild(row);
+  });
+})();
+</script>
+</body>
+</html>

@@ -267,8 +267,8 @@ function die(s: GameState): void {
   }
 }
 
-/** Take an obstacle hit: spend a shield, then a stored life, else die. */
-function hit(s: GameState): void {
+/** Take an obstacle hit: spend a shield, then a stored life, else die. Returns true if it was fatal. */
+function hit(s: GameState): boolean {
   const cx = s.player.x + C.PLAYER_W / 2;
   const cy = s.player.y + C.PLAYER_H / 2;
   if (s.shielded) {
@@ -277,15 +277,18 @@ function hit(s: GameState): void {
     s.shake = 0.7;
     s.events.push("hurt");
     burst(s, cx, cy, C.COLORS.shield, 16, 170);
-  } else if (s.lives > 0) {
+    return false;
+  }
+  if (s.lives > 0) {
     s.lives -= 1;
     s.invuln = C.INVULN_TIME;
     s.shake = 0.8;
     s.events.push("hurt");
     burst(s, cx, cy, C.COLORS.clawdBody, 16, 190);
-  } else {
-    die(s);
+    return false;
   }
+  die(s);
+  return true;
 }
 
 /** Advance the simulation by a fixed dt (seconds). Safe to call in any phase. */
@@ -400,8 +403,7 @@ export function step(s: GameState, dt: number): void {
   for (const o of s.obstacles) {
     if (o.x > p.x) nearest = Math.min(nearest, o.x - (p.x + C.PLAYER_W));
     if (s.invuln <= 0 && aabb(pr.x + 1, pr.y + 1, pr.w - 2, pr.h - 2, o.x, o.y, o.w, o.h)) {
-      hit(s);
-      if (s.phase === "dead") return;
+      if (hit(s)) return; // fatal
       break; // survived (shield/life) — i-frames are up now, stop checking this frame
     }
   }
