@@ -3,11 +3,13 @@
 // so it stays sample-accurate regardless of frame rate. Routed through the music bus (audio.ts),
 // silent unless the player toggles music on (default off).
 //
-// Form: AABA over a written lead melody (A = Am–F–C–G, B = Dm–G–C–E bridge). The lead uses
-// portamento (it glides into each note) but is NOT legato — every note re-attacks with a gap, and
-// vibrato eases in progressively the longer a note is held. Note lengths vary (some 16ths, some
-// held). The backing builds in layers: bar 8 adds a 16th sub-bass (1 oct down), bar 16 adds drums;
-// a pentatonic fill lick lands every 16 bars. Tempo rises with game speed — pitch never does.
+// Form: AABA over a written lead melody (A = Am–F–C–G, B = Dm–G–C–E bridge). The lead is a classic
+// SQUARE wave that glides into each note (portamento, NOT legato): short notes stay punchy with a
+// gap, while long notes truly sustain and sing with vibrato that eases in and deepens.
+// The arrangement enters ONE layer at a time: arp alone (bar 0) → + bass & drums (bar 8) → + lead
+// melody (bar 16) → + sub-bass (bar 24); a pentatonic fill lands every 16 bars. B sections swap to
+// a contrasting arp (open beat stabs) and busier, syncopated drums. Tempo rises with game speed —
+// pitch never does.
 import { getCtx, getMusicBus, isMusicOn, initAudio, toggleMusic } from "./audio";
 
 const BPM = 116;
@@ -37,7 +39,7 @@ const CH: Record<string, Chord> = {
 const A_CHORDS = [CH.Am, CH.F, CH.C, CH.G];
 const B_CHORDS = [CH.Dm, CH.G, CH.C, CH.E];
 const ORDER: ("A" | "B")[] = ["A", "A", "B", "A"]; // AABA, 16 bars, loops
-const ARP_PATTERN = [0, 1, 2, 3, 3, 2, 1, 0];
+const A_ARP = [0, 1, 2, 3, 3, 2, 1, 0]; // flowing arpeggio shape for A sections
 
 // lead melodies as [noteName | rest(0), durationIn16ths]; each section = 64 sixteenths (4 bars)
 type Step = [keyof typeof N | 0, number];
@@ -144,39 +146,41 @@ function snare(at: number): void {
 
 // lead voice: portamento glide in, NOT legato (releases before the slot ends), with vibrato that
 // eases in and deepens the longer the note is held. `d` = note length in 16ths.
-function leadNote(f: number, durSec: number, d: number, at: number): void {
+function leadNote(f: number, slotSec: number, d: number, at: number): void {
   const ctx = getCtx();
   const bus = getMusicBus();
   if (!ctx || !bus) return;
   const o = ctx.createOscillator();
   const g = ctx.createGain();
-  o.type = "sawtooth";
+  o.type = "square"; // classic square lead
   if (lastLead > 0) {
     o.frequency.setValueAtTime(lastLead, at);
-    o.frequency.exponentialRampToValueAtTime(f, at + 0.05); // portamento
+    o.frequency.exponentialRampToValueAtTime(f, at + 0.05); // portamento glide
   } else {
     o.frequency.setValueAtTime(f, at);
   }
   lastLead = f;
-  const sus = durSec * 0.82; // release before the slot ends → re-articulated, not legato
+  // long notes (d>=4) truly sustain/hold; short notes stay punchy with a gap (still not legato)
+  const sus = slotSec * (d >= 4 ? 0.96 : 0.78);
   g.gain.setValueAtTime(0.0001, at);
-  g.gain.exponentialRampToValueAtTime(0.34, at + 0.012);
-  g.gain.setValueAtTime(0.34, at + sus * 0.5);
+  g.gain.exponentialRampToValueAtTime(0.28, at + 0.012);
+  g.gain.setValueAtTime(0.28, at + sus * 0.6); // hold the level through the sustain
   g.gain.exponentialRampToValueAtTime(0.0001, at + sus);
-  // progressive vibrato — depth grows across the note, and deeper for longer notes
+  // vibrato eases in once the note settles, then deepens — so it sings on the long held notes
   const lfo = ctx.createOscillator();
   const lg = ctx.createGain();
   lfo.type = "sine";
   lfo.frequency.setValueAtTime(5.6, at);
-  const maxDepth = f * (0.005 + Math.min(0.022, d * 0.0045));
+  const maxDepth = f * (0.004 + Math.min(0.02, d * 0.004));
   lg.gain.setValueAtTime(0, at);
+  lg.gain.setValueAtTime(0, at + Math.min(0.13, sus * 0.3));
   lg.gain.linearRampToValueAtTime(maxDepth, at + sus);
   lfo.connect(lg).connect(o.frequency);
   o.connect(g).connect(bus);
   o.start(at);
   lfo.start(at);
-  o.stop(at + durSec);
-  lfo.stop(at + durSec);
+  o.stop(at + sus + 0.03);
+  lfo.stop(at + sus + 0.03);
 }
 
 function scheduleStep(i: number, at: number): void {
@@ -193,26 +197,40 @@ function scheduleStep(i: number, at: number): void {
   const leadMap = isA ? A_LEAD_MAP : B_LEAD_MAP;
   const fillBar = bar >= 16 && bar % 16 === 15;
 
-  // chord backing — soft 8th-note arpeggio under the melody
-  if (s16 % 2 === 0) voice(chord.arp[ARP_PATTERN[s16 / 2]], sd * 1.7, "square", 0.22, at);
-  // bass on beats 1 & 3
-  if (s16 === 0 || s16 === 8) voice(chord.bass, sd * 3.6, "triangle", 0.55, at);
-  // sub-bass 16ths, one octave down (bar 8+)
-  if (bar >= 8) voice(chord.bass / 2, sd * 0.9, "square", 0.3, at);
-  // drums (bar 16+)
-  if (bar >= 16) {
-    if (s16 === 0 || s16 === 8) kick(at);
-    if (s16 === 4 || s16 === 12) snare(at);
-    if (s16 % 2 === 0) noiseHit(at, 0.025, 0.08);
+  // ARP — present from the very start (the only instrument for the first 8 bars).
+  // A = flowing 8th-note arpeggio; B = open beat stabs (root+fifth) for contrast.
+  if (isA) {
+    if (s16 % 2 === 0) voice(chord.arp[A_ARP[s16 / 2]], sd * 1.7, "square", 0.22, at);
+  } else if (s16 % 4 === 0) {
+    voice(chord.arp[0], sd * 3.2, "square", 0.2, at);
+    voice(chord.arp[2], sd * 3.2, "square", 0.15, at);
   }
 
-  if (fillBar) {
-    // turnaround fill lick (replaces the melody that bar)
-    voice(PENT[FILL[s16 % FILL.length]], sd * 0.9, "square", 0.34, at);
-  } else {
-    // the main melody
-    const on = leadMap[secStep];
-    if (on) leadNote(on.f, on.d * sd * 0.96, on.d, at);
+  // BASS + DRUMS enter together at bar 8. A = steady backbeat; B = busier & syncopated.
+  if (bar >= 8) {
+    if (s16 === 0 || s16 === 8) voice(chord.bass, sd * 3.6, "triangle", 0.55, at);
+    if (isA) {
+      if (s16 === 0 || s16 === 8) kick(at);
+      if (s16 === 4 || s16 === 12) snare(at);
+      if (s16 % 2 === 0) noiseHit(at, 0.025, 0.08); // 8th hats
+    } else {
+      if (s16 === 0 || s16 === 6 || s16 === 8 || s16 === 14) kick(at); // syncopated kick
+      if (s16 === 4 || s16 === 12) snare(at);
+      noiseHit(at, 0.02, 0.06); // 16th hats (busier)
+    }
+  }
+
+  // SUB-BASS thickens the low end later (bar 24+)
+  if (bar >= 24) voice(chord.bass / 2, sd * 0.9, "square", 0.28, at);
+
+  // LEAD melody enters at bar 16 (with a turnaround fill lick every 16 bars)
+  if (bar >= 16) {
+    if (fillBar) {
+      voice(PENT[FILL[s16 % FILL.length]], sd * 0.9, "square", 0.34, at);
+    } else {
+      const on = leadMap[secStep];
+      if (on) leadNote(on.f, on.d * sd, on.d, at);
+    }
   }
 }
 
