@@ -11,8 +11,8 @@ let ctx: AudioContext | null = null;
 let sfxBus: GainNode | null = null;
 let musicBus: GainNode | null = null;
 
-let sfxMuted = load(MUTED_KEY, false); // default: SFX ON
-let musicOn = load(MUSIC_KEY, false); // default: music OFF
+let sfxMuted = load(MUTED_KEY, false); // default: SFX ON (persisted)
+let musicOn = false; // music is opt-in PER SESSION — never auto-resumes on load (always starts off)
 
 function load(key: string, fallback: boolean): boolean {
   try {

@@ -272,16 +272,19 @@ export function render(ctx: Ctx, s: GameState): void {
   // overlays
   if (s.phase === "ready") {
     panel(ctx, [
-      { s: "CLAWD RUNNER", size: 18, color: C.COLORS.accent1, dy: -28 },
-      { s: "debugging dash", size: 9, color: C.COLORS.accent2, dy: -10 },
-      { s: "SPACE / TAP to start", size: 10, color: C.COLORS.text, dy: 18 },
-      { s: "↑ / tap = JUMP    ↓ / swipe down = DROP", size: 7, color: C.COLORS.dim, dy: 38 },
+      { s: "CLAWD RUNNER", size: 18, color: C.COLORS.accent1, dy: -46 },
+      { s: "debugging dash", size: 9, color: C.COLORS.accent2, dy: -30 },
+      { s: "SPACE / TAP  to start", size: 10, color: C.COLORS.text, dy: -8 },
+      { s: "↑ JUMP (×2 mid-air)    ↓ DUCK", size: 7, color: C.COLORS.dim, dy: 14 },
+      { s: "M music    S sound    ESC pause", size: 7, color: C.COLORS.dim, dy: 26 },
+      { s: "mobile:  tap jump · hold ▲ higher · swipe ↓ drop", size: 7, color: C.COLORS.dim, dy: 38 },
     ]);
   } else if (s.phase === "paused") {
     panel(ctx, [
-      { s: "PAUSED", size: 18, color: C.COLORS.accent1, dy: -20 },
-      { s: "SPACE / ESC to resume", size: 9, color: C.COLORS.text, dy: 6 },
-      { s: "↑ jump    ↓ duck", size: 7, color: C.COLORS.dim, dy: 24 },
+      { s: "PAUSED", size: 18, color: C.COLORS.accent1, dy: -24 },
+      { s: "SPACE / ESC to resume", size: 9, color: C.COLORS.text, dy: 0 },
+      { s: "↑ jump (×2)   ↓ duck", size: 7, color: C.COLORS.dim, dy: 20 },
+      { s: "M music   S sound", size: 7, color: C.COLORS.dim, dy: 32 },
     ]);
   } else if (s.phase === "dead") {
     panel(ctx, [

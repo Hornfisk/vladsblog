@@ -28,8 +28,37 @@ function useViewport() {
   return v;
 }
 
+// 40px tap targets (clears mobile edge-gesture zones) with crisp pixel-art icons.
 const btnCls =
-  "rounded-md border border-accent1/30 bg-[#151821]/80 px-2 py-1 text-sm transition-colors";
+  "grid place-items-center h-10 w-10 rounded-md border border-accent1/40 bg-[#151821]/85 transition-colors";
+
+// 8-bit icons drawn on a 9x9 grid, themed via currentColor.
+type Cells = ReadonlyArray<readonly [number, number]>;
+const SPK: Cells = [
+  [0, 3], [0, 4], [0, 5], [1, 3], [1, 4], [1, 5],
+  [2, 2], [2, 3], [2, 4], [2, 5], [2, 6],
+  [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], [3, 6], [3, 7],
+];
+const SPK_ON: Cells = [...SPK, [5, 3], [5, 4], [5, 5], [7, 2], [7, 3], [7, 4], [7, 5], [7, 6]];
+const SPK_OFF: Cells = [...SPK, [5, 3], [7, 3], [6, 4], [5, 5], [7, 5]];
+const NOTE: Cells = [
+  [1, 6], [2, 6], [1, 7], [2, 7],
+  [3, 2], [3, 3], [3, 4], [3, 5], [3, 6], [4, 2], [5, 2], [5, 3],
+];
+const FS: Cells = [
+  [0, 0], [1, 0], [0, 1], [8, 0], [7, 0], [8, 1],
+  [0, 8], [1, 8], [0, 7], [8, 8], [7, 8], [8, 7],
+];
+
+function PixelIcon({ cells }: { cells: Cells }) {
+  return (
+    <svg viewBox="0 0 9 9" width="20" height="20" shapeRendering="crispEdges" aria-hidden="true">
+      {cells.map(([x, y], i) => (
+        <rect key={i} x={x} y={y} width="1" height="1" fill="currentColor" />
+      ))}
+    </svg>
+  );
+}
 
 function SfxButton() {
   const [muted, setMuted] = useState(isSfxMuted);
@@ -43,9 +72,9 @@ function SfxButton() {
       }}
       aria-label={muted ? "Unmute sound effects (s)" : "Mute sound effects (s)"}
       title="sound effects (s)"
-      className={`${btnCls} ${muted ? "text-gray-500" : "text-gray-300 hover:text-accent1"}`}
+      className={`${btnCls} ${muted ? "text-gray-500" : "text-accent1"}`}
     >
-      {muted ? "🔇" : "🔊"}
+      <PixelIcon cells={muted ? SPK_OFF : SPK_ON} />
     </button>
   );
 }
@@ -59,9 +88,9 @@ function MusicButton() {
       onClick={() => toggleMusicAndSchedule()}
       aria-label={on ? "Turn music off (m)" : "Turn music on (m)"}
       title="music (m)"
-      className={`${btnCls} ${on ? "text-accent2" : "text-gray-500 hover:text-accent1"}`}
+      className={`${btnCls} ${on ? "text-accent2" : "text-gray-500"}`}
     >
-      ♪
+      <PixelIcon cells={NOTE} />
     </button>
   );
 }
@@ -78,7 +107,7 @@ function FullscreenButton() {
       }}
       className={`${btnCls} text-gray-300 hover:text-accent1`}
     >
-      ⛶
+      <PixelIcon cells={FS} />
     </button>
   );
 }

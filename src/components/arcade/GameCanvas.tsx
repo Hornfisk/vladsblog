@@ -17,7 +17,7 @@ import { render } from "./render";
 import { useGameLoop } from "./useGameLoop";
 import { playSfx } from "./sfx";
 import { initAudio, isMusicOn, toggleSfx } from "./audio";
-import { startMusic, stopMusic, toggleMusicAndSchedule } from "./music";
+import { startMusic, stopMusic, toggleMusicAndSchedule, setMusicSpeed } from "./music";
 
 const STEP = 1 / 120; // fixed physics timestep
 const SWIPE = 22; // px of vertical travel before a drag counts as a swipe
@@ -232,6 +232,8 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
       for (const ev of s.events) playSfx(ev);
       s.events.length = 0;
     }
+    // music tempo rises with game speed (pitch unchanged)
+    setMusicSpeed((s.speed - C.BASE_SPEED) / (C.MAX_SPEED - C.BASE_SPEED));
     blit();
   }, () => {
     // auto-pause when tab hidden
