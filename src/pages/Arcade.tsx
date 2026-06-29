@@ -44,6 +44,22 @@ function MuteButton({ className = "" }: { className?: string }) {
   );
 }
 
+function FullscreenButton({ className = "" }: { className?: string }) {
+  return (
+    <button
+      type="button"
+      aria-label="Toggle fullscreen"
+      onClick={() => {
+        if (document.fullscreenElement) void document.exitFullscreen?.();
+        else void document.documentElement.requestFullscreen?.().catch(() => {});
+      }}
+      className={`rounded-md border border-accent1/30 bg-[#151821]/80 px-2 py-1 text-sm text-gray-300 hover:text-accent1 transition-colors ${className}`}
+    >
+      ⛶
+    </button>
+  );
+}
+
 function RotateOverlay() {
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#151821] text-center px-6">
@@ -68,8 +84,8 @@ const Arcade = () => {
   // --- mobile: immersive fullscreen, landscape-first ---
   if (touch) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#151821]">
-        <GameCanvas />
+      <div className="fixed inset-0 z-50 bg-[#151821]" style={{ height: "100dvh" }}>
+        <GameCanvas touch />
         {portrait && <RotateOverlay />}
         {/* floating controls */}
         <Link
@@ -79,6 +95,7 @@ const Arcade = () => {
         >
           ←
         </Link>
+        <FullscreenButton className="absolute top-3 right-14 z-20" />
         <MuteButton className="absolute top-3 right-3 z-20" />
       </div>
     );
@@ -109,7 +126,7 @@ const Arcade = () => {
             <span className="text-gray-400">space / ↑</span> jump&nbsp;&nbsp;
             <span className="text-gray-400">↓</span> duck&nbsp;&nbsp;
             <span className="text-gray-400">esc</span> menu&nbsp;&nbsp;
-            <span className="text-gray-600">(mobile: swipe ↑ jump · swipe ↓ duck · tap jump)</span>
+            <span className="text-gray-600">(mobile: tap = jump · hold ▲ for higher · swipe ↓ to drop)</span>
           </p>
           <Link
             to="/"

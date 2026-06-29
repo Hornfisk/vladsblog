@@ -20,7 +20,7 @@ import { initAudio, playSfx } from "./sfx";
 const STEP = 1 / 120; // fixed physics timestep
 const SWIPE = 22; // px of vertical travel before a drag counts as a swipe
 
-export function GameCanvas() {
+export function GameCanvas({ touch = false }: { touch?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<GameState | null>(null);
   const offRef = useRef<HTMLCanvasElement | null>(null);
@@ -96,18 +96,30 @@ export function GameCanvas() {
     };
   }, []);
 
-  // --- touch / pointer: vertical swipes ---
-  const swipe = useRef<
-    { y: number; t: number; jumped: boolean; ducking: boolean; wasPlaying: boolean } | null
-  >(null);
+  // --- fullscreen (mobile only) ---
+  const goFullscreen = () => {
+    if (!touch || typeof document === "undefined") return;
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      void el.requestFullscreen().catch(() => {
+        /* iOS Safari blocks element fullscreen — the fixed-inset layout still fills */
+      });
+    }
+  };
+
+  // --- touch / pointer on the canvas: tap = jump, swipe down (+hold) = duck / fast-fall ---
+  const swipe = useRef<{ y: number; ducking: boolean; wasPlaying: boolean } | null>(null);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     initAudio();
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
-    swipe.current = { y: e.clientY, t: performance.now(), jumped: false, ducking: false, wasPlaying };
-    if (!wasPlaying) onJumpDown(s); // tap to start / resume / restart (without also jumping)
+    swipe.current = { y: e.clientY, ducking: false, wasPlaying };
+    if (!wasPlaying) {
+      onJumpDown(s); // tap to start / resume / restart
+      goFullscreen();
+    }
   };
 
   const onPointerMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -115,15 +127,11 @@ export function GameCanvas() {
     const s = stateRef.current!;
     if (!sw || s.phase !== "playing") return;
     const dy = e.clientY - sw.y;
-    if (dy < -SWIPE && !sw.jumped) {
-      onJumpDown(s); // swipe up = jump
-      sw.jumped = true;
-    }
     if (dy > SWIPE && !sw.ducking) {
-      s.input.duck = true; // swipe down = duck (held until release / swipe back up)
+      s.input.duck = true; // swipe down = duck on the ground / slam down in the air
       sw.ducking = true;
     } else if (dy < SWIPE * 0.4 && sw.ducking) {
-      s.input.duck = false;
+      s.input.duck = false; // swiped back up = stop ducking
       sw.ducking = false;
     }
   };
@@ -133,16 +141,29 @@ export function GameCanvas() {
     const s = stateRef.current!;
     if (sw) {
       const moved = Math.abs(e.clientY - sw.y);
-      const quick = performance.now() - sw.t < 300;
-      // a clean tap (no drag) jumps — but only if we were already mid-game, so the
-      // tap that *starts* a run doesn't burn an immediate jump
-      if (sw.wasPlaying && s.phase === "playing" && !sw.jumped && !sw.ducking && moved < SWIPE && quick) {
+      // a clean tap (no downward drag) on an in-progress run = jump
+      if (sw.wasPlaying && s.phase === "playing" && !sw.ducking && moved < SWIPE) {
         onJumpDown(s);
       }
       if (sw.ducking) s.input.duck = false;
     }
     swipe.current = null;
-    onJumpUp(s);
+  };
+
+  // --- dedicated JUMP button (touch): press to jump, hold for a higher jump ---
+  const onJumpBtnDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    initAudio();
+    const s = stateRef.current!;
+    const wasPlaying = s.phase === "playing";
+    onJumpDown(s);
+    if (!wasPlaying) goFullscreen();
+  };
+  const onJumpBtnUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onJumpUp(stateRef.current!); // releasing early cuts the jump → variable height
   };
 
   // --- main loop ---
@@ -199,16 +220,31 @@ export function GameCanvas() {
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="w-full h-full block touch-none cursor-pointer"
-      style={{ imageRendering: "pixelated" }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={endPointer}
-      onPointerCancel={endPointer}
-      onPointerLeave={endPointer}
-      aria-label="Clawd Runner game canvas"
-    />
+    <div className="relative w-full h-full">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full block touch-none cursor-pointer"
+        style={{ imageRendering: "pixelated" }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endPointer}
+        onPointerCancel={endPointer}
+        onPointerLeave={endPointer}
+        aria-label="Clawd Runner game canvas"
+      />
+      {touch && (
+        <button
+          type="button"
+          aria-label="Jump (hold for a higher jump)"
+          onPointerDown={onJumpBtnDown}
+          onPointerUp={onJumpBtnUp}
+          onPointerCancel={onJumpBtnUp}
+          onPointerLeave={onJumpBtnUp}
+          className="absolute bottom-6 right-6 z-20 h-20 w-20 select-none touch-none rounded-full border-2 border-accent1/60 bg-accent1/15 text-accent1 font-mono text-[10px] leading-tight active:bg-accent1/35"
+        >
+          ▲<br />JUMP
+        </button>
+      )}
+    </div>
   );
 }
