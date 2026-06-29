@@ -53,6 +53,15 @@ export const TOKEN_R = 6;
 export const TOKEN_POINTS = 25;
 export const COMBO_MAX = 9;
 
+// --- power-ups (float in a HIGH lane only reachable with a double jump) ---
+export const POWERUP_CHANCE = 0.16; // chance to float a special pickup after an obstacle
+export const POWERUP_Y_MIN = 50; // small y = high up; this lane sits above single-jump apex
+export const POWERUP_Y_MAX = 70;
+export const PICKUP_R = 7;
+export const GEM_POINTS = 150; // gold gem bonus
+export const MAX_LIVES = 3; // cap on stored extra lives
+export const INVULN_TIME = 1.2; // i-frames after surviving a hit (shield break / life lost)
+
 // --- juice ---
 export const SHAKE_DECAY = 6;
 export const ALERT_RANGE = 78; // obstacle distance at which Clawd's eyes go >  < (squint)
@@ -80,7 +89,13 @@ export const COLORS = {
   errDark: "#7a1d8a",
   token: "#46d27a",
   tokenGlow: "rgba(70,210,122,0.35)",
+  gem: "#ffd24a", // points pickup
+  gemGlow: "rgba(255,210,74,0.35)",
+  shield: "#54d6ff", // shield pickup + shield ring
+  shieldGlow: "rgba(84,214,255,0.4)",
+  life: "#ff5a7a", // 1up heart
 } as const;
 
 export const HIGHSCORE_KEY = "clawd.arcade.highscore.v1";
-export const MUTED_KEY = "clawd.arcade.muted.v1";
+export const MUTED_KEY = "clawd.arcade.muted.v1"; // sfx mute
+export const MUSIC_KEY = "clawd.arcade.music.v1"; // music on/off

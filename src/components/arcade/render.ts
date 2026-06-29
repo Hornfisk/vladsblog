@@ -114,6 +114,70 @@ function drawToken(ctx: Ctx, tk: Token, t: number): void {
   for (const [dx, dy] of cm) ctx.fillRect(Math.round(tk.x + dx), Math.round(yb + dy), 1, 1);
 }
 
+// pixel heart (centered on 0,0; ~7 wide)
+const HEART: Array<[number, number]> = [
+  [-2, -2], [-1, -2], [1, -2], [2, -2],
+  [-3, -1], [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1], [3, -1],
+  [-3, 0], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [3, 0],
+  [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
+  [-1, 2], [0, 2], [1, 2],
+  [0, 3],
+];
+
+/** High-lane power-ups: gem (points), shield, life. */
+function drawPickup(ctx: Ctx, tk: Token, t: number): void {
+  const yb = tk.y + Math.sin(t * 4 + tk.id) * 1.5;
+  if (tk.kind === "gem") {
+    ctx.fillStyle = C.COLORS.gemGlow;
+    ctx.beginPath();
+    ctx.arc(tk.x, yb, C.PICKUP_R + 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = C.COLORS.gem; // diamond
+    ctx.beginPath();
+    ctx.moveTo(tk.x, yb - C.PICKUP_R);
+    ctx.lineTo(tk.x + C.PICKUP_R * 0.8, yb);
+    ctx.lineTo(tk.x, yb + C.PICKUP_R);
+    ctx.lineTo(tk.x - C.PICKUP_R * 0.8, yb);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.7)"; // facet glint
+    ctx.fillRect(Math.round(tk.x - 1), Math.round(yb - 3), 1, 3);
+  } else if (tk.kind === "shield") {
+    const pr = C.PICKUP_R + Math.sin(t * 6 + tk.id) * 0.6;
+    ctx.fillStyle = C.COLORS.shieldGlow;
+    ctx.beginPath();
+    ctx.arc(tk.x, yb, pr + 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = C.COLORS.shield;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(tk.x, yb, pr, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = C.COLORS.shield; // emblem "+"
+    ctx.fillRect(Math.round(tk.x), Math.round(yb - 2), 1, 5);
+    ctx.fillRect(Math.round(tk.x - 2), Math.round(yb), 5, 1);
+  } else {
+    ctx.fillStyle = "rgba(255,90,122,0.3)";
+    ctx.beginPath();
+    ctx.arc(tk.x, yb, C.PICKUP_R + 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = C.COLORS.life;
+    for (const [dx, dy] of HEART) ctx.fillRect(Math.round(tk.x + dx), Math.round(yb + dy - 1), 1, 1);
+  }
+}
+
+// small HUD heart (~5 wide), top-left at (x,y)
+const MINI_HEART: Array<[number, number]> = [
+  [0, 0], [2, 0],
+  [-1, 1], [0, 1], [1, 1], [2, 1], [3, 1],
+  [0, 2], [1, 2], [2, 2],
+  [1, 3],
+];
+function drawMiniHeart(ctx: Ctx, x: number, y: number): void {
+  ctx.fillStyle = C.COLORS.life;
+  for (const [dx, dy] of MINI_HEART) ctx.fillRect(x + dx, y + dy, 1, 1);
+}
+
 function drawParticles(ctx: Ctx, s: GameState): void {
   for (const p of s.particles) {
     ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.max));
@@ -128,6 +192,15 @@ function drawHUD(ctx: Ctx, s: GameState): void {
   text(ctx, `HI ${s.highScore}`.padEnd(0), C.VIRTUAL_W - 6, 10, 8, C.COLORS.dim, "right");
   if (s.combo > 1 && s.phase === "playing") {
     text(ctx, `x${s.combo}`, C.VIRTUAL_W / 2, 12, 9, C.COLORS.token, "center");
+  }
+  // lives (hearts) + shield pip, top-left under the score
+  for (let i = 0; i < s.lives; i++) drawMiniHeart(ctx, 7 + i * 8, 17);
+  if (s.shielded) {
+    ctx.strokeStyle = C.COLORS.shield;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(8 + s.lives * 8 + 2, 19, 3, 0, Math.PI * 2);
+    ctx.stroke();
   }
 }
 
@@ -153,18 +226,41 @@ export function render(ctx: Ctx, s: GameState): void {
     if (o.type === "bug") drawBug(ctx, o, t);
     else drawErr(ctx, o, t);
   }
-  for (const tk of s.tokens) if (!tk.collected) drawToken(ctx, tk, t);
+  for (const tk of s.tokens) {
+    if (tk.collected) continue;
+    if (tk.kind === "token") drawToken(ctx, tk, t);
+    else drawPickup(ctx, tk, t);
+  }
 
   // Clawd
   const p = s.player;
-  drawClawd(ctx, p.x, p.y, {
-    expression: s.expression,
-    runPhase: p.runPhase,
-    squash: p.squash,
-    ducking: p.ducking,
-    airborne: !p.onGround,
-    blinking: p.blink < 0.12,
-  });
+  // shield bubble
+  if (s.shielded) {
+    const sbx = p.x + C.PLAYER_W / 2;
+    const sby = p.y + C.PLAYER_H / 2;
+    const rr = 15 + Math.sin(t * 6) * 1;
+    ctx.fillStyle = C.COLORS.shieldGlow;
+    ctx.beginPath();
+    ctx.arc(sbx, sby, rr + 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = C.COLORS.shield;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(sbx, sby, rr, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // flicker Clawd while invulnerable (i-frames after a non-fatal hit)
+  const flicker = s.invuln > 0 && Math.floor(t * 18) % 2 === 0;
+  if (!flicker) {
+    drawClawd(ctx, p.x, p.y, {
+      expression: s.expression,
+      runPhase: p.runPhase,
+      squash: p.squash,
+      ducking: p.ducking,
+      airborne: !p.onGround,
+      blinking: p.blink < 0.12,
+    });
+  }
 
   drawParticles(ctx, s);
   drawHUD(ctx, s);

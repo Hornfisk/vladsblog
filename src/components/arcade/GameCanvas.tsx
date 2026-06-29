@@ -15,7 +15,9 @@ import {
 } from "./engine";
 import { render } from "./render";
 import { useGameLoop } from "./useGameLoop";
-import { initAudio, playSfx } from "./sfx";
+import { playSfx } from "./sfx";
+import { initAudio, isMusicOn, toggleSfx } from "./audio";
+import { startMusic, stopMusic, toggleMusicAndSchedule } from "./music";
 
 const STEP = 1 / 120; // fixed physics timestep
 const SWIPE = 22; // px of vertical travel before a drag counts as a swipe
@@ -40,7 +42,30 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
     offCtxRef.current = octx;
   }
 
-  // --- keyboard input (jump / duck / pause / restart only) ---
+  // bring audio up on the first user gesture; only run the music scheduler if music is on
+  const wakeAudio = () => {
+    initAudio();
+    if (isMusicOn()) startMusic();
+  };
+
+  // music scheduler lifecycle: pause when the tab is hidden, stop on unmount
+  useEffect(() => {
+    const onVis = () => {
+      if (document.hidden) {
+        stopMusic();
+      } else if (isMusicOn()) {
+        initAudio(); // browsers auto-suspend on hide — resume before scheduling
+        startMusic();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      stopMusic();
+    };
+  }, []);
+
+  // --- keyboard input (jump / duck / pause / restart / audio toggles) ---
   useEffect(() => {
     const s = () => stateRef.current!;
 
@@ -51,13 +76,12 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
         case "ArrowUp":
         case "KeyW":
           e.preventDefault();
-          initAudio();
+          wakeAudio();
           if (!pressed.current.has(code)) onJumpDown(s());
           break;
         case "ArrowDown":
-        case "KeyS":
           e.preventDefault();
-          initAudio();
+          wakeAudio();
           s().input.duck = true;
           break;
         case "Escape":
@@ -65,6 +89,17 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
           break;
         case "KeyR":
           if (s().phase === "dead") startGame(s());
+          break;
+        case "KeyM": // toggle music
+          if (!pressed.current.has(code)) {
+            toggleMusicAndSchedule();
+          }
+          break;
+        case "KeyS": // toggle sound effects
+          if (!pressed.current.has(code)) {
+            wakeAudio();
+            toggleSfx();
+          }
           break;
         default:
           return;
@@ -82,7 +117,6 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
           onJumpUp(s());
           break;
         case "ArrowDown":
-        case "KeyS":
           s().input.duck = false;
           break;
       }
@@ -117,7 +151,7 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
     } catch {
       /* not supported — fine */
     }
-    initAudio();
+    wakeAudio();
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
     swipe.current = { y: e.clientY, ducking: false, wasPlaying };
@@ -166,7 +200,7 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
     } catch {
       /* not supported — fine */
     }
-    initAudio();
+    wakeAudio();
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
     onJumpDown(s);

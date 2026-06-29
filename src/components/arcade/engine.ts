@@ -7,8 +7,12 @@ export type Phase = "ready" | "playing" | "paused" | "dead";
 export type Expression = "idle" | "focused" | "alert" | "bored" | "dead";
 export type ObstacleType = "bug" | "err";
 
+/** Pickup kinds. "token" is the common ground-lane reward; the rest float in the
+ * high lane that only a double jump can reach. */
+export type PickupKind = "token" | "gem" | "shield" | "life";
+
 /** One-shot events the loop drains each frame to fire sound effects. */
-export type SfxEvent = "jump" | "duck" | "token" | "die" | "start";
+export type SfxEvent = "jump" | "duck" | "token" | "die" | "start" | "powerup" | "shield" | "life" | "hurt";
 
 export interface Obstacle {
   id: number;
@@ -24,6 +28,7 @@ export interface Token {
   x: number;
   y: number;
   collected: boolean;
+  kind: PickupKind;
 }
 
 export interface Particle {
@@ -66,6 +71,9 @@ export interface GameState {
   newHigh: boolean;
   combo: number;
   tokenTally: number;
+  lives: number; // stored extra lives (a hit spends one instead of dying)
+  shielded: boolean; // one-hit shield active
+  invuln: number; // i-frames remaining after surviving a hit
   player: Player;
   obstacles: Obstacle[];
   tokens: Token[];
@@ -109,6 +117,9 @@ export function createGameState(): GameState {
     newHigh: false,
     combo: 0,
     tokenTally: 0,
+    lives: 0,
+    shielded: false,
+    invuln: 0,
     player: makePlayer(),
     obstacles: [],
     tokens: [],
@@ -193,8 +204,22 @@ function spawn(s: GameState): void {
         x: startX + i * 16,
         y: baseY - Math.sin((i / Math.max(1, count - 1)) * Math.PI) * 14,
         collected: false,
+        kind: "token",
       });
     }
+  }
+
+  // rarely float a power-up in the HIGH lane — only a double jump can reach it
+  if (Math.random() < C.POWERUP_CHANCE) {
+    const roll = Math.random();
+    const kind: PickupKind = roll < 0.6 ? "gem" : roll < 0.9 ? "shield" : "life";
+    s.tokens.push({
+      id: s.nextId++,
+      x: C.VIRTUAL_W + 60 + Math.random() * 40,
+      y: C.POWERUP_Y_MIN + Math.random() * (C.POWERUP_Y_MAX - C.POWERUP_Y_MIN),
+      collected: false,
+      kind,
+    });
   }
 }
 
@@ -239,6 +264,27 @@ function die(s: GameState): void {
     s.highScore = s.score;
     s.newHigh = true;
     saveHighScore(s.highScore);
+  }
+}
+
+/** Take an obstacle hit: spend a shield, then a stored life, else die. */
+function hit(s: GameState): void {
+  const cx = s.player.x + C.PLAYER_W / 2;
+  const cy = s.player.y + C.PLAYER_H / 2;
+  if (s.shielded) {
+    s.shielded = false;
+    s.invuln = C.INVULN_TIME;
+    s.shake = 0.7;
+    s.events.push("hurt");
+    burst(s, cx, cy, C.COLORS.shield, 16, 170);
+  } else if (s.lives > 0) {
+    s.lives -= 1;
+    s.invuln = C.INVULN_TIME;
+    s.shake = 0.8;
+    s.events.push("hurt");
+    burst(s, cx, cy, C.COLORS.clawdBody, 16, 190);
+  } else {
+    die(s);
   }
 }
 
@@ -345,30 +391,54 @@ export function step(s: GameState, dt: number): void {
   s.obstacles = s.obstacles.filter((o) => o.x + o.w > -8);
   s.tokens = s.tokens.filter((tk) => tk.x > -8 && !tk.collected);
 
+  // --- invulnerability frames decay ---
+  if (s.invuln > 0) s.invuln = Math.max(0, s.invuln - dt);
+
   // --- collisions ---
   const pr = playerRect(p);
   let nearest = Infinity;
   for (const o of s.obstacles) {
     if (o.x > p.x) nearest = Math.min(nearest, o.x - (p.x + C.PLAYER_W));
-    if (aabb(pr.x + 1, pr.y + 1, pr.w - 2, pr.h - 2, o.x, o.y, o.w, o.h)) {
-      die(s);
-      return;
+    if (s.invuln <= 0 && aabb(pr.x + 1, pr.y + 1, pr.w - 2, pr.h - 2, o.x, o.y, o.w, o.h)) {
+      hit(s);
+      if (s.phase === "dead") return;
+      break; // survived (shield/life) — i-frames are up now, stop checking this frame
     }
   }
 
-  // --- token pickups ---
+  // --- pickups: ground tokens + high-lane power-ups ---
   for (const tk of s.tokens) {
     if (tk.collected) continue;
     const cx = pr.x + pr.w / 2;
     const cy = pr.y + pr.h / 2;
     const dx = cx - tk.x;
     const dy = cy - tk.y;
-    if (dx * dx + dy * dy < (C.TOKEN_R + 11) * (C.TOKEN_R + 11)) {
+    const reach = (tk.kind === "token" ? C.TOKEN_R : C.PICKUP_R) + 11;
+    if (dx * dx + dy * dy < reach * reach) {
       tk.collected = true;
-      s.combo = Math.min(C.COMBO_MAX, s.combo + 1);
-      s.tokenTally += C.TOKEN_POINTS * s.combo;
-      s.events.push("token");
-      burst(s, tk.x, tk.y, C.COLORS.token, 8, 130);
+      switch (tk.kind) {
+        case "token":
+          s.combo = Math.min(C.COMBO_MAX, s.combo + 1);
+          s.tokenTally += C.TOKEN_POINTS * s.combo;
+          s.events.push("token");
+          burst(s, tk.x, tk.y, C.COLORS.token, 8, 130);
+          break;
+        case "gem":
+          s.tokenTally += C.GEM_POINTS;
+          s.events.push("powerup");
+          burst(s, tk.x, tk.y, C.COLORS.gem, 14, 170);
+          break;
+        case "shield":
+          s.shielded = true;
+          s.events.push("shield");
+          burst(s, tk.x, tk.y, C.COLORS.shield, 14, 170);
+          break;
+        case "life":
+          s.lives = Math.min(C.MAX_LIVES, s.lives + 1);
+          s.events.push("life");
+          burst(s, tk.x, tk.y, C.COLORS.life, 14, 170);
+          break;
+      }
     }
   }
 

@@ -5,7 +5,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { GameCanvas } from "@/components/arcade/GameCanvas";
-import { getMuted, toggleMute, initAudio } from "@/components/arcade/sfx";
+import { initAudio, isSfxMuted, toggleSfx, isMusicOn, subscribeAudio } from "@/components/arcade/audio";
+import { toggleMusicAndSchedule } from "@/components/arcade/music";
 
 /** Tracks whether we're on a touch device and which way it's held. */
 function useViewport() {
@@ -27,33 +28,55 @@ function useViewport() {
   return v;
 }
 
-function MuteButton({ className = "" }: { className?: string }) {
-  const [muted, setMutedState] = useState(getMuted);
+const btnCls =
+  "rounded-md border border-accent1/30 bg-[#151821]/80 px-2 py-1 text-sm transition-colors";
+
+function SfxButton() {
+  const [muted, setMuted] = useState(isSfxMuted);
+  useEffect(() => subscribeAudio(() => setMuted(isSfxMuted())), []);
   return (
     <button
       type="button"
       onClick={() => {
         initAudio();
-        setMutedState(toggleMute());
+        toggleSfx();
       }}
-      aria-label={muted ? "Unmute sound" : "Mute sound"}
-      className={`rounded-md border border-accent1/30 bg-[#151821]/80 px-2 py-1 text-sm text-gray-300 hover:text-accent1 transition-colors ${className}`}
+      aria-label={muted ? "Unmute sound effects (s)" : "Mute sound effects (s)"}
+      title="sound effects (s)"
+      className={`${btnCls} ${muted ? "text-gray-500" : "text-gray-300 hover:text-accent1"}`}
     >
       {muted ? "🔇" : "🔊"}
     </button>
   );
 }
 
-function FullscreenButton({ className = "" }: { className?: string }) {
+function MusicButton() {
+  const [on, setOn] = useState(isMusicOn);
+  useEffect(() => subscribeAudio(() => setOn(isMusicOn())), []);
+  return (
+    <button
+      type="button"
+      onClick={() => toggleMusicAndSchedule()}
+      aria-label={on ? "Turn music off (m)" : "Turn music on (m)"}
+      title="music (m)"
+      className={`${btnCls} ${on ? "text-accent2" : "text-gray-500 hover:text-accent1"}`}
+    >
+      ♪
+    </button>
+  );
+}
+
+function FullscreenButton() {
   return (
     <button
       type="button"
       aria-label="Toggle fullscreen"
+      title="fullscreen"
       onClick={() => {
         if (document.fullscreenElement) void document.exitFullscreen?.();
         else void document.documentElement.requestFullscreen?.().catch(() => {});
       }}
-      className={`rounded-md border border-accent1/30 bg-[#151821]/80 px-2 py-1 text-sm text-gray-300 hover:text-accent1 transition-colors ${className}`}
+      className={`${btnCls} text-gray-300 hover:text-accent1`}
     >
       ⛶
     </button>
@@ -95,8 +118,11 @@ const Arcade = () => {
         >
           ←
         </Link>
-        <FullscreenButton className="absolute top-3 right-14 z-20" />
-        <MuteButton className="absolute top-3 right-3 z-20" />
+        <div className="absolute top-3 right-3 z-20 flex gap-2">
+          <FullscreenButton />
+          <MusicButton />
+          <SfxButton />
+        </div>
       </div>
     );
   }
@@ -117,7 +143,10 @@ const Arcade = () => {
         {/* game viewport */}
         <div className="relative w-full aspect-video rounded-md overflow-hidden border border-accent1/30 shadow-[0_0_40px_-12px_rgba(155,135,245,0.5)] bg-[#151821]">
           <GameCanvas />
-          <MuteButton className="absolute top-2 right-2 z-10" />
+          <div className="absolute top-2 right-2 z-10 flex gap-2">
+            <MusicButton />
+            <SfxButton />
+          </div>
         </div>
 
         {/* controls + back */}
@@ -126,7 +155,9 @@ const Arcade = () => {
             <span className="text-gray-400">space / ↑</span> jump (×2 mid-air)&nbsp;&nbsp;
             <span className="text-gray-400">↓</span> duck&nbsp;&nbsp;
             <span className="text-gray-400">esc</span> menu&nbsp;&nbsp;
-            <span className="text-gray-600">(mobile: tap = jump · hold ▲ higher · double-tap = double jump · swipe ↓ drop)</span>
+            <span className="text-gray-400">m</span> music&nbsp;&nbsp;
+            <span className="text-gray-400">s</span> sound&nbsp;&nbsp;
+            <span className="text-gray-600">(mobile: tap = jump · hold ▲ higher · swipe ↓ drop · double-jump for the high-lane power-ups)</span>
           </p>
           <Link
             to="/"

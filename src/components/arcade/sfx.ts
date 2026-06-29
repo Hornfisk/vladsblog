@@ -1,59 +1,17 @@
 // Clawd Runner — tiny 8-bit sound effects synthesized live with the Web Audio API.
-// No audio files, no network: every blip is a square/saw oscillator with a fast envelope.
-// The AudioContext is created lazily on the first user gesture (browser autoplay policy),
-// and a mute toggle is persisted to localStorage.
-import { MUTED_KEY } from "./constants";
+// No audio files: every blip is a square/saw oscillator with a fast envelope, routed
+// through the shared SFX bus (see audio.ts). No-op until the first user gesture / when muted.
+import { getCtx, getSfxBus, isSfxMuted } from "./audio";
 import type { SfxEvent } from "./engine";
 
-let ctx: AudioContext | null = null;
-let master: GainNode | null = null;
-let muted = loadMuted();
-
-function loadMuted(): boolean {
-  try {
-    return typeof localStorage !== "undefined" && localStorage.getItem(MUTED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-export function getMuted(): boolean {
-  return muted;
-}
-
-export function setMuted(v: boolean): void {
-  muted = v;
-  try {
-    localStorage.setItem(MUTED_KEY, v ? "1" : "0");
-  } catch {
-    /* private mode — fine, just won't persist */
-  }
-  if (master) master.gain.value = v ? 0 : 0.9;
-}
-
-export function toggleMute(): boolean {
-  setMuted(!muted);
-  return muted;
-}
-
-/** Create/resume the context. MUST run inside a user gesture (first key press / tap). */
-export function initAudio(): void {
-  if (typeof window === "undefined") return;
-  if (!ctx) {
-    const AC: typeof AudioContext | undefined =
-      window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AC) return;
-    ctx = new AC();
-    master = ctx.createGain();
-    master.gain.value = muted ? 0 : 0.9;
-    master.connect(ctx.destination);
-  }
-  if (ctx.state === "suspended") void ctx.resume();
-}
+// re-export so existing call sites can keep importing initAudio from here
+export { initAudio } from "./audio";
 
 /** A pitched blip: glides through `freqs`, with a quick attack/decay envelope. */
 function tone(freqs: number[], dur: number, type: OscillatorType, vol: number, delay = 0): void {
-  if (!ctx || !master) return;
+  const ctx = getCtx();
+  const bus = getSfxBus();
+  if (!ctx || !bus) return;
   const t = ctx.currentTime + delay;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
@@ -66,14 +24,16 @@ function tone(freqs: number[], dur: number, type: OscillatorType, vol: number, d
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  osc.connect(g).connect(master);
+  osc.connect(g).connect(bus);
   osc.start(t);
   osc.stop(t + dur + 0.02);
 }
 
-/** A short noise burst (used for the crash on death). */
+/** A short noise burst (used for crashes). */
 function noise(dur: number, vol: number, delay = 0): void {
-  if (!ctx || !master) return;
+  const ctx = getCtx();
+  const bus = getSfxBus();
+  if (!ctx || !bus) return;
   const t = ctx.currentTime + delay;
   const n = Math.floor(ctx.sampleRate * dur);
   const buf = ctx.createBuffer(1, n, ctx.sampleRate);
@@ -84,14 +44,14 @@ function noise(dur: number, vol: number, delay = 0): void {
   const g = ctx.createGain();
   g.gain.setValueAtTime(vol, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  src.connect(g).connect(master);
+  src.connect(g).connect(bus);
   src.start(t);
   src.stop(t + dur + 0.02);
 }
 
 /** Fire the cue for a gameplay event. No-op when muted or before the first gesture. */
 export function playSfx(name: SfxEvent): void {
-  if (muted || !ctx) return;
+  if (isSfxMuted() || !getCtx()) return;
   switch (name) {
     case "jump":
       tone([330, 760], 0.13, "square", 0.16);
@@ -102,6 +62,23 @@ export function playSfx(name: SfxEvent): void {
     case "token": // classic two-step coin
       tone([988], 0.05, "square", 0.15);
       tone([1319], 0.14, "square", 0.13, 0.05);
+      break;
+    case "powerup": // bright ascending arpeggio (gem)
+      tone([784], 0.06, "square", 0.15);
+      tone([1047], 0.06, "square", 0.15, 0.06);
+      tone([1568], 0.16, "square", 0.14, 0.12);
+      break;
+    case "shield": // shimmery up-sweep
+      tone([523, 1568], 0.22, "triangle", 0.16);
+      break;
+    case "life": // happy 1up jingle
+      tone([659], 0.08, "square", 0.16);
+      tone([988], 0.08, "square", 0.16, 0.08);
+      tone([1319], 0.2, "square", 0.15, 0.16);
+      break;
+    case "hurt": // down-blip + thud when a shield/life absorbs a hit
+      tone([440, 130], 0.18, "square", 0.16);
+      noise(0.14, 0.08, 0.0);
       break;
     case "start":
       tone([440, 660, 880], 0.16, "square", 0.15);
