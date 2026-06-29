@@ -13,7 +13,7 @@ import {
   startGame,
   type GameState,
 } from "./engine";
-import { render } from "./render";
+import { render, renderText } from "./render";
 import { useGameLoop } from "./useGameLoop";
 import { playSfx } from "./sfx";
 import { initAudio, isMusicOn, toggleSfx } from "./audio";
@@ -270,6 +270,9 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
     const ox = Math.floor((cw - dw) / 2);
     const oy = Math.floor((ch - dh) / 2);
     mctx.drawImage(off, ox, oy, dw, dh);
+
+    // text drawn here, at native display resolution, so it stays crisp (not magnified)
+    renderText(mctx, stateRef.current!, scale, ox, oy);
   }
 
   return (

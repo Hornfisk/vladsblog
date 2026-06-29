@@ -187,13 +187,8 @@ function drawParticles(ctx: Ctx, s: GameState): void {
   ctx.globalAlpha = 1;
 }
 
-function drawHUD(ctx: Ctx, s: GameState): void {
-  text(ctx, `${s.score}`.padStart(5, "0"), 6, 10, 10, C.COLORS.text, "left");
-  text(ctx, `HI ${s.highScore}`.padEnd(0), C.VIRTUAL_W - 6, 10, 8, C.COLORS.dim, "right");
-  if (s.combo > 1 && s.phase === "playing") {
-    text(ctx, `x${s.combo}`, C.VIRTUAL_W / 2, 12, 9, C.COLORS.token, "center");
-  }
-  // lives (hearts) + shield pip, top-left under the score
+function drawHUDPixels(ctx: Ctx, s: GameState): void {
+  // lives (hearts) + shield pip; the score/HI/combo TEXT is drawn separately at native res
   for (let i = 0; i < s.lives; i++) drawMiniHeart(ctx, 7 + i * 8, 17);
   if (s.shielded) {
     ctx.strokeStyle = C.COLORS.shield;
@@ -204,24 +199,48 @@ function drawHUD(ctx: Ctx, s: GameState): void {
   }
 }
 
-function panel(ctx: Ctx, lines: Array<{ s: string; size: number; color: string; dy: number }>): void {
-  ctx.fillStyle = "rgba(21,24,33,0.78)";
-  ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
-  const cx = C.VIRTUAL_W / 2;
-  const cy = C.VIRTUAL_H / 2;
-  for (const l of lines) text(ctx, l.s, cx, cy + l.dy, l.size, l.color, "center");
+type PanelLine = { s: string; size: number; color: string; dy: number };
+
+function panelLines(s: GameState): PanelLine[] | null {
+  if (s.phase === "ready") {
+    return [
+      { s: "CLAWD RUNNER", size: 18, color: C.COLORS.accent1, dy: -46 },
+      { s: "debugging dash", size: 9, color: C.COLORS.accent2, dy: -30 },
+      { s: "SPACE / TAP  to start", size: 10, color: C.COLORS.text, dy: -8 },
+      { s: "↑ JUMP (×2 mid-air)    ↓ DUCK", size: 7, color: C.COLORS.dim, dy: 14 },
+      { s: "M music    S sound    ESC pause", size: 7, color: C.COLORS.dim, dy: 26 },
+      { s: "mobile:  tap jump · hold ▲ higher · swipe ↓ drop", size: 7, color: C.COLORS.dim, dy: 38 },
+    ];
+  }
+  if (s.phase === "paused") {
+    return [
+      { s: "PAUSED", size: 18, color: C.COLORS.accent1, dy: -24 },
+      { s: "SPACE / ESC to resume", size: 9, color: C.COLORS.text, dy: 0 },
+      { s: "↑ jump (×2)   ↓ duck", size: 7, color: C.COLORS.dim, dy: 20 },
+      { s: "M music   S sound", size: 7, color: C.COLORS.dim, dy: 32 },
+    ];
+  }
+  if (s.phase === "dead") {
+    return [
+      { s: "SEGFAULT", size: 18, color: C.COLORS.accent2, dy: -30 },
+      { s: `score ${s.score}`, size: 11, color: C.COLORS.text, dy: -6 },
+      { s: s.newHigh ? "★ NEW HIGH SCORE ★" : `high ${s.highScore}`, size: 9, color: s.newHigh ? C.COLORS.token : C.COLORS.dim, dy: 12 },
+      { s: "SPACE / TAP / R to retry", size: 9, color: C.COLORS.accent1, dy: 34 },
+    ];
+  }
+  return null;
 }
 
+/** Draw the pixel-art world to the low-res buffer. TEXT is drawn separately (renderText), at
+ *  native resolution, so it stays sharp instead of being magnified from this small buffer. */
 export function render(ctx: Ctx, s: GameState): void {
+  const t = s.time;
   ctx.save();
   if (s.shake > 0) {
     const m = s.shake * 4;
     ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
   }
-
   drawBackground(ctx, s);
-
-  const t = s.time;
   for (const o of s.obstacles) {
     if (o.type === "bug") drawBug(ctx, o, t);
     else drawErr(ctx, o, t);
@@ -231,10 +250,7 @@ export function render(ctx: Ctx, s: GameState): void {
     if (tk.kind === "token") drawToken(ctx, tk, t);
     else drawPickup(ctx, tk, t);
   }
-
-  // Clawd
   const p = s.player;
-  // shield bubble
   if (s.shielded) {
     const sbx = p.x + C.PLAYER_W / 2;
     const sby = p.y + C.PLAYER_H / 2;
@@ -249,7 +265,6 @@ export function render(ctx: Ctx, s: GameState): void {
     ctx.arc(sbx, sby, rr, 0, Math.PI * 2);
     ctx.stroke();
   }
-  // flicker Clawd while invulnerable (i-frames after a non-fatal hit)
   const flicker = s.invuln > 0 && Math.floor(t * 18) % 2 === 0;
   if (!flicker) {
     drawClawd(ctx, p.x, p.y, {
@@ -261,39 +276,43 @@ export function render(ctx: Ctx, s: GameState): void {
       blinking: p.blink < 0.12,
     });
   }
-
   drawParticles(ctx, s);
-  drawHUD(ctx, s);
+  ctx.restore();
 
-  // scanlines
+  // HUD pixel bits + scanlines + the dim panel backdrop (drawn straight, no shake)
+  drawHUDPixels(ctx, s);
   ctx.fillStyle = "rgba(0,0,0,0.06)";
   for (let y = 0; y < C.VIRTUAL_H; y += 2) ctx.fillRect(0, y, C.VIRTUAL_W, 1);
-
-  // overlays
-  if (s.phase === "ready") {
-    panel(ctx, [
-      { s: "CLAWD RUNNER", size: 18, color: C.COLORS.accent1, dy: -46 },
-      { s: "debugging dash", size: 9, color: C.COLORS.accent2, dy: -30 },
-      { s: "SPACE / TAP  to start", size: 10, color: C.COLORS.text, dy: -8 },
-      { s: "↑ JUMP (×2 mid-air)    ↓ DUCK", size: 7, color: C.COLORS.dim, dy: 14 },
-      { s: "M music    S sound    ESC pause", size: 7, color: C.COLORS.dim, dy: 26 },
-      { s: "mobile:  tap jump · hold ▲ higher · swipe ↓ drop", size: 7, color: C.COLORS.dim, dy: 38 },
-    ]);
-  } else if (s.phase === "paused") {
-    panel(ctx, [
-      { s: "PAUSED", size: 18, color: C.COLORS.accent1, dy: -24 },
-      { s: "SPACE / ESC to resume", size: 9, color: C.COLORS.text, dy: 0 },
-      { s: "↑ jump (×2)   ↓ duck", size: 7, color: C.COLORS.dim, dy: 20 },
-      { s: "M music   S sound", size: 7, color: C.COLORS.dim, dy: 32 },
-    ]);
-  } else if (s.phase === "dead") {
-    panel(ctx, [
-      { s: "SEGFAULT", size: 18, color: C.COLORS.accent2, dy: -30 },
-      { s: `score ${s.score}`, size: 11, color: C.COLORS.text, dy: -6 },
-      { s: s.newHigh ? "★ NEW HIGH SCORE ★" : `high ${s.highScore}`, size: 9, color: s.newHigh ? C.COLORS.token : C.COLORS.dim, dy: 12 },
-      { s: "SPACE / TAP / R to retry", size: 9, color: C.COLORS.accent1, dy: 34 },
-    ]);
+  if (panelLines(s)) {
+    ctx.fillStyle = "rgba(21,24,33,0.82)";
+    ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
   }
+}
 
-  ctx.restore();
+/** Draw HUD + panel TEXT on the display canvas at native resolution (crisp). (vx,vy,vsize) are in
+ *  virtual-canvas units; scale/ox/oy map them onto the blitted pixel-art. */
+export function renderText(
+  ctx: Ctx, s: GameState, scale: number, ox: number, oy: number,
+): void {
+  const vtext = (
+    str: string, vx: number, vy: number, vsize: number, color: string,
+    align: CanvasTextAlign = "left",
+  ) => {
+    ctx.font = `${vsize * scale}px 'JetBrains Mono', ui-monospace, monospace`;
+    ctx.textAlign = align;
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = color;
+    ctx.fillText(str, ox + vx * scale, oy + vy * scale);
+  };
+  vtext(`${s.score}`.padStart(5, "0"), 6, 10, 10, C.COLORS.text, "left");
+  vtext(`HI ${s.highScore}`, C.VIRTUAL_W - 6, 10, 8, C.COLORS.dim, "right");
+  if (s.combo > 1 && s.phase === "playing") {
+    vtext(`x${s.combo}`, C.VIRTUAL_W / 2, 12, 9, C.COLORS.token, "center");
+  }
+  const lines = panelLines(s);
+  if (lines) {
+    const cx = C.VIRTUAL_W / 2;
+    const cy = C.VIRTUAL_H / 2;
+    for (const l of lines) vtext(l.s, cx, cy + l.dy, l.size, l.color, "center");
+  }
 }
