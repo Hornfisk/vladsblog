@@ -7,6 +7,8 @@ import { Link } from "react-router-dom";
 import { GameCanvas } from "@/components/arcade/GameCanvas";
 import { initAudio, isSfxMuted, toggleSfx, isMusicOn, subscribeAudio } from "@/components/arcade/audio";
 import { toggleMusicAndSchedule } from "@/components/arcade/music";
+import { useInstallPrompt, type InstallMode } from "@/lib/installPrompt";
+import { type Phase } from "@/components/arcade/engine";
 
 /** Tracks whether we're on a touch device and which way it's held. */
 function useViewport() {
@@ -48,6 +50,12 @@ const NOTE: Cells = [
 const FS: Cells = [
   [0, 0], [1, 0], [0, 1], [8, 0], [7, 0], [8, 1],
   [0, 8], [1, 8], [0, 7], [8, 8], [7, 8], [8, 7],
+];
+// download-into-tray glyph for the install button
+const DL: Cells = [
+  [4, 0], [4, 1], [4, 2], [4, 3],            // shaft
+  [2, 3], [6, 3], [3, 4], [5, 4], [4, 5],     // arrowhead (pointing down)
+  [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7], // tray base
 ];
 
 function PixelIcon({ cells }: { cells: Cells }) {
@@ -112,6 +120,63 @@ function FullscreenButton() {
   );
 }
 
+// Install-to-home-screen button. Native prompt on Chromium; opens an instructions
+// card on iOS (which has no install API). Renders nothing when not installable.
+function InstallButton({
+  mode,
+  onPrompt,
+  onIos,
+}: {
+  mode: InstallMode;
+  onPrompt: () => void;
+  onIos: () => void;
+}) {
+  if (mode === "none") return null;
+  return (
+    <button
+      type="button"
+      onClick={mode === "ios" ? onIos : onPrompt}
+      aria-label="Install vlads.blog to your home screen"
+      title="install to home screen"
+      className="flex h-10 items-center gap-1.5 rounded-md border border-accent2/50 bg-[#151821]/85 px-3 text-xs text-accent2 transition-colors hover:border-accent2"
+    >
+      <PixelIcon cells={DL} />
+      install
+    </button>
+  );
+}
+
+// iOS has no programmatic install — show the Share → Add to Home Screen steps.
+function IosInstallCard({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-6"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="w-full max-w-xs rounded-lg border border-accent1/40 bg-[#151821] p-5 text-center font-mono shadow-[0_0_40px_-12px_rgba(155,135,245,0.6)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img src="/favicon.svg" alt="" className="mx-auto mb-3 h-12 w-12 rounded" />
+        <p className="mb-2 text-sm text-accent1">install vlads.blog</p>
+        <p className="text-xs leading-relaxed text-gray-400">
+          tap the <span className="text-accent2">share</span> button, then choose{" "}
+          <span className="text-accent2">"add to home screen"</span>.
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-4 text-xs text-gray-500 underline underline-offset-4 hover:text-gray-300"
+        >
+          close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function RotateOverlay() {
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#151821] text-center px-6">
@@ -124,6 +189,12 @@ function RotateOverlay() {
 
 const Arcade = () => {
   const { touch, portrait } = useViewport();
+  const [phase, setPhase] = useState<Phase>("ready");
+  const { mode, promptInstall } = useInstallPrompt();
+  const [iosCard, setIosCard] = useState(false);
+  const installEl = (
+    <InstallButton mode={mode} onPrompt={() => void promptInstall()} onIos={() => setIosCard(true)} />
+  );
 
   useEffect(() => {
     const prev = document.title;
@@ -137,7 +208,7 @@ const Arcade = () => {
   if (touch) {
     return (
       <div className="fixed inset-0 z-50 bg-[#151821]" style={{ height: "100dvh" }}>
-        <GameCanvas touch />
+        <GameCanvas touch onPhaseChange={setPhase} />
         {portrait && <RotateOverlay />}
         {/* floating controls */}
         <Link
@@ -147,11 +218,14 @@ const Arcade = () => {
         >
           ←
         </Link>
-        <div className="absolute top-3 right-3 z-20 flex gap-2">
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+          {/* install offered only when not actively playing, so it never clutters the run */}
+          {phase !== "playing" && installEl}
           <FullscreenButton />
           <MusicButton />
           <SfxButton />
         </div>
+        {iosCard && <IosInstallCard onClose={() => setIosCard(false)} />}
       </div>
     );
   }
@@ -171,7 +245,7 @@ const Arcade = () => {
 
         {/* game viewport */}
         <div className="relative w-full aspect-video rounded-md overflow-hidden border border-accent1/30 shadow-[0_0_40px_-12px_rgba(155,135,245,0.5)] bg-[#151821]">
-          <GameCanvas />
+          <GameCanvas onPhaseChange={setPhase} />
           <div className="absolute top-2 right-2 z-10 flex gap-2">
             <MusicButton />
             <SfxButton />
@@ -188,12 +262,15 @@ const Arcade = () => {
             <span className="text-gray-400">s</span> sound&nbsp;&nbsp;
             <span className="text-gray-600">(mobile: tap = jump · hold ▲ higher · swipe ↓ drop · double-jump for the high-lane power-ups)</span>
           </p>
-          <Link
-            to="/"
-            className="text-accent1 hover:text-accent2 transition-colors underline underline-offset-4 shrink-0"
-          >
-            ← back to posts
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            {installEl}
+            <Link
+              to="/"
+              className="text-accent1 hover:text-accent2 transition-colors underline underline-offset-4"
+            >
+              ← back to posts
+            </Link>
+          </div>
         </div>
 
         <p className="mt-6 text-center text-[11px] text-gray-600">

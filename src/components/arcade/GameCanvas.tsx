@@ -18,6 +18,7 @@ import {
   togglePause,
   startGame,
   type GameState,
+  type Phase,
 } from "./engine";
 import { render, renderText } from "./render";
 import { useGameLoop } from "./useGameLoop";
@@ -32,7 +33,13 @@ const GAME_ASPECT = C.VIRTUAL_W / C.VIRTUAL_H; // 16:9 — drives the pillar-mar
 const MIN_ZONE = 56; // px floor on side tap-zone width (usable target even on near-16:9 phones)
 const HINT_MS = 2600; // how long the side boxes stay visible before fading on first visit
 
-export function GameCanvas({ touch = false }: { touch?: boolean }) {
+export function GameCanvas({
+  touch = false,
+  onPhaseChange,
+}: {
+  touch?: boolean;
+  onPhaseChange?: (phase: Phase) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<GameState | null>(null);
   const offRef = useRef<HTMLCanvasElement | null>(null);
@@ -40,6 +47,7 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
   const accRef = useRef(0);
   const pressed = useRef<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const lastPhaseRef = useRef<Phase>("ready");
   // side jump zones (touch): width tracks the pillar margin; hint outline fades after first sight
   const [zoneW, setZoneW] = useState(MIN_ZONE);
   const [hintOn, setHintOn] = useState(false);
@@ -186,6 +194,12 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
     return () => window.clearTimeout(t);
   }, [touch]);
 
+  // report the initial phase once mounted, so the page starts in the right state
+  useEffect(() => {
+    onPhaseChange?.(stateRef.current!.phase);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // --- fullscreen (mobile only) ---
   const goFullscreen = () => {
     if (!touch || typeof document === "undefined") return;
@@ -291,6 +305,11 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
     }
     // music tempo rises with game speed (pitch unchanged)
     setMusicSpeed((s.speed - C.BASE_SPEED) / (C.MAX_SPEED - C.BASE_SPEED));
+    // surface phase transitions (ready/playing/paused/dead) to the page
+    if (s.phase !== lastPhaseRef.current) {
+      lastPhaseRef.current = s.phase;
+      onPhaseChange?.(s.phase);
+    }
     blit();
   }, () => {
     // auto-pause when tab hidden
