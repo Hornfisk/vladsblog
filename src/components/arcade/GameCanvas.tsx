@@ -32,6 +32,7 @@ const HINT_KEY = "clawd:jumpHintSeen"; // localStorage flag — skip the side-ta
 const GAME_ASPECT = C.VIRTUAL_W / C.VIRTUAL_H; // 16:9 — drives the pillar-margin tap zones
 const MIN_ZONE = 56; // px floor on side tap-zone width (usable target even on near-16:9 phones)
 const HINT_MS = 2600; // how long the side boxes stay visible before fading on first visit
+const DUCK_BAND = 0.62; // press below this fraction of the canvas height = hold-to-duck (else jump)
 
 export function GameCanvas({
   touch = false,
@@ -211,8 +212,15 @@ export function GameCanvas({
     }
   };
 
-  // --- touch / pointer on the canvas: tap = jump, swipe down (+hold) = duck / fast-fall ---
-  const swipe = useRef<{ y: number; ducking: boolean; wasPlaying: boolean } | null>(null);
+  // --- touch / pointer on the canvas ---
+  // Press in the upper area = jump NOW (snappy; hold for higher, release cuts). Press-and-hold
+  // the bottom band = duck. A downward drag still slams in the air / ducks on the ground.
+  const swipe = useRef<{
+    y: number;
+    ducking: boolean;
+    wasPlaying: boolean;
+    bandDuck: boolean;
+  } | null>(null);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -222,12 +230,24 @@ export function GameCanvas({
       /* not supported — fine */
     }
     wakeAudio();
+    if (hintOn) dismissHint();
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
-    swipe.current = { y: e.clientY, ducking: false, wasPlaying };
     if (!wasPlaying) {
+      swipe.current = { y: e.clientY, ducking: false, wasPlaying, bandDuck: false };
       onJumpDown(s); // tap to start / resume / restart
       goFullscreen();
+      return;
+    }
+    // bottom band = hold-to-duck; everywhere else = jump immediately
+    const rect = e.currentTarget.getBoundingClientRect();
+    const inDuckBand = e.clientY - rect.top > rect.height * DUCK_BAND;
+    if (inDuckBand) {
+      s.input.duck = true;
+      swipe.current = { y: e.clientY, ducking: true, wasPlaying, bandDuck: true };
+    } else {
+      onJumpDown(s); // press = jump now
+      swipe.current = { y: e.clientY, ducking: false, wasPlaying, bandDuck: false };
     }
   };
 
@@ -235,26 +255,26 @@ export function GameCanvas({
     const sw = swipe.current;
     const s = stateRef.current!;
     if (!sw || s.phase !== "playing") return;
+    if (sw.bandDuck) return; // holding the duck zone — release ends it; ignore drags
     const dy = e.clientY - sw.y;
     if (dy > SWIPE && !sw.ducking) {
-      s.input.duck = true; // swipe down = duck on the ground / slam down in the air
+      s.input.duck = true; // drag down = slam in the air / duck on the ground
       sw.ducking = true;
     } else if (dy < SWIPE * 0.4 && sw.ducking) {
-      s.input.duck = false; // swiped back up = stop ducking
+      s.input.duck = false; // dragged back up = stop ducking
       sw.ducking = false;
     }
   };
 
-  const endPointer = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+  const endPointer = () => {
     const sw = swipe.current;
     const s = stateRef.current!;
     if (sw) {
-      const moved = Math.abs(e.clientY - sw.y);
-      // a clean tap (no downward drag) on an in-progress run = jump
-      if (sw.wasPlaying && s.phase === "playing" && !sw.ducking && moved < SWIPE) {
-        onJumpDown(s);
+      if (sw.ducking) {
+        s.input.duck = false; // release ends the duck / slam
+      } else if (sw.wasPlaying) {
+        onJumpUp(s); // release cuts the jump → variable height
       }
-      if (sw.ducking) s.input.duck = false;
     }
     swipe.current = null;
   };
