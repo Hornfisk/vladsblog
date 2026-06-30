@@ -2,7 +2,13 @@
 // Everything is client-side and self-contained; no network, no shared state.
 // Controls are jump/duck only (Clawd is pinned to the left): keyboard on desktop, vertical
 // swipes on touch (swipe up = jump, swipe down = duck, quick tap = jump).
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import * as C from "./constants";
 import {
   createGameState,
@@ -21,6 +27,10 @@ import { startMusic, stopMusic, toggleMusicAndSchedule, setMusicSpeed } from "./
 
 const STEP = 1 / 120; // fixed physics timestep
 const SWIPE = 22; // px of vertical travel before a drag counts as a swipe
+const HINT_KEY = "clawd:jumpHintSeen"; // localStorage flag — skip the side-tap hint for repeat visitors
+const GAME_ASPECT = C.VIRTUAL_W / C.VIRTUAL_H; // 16:9 — drives the pillar-margin tap zones
+const MIN_ZONE = 56; // px floor on side tap-zone width (usable target even on near-16:9 phones)
+const HINT_MS = 2600; // how long the side boxes stay visible before fading on first visit
 
 export function GameCanvas({ touch = false }: { touch?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -29,6 +39,19 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
   const offCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const accRef = useRef(0);
   const pressed = useRef<Set<string>>(new Set());
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  // side jump zones (touch): width tracks the pillar margin; hint outline fades after first sight
+  const [zoneW, setZoneW] = useState(MIN_ZONE);
+  const [hintOn, setHintOn] = useState(false);
+
+  const dismissHint = () => {
+    setHintOn(false);
+    try {
+      localStorage.setItem(HINT_KEY, "1");
+    } catch {
+      /* private mode / blocked storage — fine, hint just shows again next time */
+    }
+  };
 
   // one-time setup: state + offscreen virtual canvas
   if (!stateRef.current) stateRef.current = createGameState();
@@ -130,6 +153,39 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
     };
   }, []);
 
+  // --- side jump zones: size to the empty pillar margins beside the 16:9 play area ---
+  useLayoutEffect(() => {
+    if (!touch) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const gameW = Math.min(w, h * GAME_ASPECT);
+      const margin = Math.max(0, (w - gameW) / 2);
+      setZoneW(Math.max(MIN_ZONE, Math.floor(margin)));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [touch]);
+
+  // --- one-time "tap here" hint: show the side boxes, then fade after a beat ---
+  useEffect(() => {
+    if (!touch || typeof window === "undefined") return;
+    let seen = false;
+    try {
+      seen = localStorage.getItem(HINT_KEY) === "1";
+    } catch {
+      /* storage blocked — treat as unseen */
+    }
+    if (seen) return;
+    setHintOn(true);
+    const t = window.setTimeout(() => dismissHint(), HINT_MS);
+    return () => window.clearTimeout(t);
+  }, [touch]);
+
   // --- fullscreen (mobile only) ---
   const goFullscreen = () => {
     if (!touch || typeof document === "undefined") return;
@@ -201,6 +257,7 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
       /* not supported — fine */
     }
     wakeAudio();
+    if (hintOn) dismissHint(); // first interaction with a zone retires the hint
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
     onJumpDown(s);
@@ -276,7 +333,7 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div ref={containerRef} className="relative w-full h-full">
       <canvas
         ref={canvasRef}
         className="w-full h-full block touch-none cursor-pointer"
@@ -289,19 +346,33 @@ export function GameCanvas({ touch = false }: { touch?: boolean }) {
         onContextMenu={(e) => e.preventDefault()}
         aria-label="Clawd Runner game canvas"
       />
-      {touch && (
-        <button
-          type="button"
-          aria-label="Jump (hold for a higher jump)"
-          onPointerDown={onJumpBtnDown}
-          onPointerUp={onJumpBtnUp}
-          onPointerCancel={onJumpBtnCancel}
-          onContextMenu={(e) => e.preventDefault()}
-          className="absolute bottom-6 right-6 z-20 h-20 w-20 select-none touch-none rounded-full border-2 border-accent1/60 bg-accent1/15 text-accent1 font-mono text-[10px] leading-tight active:bg-accent1/35"
-        >
-          ▲<br />JUMP
-        </button>
-      )}
+      {/* Side jump zones: the empty pillar space beside the game is the tap target
+          (press = jump, hold = higher). The rounded outline is just a first-visit hint
+          that fades out; the zones stay tappable after it's gone. */}
+      {touch &&
+        (["left", "right"] as const).map((side) => (
+          <button
+            key={side}
+            type="button"
+            aria-label="Jump (hold for a higher jump)"
+            onPointerDown={onJumpBtnDown}
+            onPointerUp={onJumpBtnUp}
+            onPointerCancel={onJumpBtnCancel}
+            onContextMenu={(e) => e.preventDefault()}
+            style={{ width: zoneW }}
+            className={`absolute top-16 bottom-0 z-20 flex select-none touch-none items-center justify-center bg-transparent ${
+              side === "left" ? "left-0" : "right-0"
+            }`}
+          >
+            <span
+              className={`pointer-events-none mx-1 flex h-[55%] w-[calc(100%-0.5rem)] items-center justify-center rounded-2xl border-2 border-accent1/45 bg-accent1/5 font-mono text-[10px] uppercase tracking-widest text-accent1/75 transition-opacity duration-700 ${
+                hintOn ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              tap
+            </span>
+          </button>
+        ))}
     </div>
   );
 }
