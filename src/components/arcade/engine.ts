@@ -5,7 +5,7 @@ import { loadHighScore, saveHighScore } from "./highScore";
 
 export type Phase = "ready" | "playing" | "paused" | "dead";
 export type Expression = "idle" | "focused" | "alert" | "bored" | "dead";
-export type ObstacleType = "bug" | "flyer";
+export type ObstacleType = "skitter" | "crawler" | "stacker" | "flyer";
 
 /** Pickup kinds. "token" is the common ground-lane reward; the rest float in the
  * high lane that only a double jump can reach. */
@@ -183,14 +183,23 @@ function spawn(s: GameState): void {
       h: C.FLYER_H,
     });
   } else {
-    // ground bug — jump over it
+    // ground creature — jump over it; species picked by weight
+    const r = Math.random();
+    let type: ObstacleType, w: number, hh: number;
+    if (r < 0.45) {
+      type = "skitter"; w = C.SKITTER_W; hh = C.SKITTER_H;
+    } else if (r < 0.85) {
+      type = "crawler"; w = C.CRAWLER_W; hh = C.CRAWLER_H;
+    } else {
+      type = "stacker"; w = C.STACKER_W; hh = C.STACKER_H;
+    }
     s.obstacles.push({
       id: s.nextId++,
-      type: "bug",
+      type,
       x: C.VIRTUAL_W + 8,
-      y: C.GROUND_Y - C.BUG_H,
-      w: C.BUG_W,
-      h: C.BUG_H,
+      y: C.GROUND_Y - hh,
+      w,
+      h: hh,
     });
   }
   // sometimes float a line of tokens in a reachable arc after the obstacle

@@ -42,8 +42,12 @@ export const SPAWN_JITTER = 0.45; // random extra seconds
 export const TOKEN_CHANCE = 0.6; // chance to also float a token after an obstacle
 
 // --- obstacles ---
-export const BUG_W = 18;
-export const BUG_H = 15;
+export const SKITTER_W = 12; // small low scuttler — easy hop
+export const SKITTER_H = 9;
+export const CRAWLER_W = 18; // the standard beetle
+export const CRAWLER_H = 15;
+export const STACKER_W = 14; // tall stack-overflow tower — needs a full (held) jump
+export const STACKER_H = 34;
 export const FLYER_W = 24;
 export const FLYER_H = 16;
 export const FLYER_GAP = 13; // open height beneath the overhead flyer (duck to fit)
@@ -85,6 +89,7 @@ export const COLORS = {
   eyeWhite: "#fdf6f0", // (bug sprite eyes)
   bug: "#E0556E",
   bugDark: "#8f2a3e",
+  bugLit: "#ff7d92", // brighter red for the stacker's glitch flicker
   flyer: "#D946EF",
   flyerDark: "#7a1d8a",
   token: "#46d27a",

@@ -76,7 +76,7 @@ function drawBackground(ctx: Ctx, s: GameState): void {
   }
 }
 
-function drawBug(ctx: Ctx, o: Obstacle, t: number): void {
+function drawCrawler(ctx: Ctx, o: Obstacle, t: number): void {
   const { x, y, w, h } = o;
   const wob = Math.sin(t * 14 + o.id) * 0.5;
   // legs
@@ -101,6 +101,44 @@ function drawBug(ctx: Ctx, o: Obstacle, t: number): void {
   ctx.fillStyle = C.COLORS.eyeWhite;
   ctx.fillRect(x + 4, y + 4, 1, 1);
   ctx.fillRect(x + w - 5, y + 4, 1, 1);
+}
+
+function drawSkitter(ctx: Ctx, o: Obstacle, t: number): void {
+  const { x, y, w, h } = o;
+  const wob = Math.sin(t * 24 + o.id) * 0.6; // fast scuttle
+  // six little legs
+  ctx.fillStyle = C.COLORS.bugDark;
+  for (let i = 0; i < 3; i++) {
+    const lx = x + 2 + i * 4;
+    ctx.fillRect(Math.round(lx), Math.round(y + h - 1 + wob), 1, 2);
+    ctx.fillRect(Math.round(lx + 1), Math.round(y + h - 1 - wob), 1, 2);
+  }
+  // squat body
+  ctx.fillStyle = C.COLORS.bug;
+  ctx.fillRect(x + 1, y + 2, w - 2, h - 3);
+  ctx.fillRect(x + 2, y + 1, w - 4, h - 1);
+  // eyes
+  ctx.fillStyle = C.COLORS.eyeWhite;
+  ctx.fillRect(x + 2, y + 3, 1, 1);
+  ctx.fillRect(x + w - 3, y + 3, 1, 1);
+}
+
+function drawStacker(ctx: Ctx, o: Obstacle, t: number): void {
+  const { x, y, w, h } = o;
+  const seg = 6; // height of one stacked block
+  const n = Math.floor(h / seg);
+  for (let i = 0; i < n; i++) {
+    const by = y + i * seg;
+    const lit = (Math.floor(t * 6) + i) % 4 === 0; // a glitch flicker climbing the tower
+    ctx.fillStyle = C.COLORS.bugDark;
+    ctx.fillRect(x, by, w, seg - 1);
+    ctx.fillStyle = lit ? C.COLORS.bugLit : C.COLORS.bug;
+    ctx.fillRect(x + 1, by + 1, w - 2, seg - 3);
+  }
+  // eyes near the top so it reads as a creature, not just a wall
+  ctx.fillStyle = C.COLORS.eyeWhite;
+  ctx.fillRect(x + 3, y + 2, 2, 2);
+  ctx.fillRect(x + w - 5, y + 2, 2, 2);
 }
 
 function drawFlyer(ctx: Ctx, o: Obstacle, t: number): void {
@@ -273,7 +311,9 @@ export function render(ctx: Ctx, s: GameState): void {
   drawBackground(ctx, s);
   for (const o of s.obstacles) {
     if (o.type === "flyer") drawFlyer(ctx, o, t);
-    else drawBug(ctx, o, t);
+    else if (o.type === "skitter") drawSkitter(ctx, o, t);
+    else if (o.type === "stacker") drawStacker(ctx, o, t);
+    else drawCrawler(ctx, o, t);
   }
   for (const tk of s.tokens) {
     if (tk.collected) continue;
