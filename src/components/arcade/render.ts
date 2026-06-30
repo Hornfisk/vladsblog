@@ -17,26 +17,61 @@ function text(
   ctx.fillText(str, x, y);
 }
 
+// Cheap deterministic hash → [0,1). Indexing by absolute world-cell number means each
+// layer's field is generated fresh as it scrolls, so nothing visibly repeats: stars and
+// buildings are placed per-cell, and the cell index climbs forever with bgScroll.
+function hash(n: number): number {
+  const x = Math.sin(n * 127.1) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// Three back-to-front depth layers, all driven by s.bgScroll at different parallax rates:
+// stars (farthest, slowest) → city skyline (mid) → ground ticks (nearest). Kept subtle so
+// it sits behind the action and never competes with obstacles.
 function drawBackground(ctx: Ctx, s: GameState): void {
   ctx.fillStyle = C.COLORS.bg;
   ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
 
-  // parallax dot grid (matches the site's backdrop)
-  const step = 28;
-  const off = (s.bgScroll * 0.4) % step;
-  ctx.fillStyle = C.COLORS.grid;
-  for (let gx = -off; gx < C.VIRTUAL_W; gx += step) {
-    for (let gy = 0; gy < C.GROUND_Y; gy += step) {
-      ctx.fillRect(Math.round(gx), gy, 1, 1);
+  // --- layer 1: stars (farthest, ~0.12×) — sparse dim pixels in the upper sky ---
+  const starOff = s.bgScroll * 0.12;
+  const cellW = 19;
+  const skyH = C.GROUND_Y - 26;
+  const rows = 4;
+  const cols = Math.ceil(C.VIRTUAL_W / cellW) + 2;
+  for (let row = 0; row < rows; row++) {
+    for (let i = -1; i < cols; i++) {
+      const cell = Math.floor(starOff / cellW) + i;
+      if (hash(cell * 1.7 + row * 91.3) > 0.45) continue; // ~45% of cells get a star
+      const jx = hash(cell * 3.3 + row * 7.1);
+      const jy = hash(cell * 5.9 + row * 13.7);
+      const px = Math.round(cell * cellW - starOff + jx * cellW);
+      const py = Math.round(5 + row * (skyH / rows) + jy * (skyH / rows - 3));
+      ctx.fillStyle = jy < 0.3 ? "rgba(203,213,255,0.30)" : "rgba(190,196,224,0.16)";
+      ctx.fillRect(px, py, 1, 1);
     }
   }
 
-  // faint parallax skyline streaks
-  ctx.fillStyle = "rgba(217,70,239,0.05)";
-  const s2 = (s.bgScroll * 0.7) % 120;
-  for (let i = -1; i < 4; i++) {
-    const bx = i * 120 - s2;
-    ctx.fillRect(Math.round(bx), C.GROUND_Y - 40, 60, 40);
+  // --- layer 2: city skyline (mid, ~0.4×) — flat silhouettes + a few lit windows ---
+  const cityOff = s.bgScroll * 0.4;
+  const slotW = 34;
+  const slots = Math.ceil(C.VIRTUAL_W / slotW) + 2;
+  for (let i = -1; i < slots; i++) {
+    const slot = Math.floor(cityOff / slotW) + i;
+    const bw = 16 + Math.floor(hash(slot * 2.1 + 0.5) * 16); // 16..32 wide
+    const bh = 16 + Math.floor(hash(slot * 4.7 + 1.3) * 42); // 16..58 tall
+    const bx = Math.round(slot * slotW - cityOff + (slotW - bw) * hash(slot * 6.1));
+    const by = C.GROUND_Y - bh;
+    ctx.fillStyle = "#1b1e2c"; // silhouette barely above the bg — atmospheric, low contrast
+    ctx.fillRect(bx, by, bw, bh);
+    // lit windows: sparse, dim, mostly purple with the odd magenta
+    for (let wy = by + 3; wy < C.GROUND_Y - 2; wy += 6) {
+      for (let wx = bx + 2; wx < bx + bw - 2; wx += 5) {
+        const hw = hash(slot * 17.3 + wx * 2.7 + wy * 0.31);
+        if (hw > 0.12) continue; // ~12% of windows lit
+        ctx.fillStyle = hw < 0.025 ? "rgba(217,70,239,0.28)" : "rgba(155,135,245,0.30)";
+        ctx.fillRect(wx, wy, 1, 2);
+      }
+    }
   }
 
   // ground
