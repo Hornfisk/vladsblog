@@ -45,6 +45,9 @@ export function GameCanvas({
   const stateRef = useRef<GameState | null>(null);
   const offRef = useRef<HTMLCanvasElement | null>(null);
   const offCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const mctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const showFpsRef = useRef(false);
+  const fpsRef = useRef(0);
   const accRef = useRef(0);
   const pressed = useRef<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -132,6 +135,9 @@ export function GameCanvas({
             wakeAudio();
             toggleSfx();
           }
+          break;
+        case "KeyF": // toggle the debug FPS readout
+          if (!pressed.current.has(code)) showFpsRef.current = !showFpsRef.current;
           break;
         default:
           return;
@@ -311,6 +317,7 @@ export function GameCanvas({
   // --- main loop ---
   useGameLoop((dt) => {
     const s = stateRef.current!;
+    if (dt > 0) fpsRef.current = fpsRef.current ? fpsRef.current * 0.9 + (1 / dt) * 0.1 : 1 / dt;
     accRef.current += dt;
     let steps = 0;
     while (accRef.current >= STEP && steps < 8) {
@@ -352,7 +359,11 @@ export function GameCanvas({
       main.width = Math.floor(cw * dpr);
       main.height = Math.floor(ch * dpr);
     }
-    const mctx = main.getContext("2d");
+    let mctx = mctxRef.current;
+    if (!mctx) {
+      mctx = main.getContext("2d");
+      mctxRef.current = mctx;
+    }
     if (!mctx) return;
     mctx.imageSmoothingEnabled = false;
     mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -369,6 +380,15 @@ export function GameCanvas({
 
     // text drawn here, at native display resolution, so it stays crisp (not magnified)
     renderText(mctx, stateRef.current!, scale, ox, oy);
+
+    // debug-only FPS readout (toggle with F); drawn in the same dpr-transformed CSS-px space
+    if (showFpsRef.current) {
+      mctx.font = "10px 'JetBrains Mono', ui-monospace, monospace";
+      mctx.textAlign = "left";
+      mctx.textBaseline = "bottom";
+      mctx.fillStyle = "rgba(155,135,245,0.9)";
+      mctx.fillText(`${Math.round(fpsRef.current)} fps`, 4, ch - 4);
+    }
   }
 
   return (
