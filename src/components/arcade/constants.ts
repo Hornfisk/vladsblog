@@ -49,7 +49,7 @@ export const CRAWLER_H = 15;
 export const STACKER_W = 14; // tall stack-overflow tower — needs a full (held) jump
 export const STACKER_H = 34;
 export const FLYER_W = 24;
-export const FLYER_H = 16;
+export const FLYER_H = 14; // compact flyer — jumpable AND duckable; a ground shadow sells "airborne"
 export const FLYER_GAP = 13; // open height beneath the overhead flyer (duck to fit)
 
 // --- tokens ---

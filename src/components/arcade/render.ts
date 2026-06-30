@@ -142,26 +142,32 @@ function drawStacker(ctx: Ctx, o: Obstacle, t: number): void {
 }
 
 function drawFlyer(ctx: Ctx, o: Obstacle, t: number): void {
-  const { x, y, w, h } = o;
-  const cy = y + h / 2;
-  const flap = Math.round(Math.sin(t * 22 + o.id) * 2); // fast wing-beat
-  // wings (pink), flapping above/below the body on each side
+  const { x, y, w } = o; // compact airborne creature; the logical box drives collision
+  const midX = x + w / 2;
+  const bob = Math.round(Math.sin(t * 3 + o.id) * 2); // slow hover
+  const flap = Math.round(Math.sin(t * 20 + o.id) * 2); // wing-beat
+  // ground shadow — the key cue that it is airborne (shrinks as it bobs up)
+  ctx.fillStyle = "rgba(0,0,0,0.30)";
+  const sw = 8 - bob;
+  ctx.fillRect(Math.round(midX - sw / 2), C.GROUND_Y + 1, Math.max(2, Math.round(sw)), 2);
+  const yv = y + bob; // visual top (collision still uses the logical, un-bobbed box)
+  // wide flapping wings — the defining "flying" silhouette
   ctx.fillStyle = C.COLORS.flyer;
-  ctx.fillRect(x - 4, cy - 2 + flap, 6, 3);
-  ctx.fillRect(x + w - 2, cy - 2 - flap, 6, 3);
-  // body — dark pink core with a lighter inset
+  ctx.fillRect(x - 6, yv + 4 + flap, 8, 3); // left wing
+  ctx.fillRect(x + w - 2, yv + 4 - flap, 8, 3); // right wing
+  // compact body
   ctx.fillStyle = C.COLORS.flyerDark;
-  ctx.fillRect(x + 4, y + 3, w - 8, h - 5);
+  ctx.fillRect(x + 6, yv + 2, w - 12, 11);
   ctx.fillStyle = C.COLORS.flyer;
-  ctx.fillRect(x + 5, y + 4, w - 10, h - 8);
+  ctx.fillRect(x + 7, yv + 3, w - 14, 8);
   // glitch eyes
   ctx.fillStyle = C.COLORS.eyeWhite;
-  ctx.fillRect(x + 6, y + 5, 2, 2);
-  ctx.fillRect(x + w - 8, y + 5, 2, 2);
-  // downward stinger telegraph (points down -> duck)
+  ctx.fillRect(midX - 3, yv + 5, 2, 2);
+  ctx.fillRect(midX + 1, yv + 5, 2, 2);
+  // downward stinger telegraph (points down -> you can duck it)
   ctx.fillStyle = C.COLORS.flyer;
   const d = Math.floor(t * 10) % 2;
-  ctx.fillRect(x + w / 2 - 1, y + h + d, 2, 2);
+  ctx.fillRect(midX - 1, yv + 14 + d, 2, 2);
 }
 
 function drawToken(ctx: Ctx, tk: Token, t: number): void {
