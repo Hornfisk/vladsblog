@@ -44,9 +44,9 @@ export const TOKEN_CHANCE = 0.6; // chance to also float a token after an obstac
 // --- obstacles ---
 export const BUG_W = 18;
 export const BUG_H = 15;
-export const ERR_W = 26;
-export const ERR_H = 16;
-export const ERR_GAP = 13; // open height beneath an overhead ERR! banner (duck to fit)
+export const FLYER_W = 24;
+export const FLYER_H = 16;
+export const FLYER_GAP = 13; // open height beneath the overhead flyer (duck to fit)
 
 // --- tokens ---
 export const TOKEN_R = 6;
@@ -85,8 +85,8 @@ export const COLORS = {
   eyeWhite: "#fdf6f0", // (bug sprite eyes)
   bug: "#E0556E",
   bugDark: "#8f2a3e",
-  err: "#D946EF",
-  errDark: "#7a1d8a",
+  flyer: "#D946EF",
+  flyerDark: "#7a1d8a",
   token: "#46d27a",
   tokenGlow: "rgba(70,210,122,0.35)",
   gem: "#ffd24a", // points pickup

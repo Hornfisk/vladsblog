@@ -6,17 +6,6 @@ import { drawClawd } from "./clawdSprite";
 
 type Ctx = CanvasRenderingContext2D;
 
-function text(
-  ctx: Ctx, str: string, x: number, y: number, size: number, color: string,
-  align: CanvasTextAlign = "left",
-): void {
-  ctx.font = `${size}px 'JetBrains Mono', ui-monospace, monospace`;
-  ctx.textAlign = align;
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = color;
-  ctx.fillText(str, x, y);
-}
-
 // Cheap deterministic hash → [0,1). Indexing by absolute world-cell number means each
 // layer's field is generated fresh as it scrolls, so nothing visibly repeats: stars and
 // buildings are placed per-cell, and the cell index climbs forever with bgScroll.
@@ -114,21 +103,27 @@ function drawBug(ctx: Ctx, o: Obstacle, t: number): void {
   ctx.fillRect(x + w - 5, y + 4, 1, 1);
 }
 
-function drawErr(ctx: Ctx, o: Obstacle, t: number): void {
+function drawFlyer(ctx: Ctx, o: Obstacle, t: number): void {
   const { x, y, w, h } = o;
-  const flick = Math.sin(t * 30 + o.id) > -0.6 ? 1 : 0.55;
-  ctx.globalAlpha = flick;
-  ctx.fillStyle = C.COLORS.errDark;
-  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
-  ctx.fillStyle = C.COLORS.err;
-  ctx.fillRect(x, y, w, h);
-  ctx.globalAlpha = 1;
-  text(ctx, "ERR!", x + w / 2, y + h / 2, 8, "#1a1420", "center");
-  // danger drips pointing down (duck!)
-  ctx.fillStyle = C.COLORS.err;
-  const d = Math.floor(t * 8) % 2;
-  ctx.fillRect(x + 4, y + h + 1 + d, 1, 2);
-  ctx.fillRect(x + w - 5, y + h + 1 + (1 - d), 1, 2);
+  const cy = y + h / 2;
+  const flap = Math.round(Math.sin(t * 22 + o.id) * 2); // fast wing-beat
+  // wings (pink), flapping above/below the body on each side
+  ctx.fillStyle = C.COLORS.flyer;
+  ctx.fillRect(x - 4, cy - 2 + flap, 6, 3);
+  ctx.fillRect(x + w - 2, cy - 2 - flap, 6, 3);
+  // body — dark pink core with a lighter inset
+  ctx.fillStyle = C.COLORS.flyerDark;
+  ctx.fillRect(x + 4, y + 3, w - 8, h - 5);
+  ctx.fillStyle = C.COLORS.flyer;
+  ctx.fillRect(x + 5, y + 4, w - 10, h - 8);
+  // glitch eyes
+  ctx.fillStyle = C.COLORS.eyeWhite;
+  ctx.fillRect(x + 6, y + 5, 2, 2);
+  ctx.fillRect(x + w - 8, y + 5, 2, 2);
+  // downward stinger telegraph (points down -> duck)
+  ctx.fillStyle = C.COLORS.flyer;
+  const d = Math.floor(t * 10) % 2;
+  ctx.fillRect(x + w / 2 - 1, y + h + d, 2, 2);
 }
 
 function drawToken(ctx: Ctx, tk: Token, t: number): void {
@@ -277,8 +272,8 @@ export function render(ctx: Ctx, s: GameState): void {
   }
   drawBackground(ctx, s);
   for (const o of s.obstacles) {
-    if (o.type === "bug") drawBug(ctx, o, t);
-    else drawErr(ctx, o, t);
+    if (o.type === "flyer") drawFlyer(ctx, o, t);
+    else drawBug(ctx, o, t);
   }
   for (const tk of s.tokens) {
     if (tk.collected) continue;

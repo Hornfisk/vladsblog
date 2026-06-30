@@ -5,7 +5,7 @@ import { loadHighScore, saveHighScore } from "./highScore";
 
 export type Phase = "ready" | "playing" | "paused" | "dead";
 export type Expression = "idle" | "focused" | "alert" | "bored" | "dead";
-export type ObstacleType = "bug" | "err";
+export type ObstacleType = "bug" | "flyer";
 
 /** Pickup kinds. "token" is the common ground-lane reward; the rest float in the
  * high lane that only a double jump can reach. */
@@ -171,16 +171,16 @@ export function onJumpUp(s: GameState): void {
 }
 
 function spawn(s: GameState): void {
-  const errish = Math.random() < 0.5;
-  if (errish) {
-    // overhead ERR! banner — duck under it
+  const flying = Math.random() < 0.5;
+  if (flying) {
+    // overhead flying glitch — duck under it
     s.obstacles.push({
       id: s.nextId++,
-      type: "err",
+      type: "flyer",
       x: C.VIRTUAL_W + 8,
-      y: C.GROUND_Y - C.ERR_GAP - C.ERR_H,
-      w: C.ERR_W,
-      h: C.ERR_H,
+      y: C.GROUND_Y - C.FLYER_GAP - C.FLYER_H,
+      w: C.FLYER_W,
+      h: C.FLYER_H,
     });
   } else {
     // ground bug — jump over it
