@@ -273,6 +273,7 @@ function hit(s: GameState): boolean {
   const cy = s.player.y + C.PLAYER_H / 2;
   if (s.shielded) {
     s.shielded = false;
+    s.combo = 0;
     s.invuln = C.INVULN_TIME;
     s.shake = 0.7;
     s.events.push("hurt");
@@ -281,6 +282,7 @@ function hit(s: GameState): boolean {
   }
   if (s.lives > 0) {
     s.lives -= 1;
+    s.combo = 0;
     s.invuln = C.INVULN_TIME;
     s.shake = 0.8;
     s.events.push("hurt");
