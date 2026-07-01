@@ -367,7 +367,8 @@ export function GameCanvas({
     if (!mctx) return;
     mctx.imageSmoothingEnabled = false;
     mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    mctx.fillStyle = C.COLORS.bg;
+    // pillarbox margins match the current act's background so it reads as one world
+    mctx.fillStyle = (C.THEMES[stateRef.current!.act] ?? C.THEMES[0]).bg;
     mctx.fillRect(0, 0, cw, ch);
 
     let scale = Math.min(cw / C.VIRTUAL_W, ch / C.VIRTUAL_H);

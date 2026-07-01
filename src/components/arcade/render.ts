@@ -1,10 +1,25 @@
 // Clawd Runner — renders game state to the low-res virtual canvas. Pure draw calls,
 // no state mutation. The caller blits this canvas, integer-scaled, to the screen.
 import * as C from "./constants";
+import type { Theme } from "./constants";
 import type { GameState, Obstacle, Token } from "./engine";
 import { drawClawd } from "./clawdSprite";
 
 type Ctx = CanvasRenderingContext2D;
+
+/** The world palette for the current act. Clawd's own colors never come from here. */
+function palette(s: GameState): Theme {
+  return C.THEMES[s.act] ?? C.THEMES[0];
+}
+
+/** Turn a "#rrggbb" into an rgba() string at the given alpha (for atmospheric tints). */
+function withAlpha(hex: string, a: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
 
 // Cheap deterministic hash → [0,1). Indexing by absolute world-cell number means each
 // layer's field is generated fresh as it scrolls, so nothing visibly repeats: stars and
@@ -17,9 +32,12 @@ function hash(n: number): number {
 // Three back-to-front depth layers, all driven by s.bgScroll at different parallax rates:
 // stars (farthest, slowest) → city skyline (mid) → ground ticks (nearest). Kept subtle so
 // it sits behind the action and never competes with obstacles.
-function drawBackground(ctx: Ctx, s: GameState): void {
-  ctx.fillStyle = C.COLORS.bg;
+function drawBackground(ctx: Ctx, s: GameState, pal: Theme): void {
+  ctx.fillStyle = pal.bg;
   ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
+
+  const starBright = withAlpha(pal.star, 0.3);
+  const starDim = withAlpha(pal.star, 0.16);
 
   // --- layer 1: stars (farthest, ~0.12×) — sparse dim pixels in the upper sky ---
   const starOff = s.bgScroll * 0.12;
@@ -35,12 +53,14 @@ function drawBackground(ctx: Ctx, s: GameState): void {
       const jy = hash(cell * 5.9 + row * 13.7);
       const px = Math.round(cell * cellW - starOff + jx * cellW);
       const py = Math.round(5 + row * (skyH / rows) + jy * (skyH / rows - 3));
-      ctx.fillStyle = jy < 0.3 ? "rgba(203,213,255,0.30)" : "rgba(190,196,224,0.16)";
+      ctx.fillStyle = jy < 0.3 ? starBright : starDim;
       ctx.fillRect(px, py, 1, 1);
     }
   }
 
   // --- layer 2: city skyline (mid, ~0.4×) — flat silhouettes + a few lit windows ---
+  const winRare = withAlpha(pal.accent2, 0.28); // the odd bright accent window
+  const winCommon = withAlpha(pal.accent1, 0.3);
   const cityOff = s.bgScroll * 0.4;
   const slotW = 34;
   const slots = Math.ceil(C.VIRTUAL_W / slotW) + 2;
@@ -50,48 +70,48 @@ function drawBackground(ctx: Ctx, s: GameState): void {
     const bh = 16 + Math.floor(hash(slot * 4.7 + 1.3) * 42); // 16..58 tall
     const bx = Math.round(slot * slotW - cityOff + (slotW - bw) * hash(slot * 6.1));
     const by = C.GROUND_Y - bh;
-    ctx.fillStyle = "#1b1e2c"; // silhouette barely above the bg — atmospheric, low contrast
+    ctx.fillStyle = pal.silhouette; // silhouette barely above the bg — atmospheric, low contrast
     ctx.fillRect(bx, by, bw, bh);
-    // lit windows: sparse, dim, mostly purple with the odd magenta
+    // lit windows: sparse, dim, mostly the primary accent with the odd bright one
     for (let wy = by + 3; wy < C.GROUND_Y - 2; wy += 6) {
       for (let wx = bx + 2; wx < bx + bw - 2; wx += 5) {
         const hw = hash(slot * 17.3 + wx * 2.7 + wy * 0.31);
         if (hw > 0.12) continue; // ~12% of windows lit
-        ctx.fillStyle = hw < 0.025 ? "rgba(217,70,239,0.28)" : "rgba(155,135,245,0.30)";
+        ctx.fillStyle = hw < 0.025 ? winRare : winCommon;
         ctx.fillRect(wx, wy, 1, 2);
       }
     }
   }
 
   // ground
-  ctx.fillStyle = C.COLORS.ground;
+  ctx.fillStyle = pal.ground;
   ctx.fillRect(0, C.GROUND_Y, C.VIRTUAL_W, C.VIRTUAL_H - C.GROUND_Y);
-  ctx.fillStyle = C.COLORS.groundLine;
+  ctx.fillStyle = pal.groundLine;
   ctx.fillRect(0, C.GROUND_Y, C.VIRTUAL_W, 1);
   // scrolling ground ticks
-  ctx.fillStyle = "rgba(155,135,245,0.25)";
+  ctx.fillStyle = withAlpha(pal.accent1, 0.25);
   const goff = s.bgScroll % 16;
   for (let gx = -goff; gx < C.VIRTUAL_W; gx += 16) {
     ctx.fillRect(Math.round(gx), C.GROUND_Y + 4, 6, 1);
   }
 }
 
-function drawCrawler(ctx: Ctx, o: Obstacle, t: number): void {
+function drawCrawler(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
   const { x, y, w, h } = o;
   const wob = Math.sin(t * 14 + o.id) * 0.5;
   // legs
-  ctx.fillStyle = C.COLORS.bugDark;
+  ctx.fillStyle = pal.bugDark;
   for (let i = 0; i < 3; i++) {
     const ly = y + 5 + i * 3;
     ctx.fillRect(x - 2, Math.round(ly + wob), 3, 1);
     ctx.fillRect(x + w - 1, Math.round(ly - wob), 3, 1);
   }
   // body
-  ctx.fillStyle = C.COLORS.bug;
+  ctx.fillStyle = pal.bug;
   ctx.fillRect(x + 2, y + 3, w - 4, h - 4);
   ctx.fillRect(x + 1, y + 5, w - 2, h - 8);
   // shell split + spots
-  ctx.fillStyle = C.COLORS.bugDark;
+  ctx.fillStyle = pal.bugDark;
   ctx.fillRect(x + w / 2 - 0.5, y + 3, 1, h - 4);
   ctx.fillRect(x + 4, y + 7, 1, 1);
   ctx.fillRect(x + w - 5, y + 9, 1, 1);
@@ -103,18 +123,18 @@ function drawCrawler(ctx: Ctx, o: Obstacle, t: number): void {
   ctx.fillRect(x + w - 5, y + 4, 1, 1);
 }
 
-function drawSkitter(ctx: Ctx, o: Obstacle, t: number): void {
+function drawSkitter(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
   const { x, y, w, h } = o;
   const wob = Math.sin(t * 24 + o.id) * 0.6; // fast scuttle
   // six little legs
-  ctx.fillStyle = C.COLORS.bugDark;
+  ctx.fillStyle = pal.bugDark;
   for (let i = 0; i < 3; i++) {
     const lx = x + 2 + i * 4;
     ctx.fillRect(Math.round(lx), Math.round(y + h - 1 + wob), 1, 2);
     ctx.fillRect(Math.round(lx + 1), Math.round(y + h - 1 - wob), 1, 2);
   }
   // squat body
-  ctx.fillStyle = C.COLORS.bug;
+  ctx.fillStyle = pal.bug;
   ctx.fillRect(x + 1, y + 2, w - 2, h - 3);
   ctx.fillRect(x + 2, y + 1, w - 4, h - 1);
   // eyes
@@ -123,16 +143,16 @@ function drawSkitter(ctx: Ctx, o: Obstacle, t: number): void {
   ctx.fillRect(x + w - 3, y + 3, 1, 1);
 }
 
-function drawStacker(ctx: Ctx, o: Obstacle, t: number): void {
+function drawStacker(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
   const { x, y, w, h } = o;
   const seg = 6; // height of one stacked block
   const n = Math.floor(h / seg);
   for (let i = 0; i < n; i++) {
     const by = y + i * seg;
     const lit = (Math.floor(t * 6) + i) % 4 === 0; // a glitch flicker climbing the tower
-    ctx.fillStyle = C.COLORS.bugDark;
+    ctx.fillStyle = pal.bugDark;
     ctx.fillRect(x, by, w, seg - 1);
-    ctx.fillStyle = lit ? C.COLORS.bugLit : C.COLORS.bug;
+    ctx.fillStyle = lit ? pal.bugLit : pal.bug;
     ctx.fillRect(x + 1, by + 1, w - 2, seg - 3);
   }
   // eyes near the top so it reads as a creature, not just a wall
@@ -141,8 +161,11 @@ function drawStacker(ctx: Ctx, o: Obstacle, t: number): void {
   ctx.fillRect(x + w - 5, y + 2, 2, 2);
 }
 
-function drawFlyer(ctx: Ctx, o: Obstacle, t: number): void {
+function drawFlyer(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
   const { x, y, w } = o; // compact airborne creature; the logical box drives collision
+  // the glitch recolors to each theme's bright accent so it stays legible on any bg
+  const wing = pal.accent2;
+  const bodyDark = pal.bugDark;
   const midX = x + w / 2;
   const bob = Math.round(Math.sin(t * 3 + o.id) * 2); // slow hover
   const flap = Math.round(Math.sin(t * 20 + o.id) * 2); // wing-beat
@@ -152,20 +175,20 @@ function drawFlyer(ctx: Ctx, o: Obstacle, t: number): void {
   ctx.fillRect(Math.round(midX - sw / 2), C.GROUND_Y + 1, Math.max(2, Math.round(sw)), 2);
   const yv = y + bob; // visual top (collision still uses the logical, un-bobbed box)
   // wide flapping wings — the defining "flying" silhouette
-  ctx.fillStyle = C.COLORS.flyer;
+  ctx.fillStyle = wing;
   ctx.fillRect(x - 6, yv + 4 + flap, 8, 3); // left wing
   ctx.fillRect(x + w - 2, yv + 4 - flap, 8, 3); // right wing
   // compact body
-  ctx.fillStyle = C.COLORS.flyerDark;
+  ctx.fillStyle = bodyDark;
   ctx.fillRect(x + 6, yv + 2, w - 12, 11);
-  ctx.fillStyle = C.COLORS.flyer;
+  ctx.fillStyle = wing;
   ctx.fillRect(x + 7, yv + 3, w - 14, 8);
   // glitch eyes
   ctx.fillStyle = C.COLORS.eyeWhite;
   ctx.fillRect(midX - 3, yv + 5, 2, 2);
   ctx.fillRect(midX + 1, yv + 5, 2, 2);
   // downward stinger telegraph (points down -> you can duck it)
-  ctx.fillStyle = C.COLORS.flyer;
+  ctx.fillStyle = wing;
   const d = Math.floor(t * 10) % 2;
   ctx.fillRect(midX - 1, yv + 14 + d, 2, 2);
 }
@@ -230,13 +253,26 @@ function drawPickup(ctx: Ctx, tk: Token, t: number): void {
     ctx.fillStyle = C.COLORS.shield; // emblem "+"
     ctx.fillRect(Math.round(tk.x), Math.round(yb - 2), 1, 5);
     ctx.fillRect(Math.round(tk.x - 2), Math.round(yb), 5, 1);
-  } else {
+  } else if (tk.kind === "life") {
     ctx.fillStyle = "rgba(255,90,122,0.3)";
     ctx.beginPath();
     ctx.arc(tk.x, yb, C.PICKUP_R + 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = C.COLORS.life;
     for (const [dx, dy] of HEART) ctx.fillRect(Math.round(tk.x + dx), Math.round(yb + dy - 1), 1, 1);
+  } else {
+    // opus: a pulsing terracotta-gold up-chevron (the "model upgrade" star)
+    const pr = C.PICKUP_R + 1 + Math.sin(t * 7 + tk.id) * 0.8;
+    ctx.fillStyle = C.COLORS.opusGlow;
+    ctx.beginPath();
+    ctx.arc(tk.x, yb, pr + 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = C.COLORS.opus; // bold upward chevron ▲
+    const chev: Array<[number, number]> = [
+      [0, -4], [-1, -3], [1, -3], [-2, -2], [2, -2],
+      [-3, -1], [-1, -1], [1, -1], [3, -1], [-4, 0], [4, 0],
+    ];
+    for (const [dx, dy] of chev) ctx.fillRect(Math.round(tk.x + dx), Math.round(yb + dy), 1, 1);
   }
 }
 
@@ -261,7 +297,7 @@ function drawParticles(ctx: Ctx, s: GameState): void {
   ctx.globalAlpha = 1;
 }
 
-function drawHUDPixels(ctx: Ctx, s: GameState): void {
+function drawHUDPixels(ctx: Ctx, s: GameState, pal: Theme): void {
   // lives (hearts) + shield pip; the score/HI/combo TEXT is drawn separately at native res
   for (let i = 0; i < s.lives; i++) drawMiniHeart(ctx, 7 + i * 8, 17);
   if (s.shielded) {
@@ -271,15 +307,39 @@ function drawHUDPixels(ctx: Ctx, s: GameState): void {
     ctx.arc(8 + s.lives * 8 + 2, 19, 3, 0, Math.PI * 2);
     ctx.stroke();
   }
+
+  // --- usage / rate-limit meter (only while playing): fills as you grab tokens,
+  // glows token-green in the bonus "hot" zone, flashes red at the 429 cap ---
+  if (s.phase === "playing") {
+    const bw = 52;
+    const bx = Math.round((C.VIRTUAL_W - bw) / 2);
+    const by = 20;
+    ctx.fillStyle = "rgba(255,255,255,0.08)"; // track
+    ctx.fillRect(bx, by, bw, 3);
+    if (s.throttled > 0) {
+      const pulse = 0.55 + 0.45 * Math.sin(s.time * 22);
+      ctx.fillStyle = withAlpha(C.COLORS.throttle, pulse);
+      ctx.fillRect(bx, by, bw, 3); // full bar flashing "429"
+    } else {
+      const hot = s.usage > C.USAGE_HOT;
+      ctx.fillStyle = hot ? C.COLORS.token : pal.accent1;
+      ctx.fillRect(bx, by, Math.round(bw * s.usage), 3);
+      if (hot) {
+        // a bright cap pip riding the hot fill, to sell the bonus
+        ctx.fillStyle = C.COLORS.tokenGlow;
+        ctx.fillRect(bx + Math.round(bw * C.USAGE_HOT), by - 1, 1, 5);
+      }
+    }
+  }
 }
 
 type PanelLine = { s: string; size: number; color: string; dy: number };
 
-function panelLines(s: GameState): PanelLine[] | null {
+function panelLines(s: GameState, pal: Theme): PanelLine[] | null {
   if (s.phase === "ready") {
     return [
-      { s: "CLAWD RUNNER", size: 18, color: C.COLORS.accent1, dy: -46 },
-      { s: "debugging dash", size: 9, color: C.COLORS.accent2, dy: -30 },
+      { s: "CLAWD RUNNER", size: 18, color: pal.accent1, dy: -46 },
+      { s: "debugging dash", size: 9, color: pal.accent2, dy: -30 },
       { s: "SPACE / TAP  to start", size: 10, color: C.COLORS.text, dy: -8 },
       { s: "↑ JUMP (×2 mid-air)    ↓ DUCK", size: 7, color: C.COLORS.dim, dy: 14 },
       { s: "M music    S sound    ESC pause", size: 7, color: C.COLORS.dim, dy: 26 },
@@ -288,18 +348,28 @@ function panelLines(s: GameState): PanelLine[] | null {
   }
   if (s.phase === "paused") {
     return [
-      { s: "PAUSED", size: 18, color: C.COLORS.accent1, dy: -24 },
+      { s: "PAUSED", size: 18, color: pal.accent1, dy: -24 },
       { s: "SPACE / ESC to resume", size: 9, color: C.COLORS.text, dy: 0 },
       { s: "↑ jump (×2)   ↓ duck", size: 7, color: C.COLORS.dim, dy: 20 },
       { s: "M music   S sound", size: 7, color: C.COLORS.dim, dy: 32 },
     ];
   }
   if (s.phase === "dead") {
+    // the title + subtitle depend on what killed the run
+    const title =
+      s.deathCause === "hallucination" ? "HALLUCINATION" : s.deathCause === "ratelimit" ? "429" : "SEGFAULT";
+    const sub =
+      s.deathCause === "hallucination"
+        ? "unhandled exception"
+        : s.deathCause === "ratelimit"
+          ? "connection reset"
+          : "core dumped";
     return [
-      { s: "SEGFAULT", size: 18, color: C.COLORS.accent2, dy: -30 },
-      { s: `score ${s.score}`, size: 11, color: C.COLORS.text, dy: -6 },
-      { s: s.newHigh ? "★ NEW HIGH SCORE ★" : `high ${s.highScore}`, size: 9, color: s.newHigh ? C.COLORS.token : C.COLORS.dim, dy: 12 },
-      { s: "SPACE / TAP / R to retry", size: 9, color: C.COLORS.accent1, dy: 34 },
+      { s: title, size: 18, color: C.COLORS.throttle, dy: -36 },
+      { s: sub, size: 8, color: C.COLORS.dim, dy: -19 },
+      { s: `score ${s.score}`, size: 11, color: C.COLORS.text, dy: 0 },
+      { s: s.newHigh ? "★ NEW HIGH SCORE ★" : `high ${s.highScore}`, size: 9, color: s.newHigh ? C.COLORS.token : C.COLORS.dim, dy: 17 },
+      { s: "SPACE / TAP / R to retry", size: 9, color: pal.accent1, dy: 37 },
     ];
   }
   return null;
@@ -309,17 +379,18 @@ function panelLines(s: GameState): PanelLine[] | null {
  *  native resolution, so it stays sharp instead of being magnified from this small buffer. */
 export function render(ctx: Ctx, s: GameState): void {
   const t = s.time;
+  const pal = palette(s);
   ctx.save();
   if (s.shake > 0) {
     const m = s.shake * 4;
     ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
   }
-  drawBackground(ctx, s);
+  drawBackground(ctx, s, pal);
   for (const o of s.obstacles) {
-    if (o.type === "flyer") drawFlyer(ctx, o, t);
-    else if (o.type === "skitter") drawSkitter(ctx, o, t);
-    else if (o.type === "stacker") drawStacker(ctx, o, t);
-    else drawCrawler(ctx, o, t);
+    if (o.type === "flyer") drawFlyer(ctx, o, t, pal);
+    else if (o.type === "skitter") drawSkitter(ctx, o, t, pal);
+    else if (o.type === "stacker") drawStacker(ctx, o, t, pal);
+    else drawCrawler(ctx, o, t, pal);
   }
   for (const tk of s.tokens) {
     if (tk.collected) continue;
@@ -327,6 +398,21 @@ export function render(ctx: Ctx, s: GameState): void {
     else drawPickup(ctx, tk, t);
   }
   const p = s.player;
+  // opus mode: a pulsing terracotta-gold aura around Clawd (invincible joyride)
+  if (s.opus > 0) {
+    const gx = p.x + C.PLAYER_W / 2;
+    const gy = p.y + C.PLAYER_H / 2;
+    const rr = 15 + Math.sin(t * 12) * 2;
+    ctx.fillStyle = C.COLORS.opusGlow;
+    ctx.beginPath();
+    ctx.arc(gx, gy, rr + 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = C.COLORS.opus;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(gx, gy, rr, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   if (s.shielded) {
     const sbx = p.x + C.PLAYER_W / 2;
     const sby = p.y + C.PLAYER_H / 2;
@@ -355,12 +441,29 @@ export function render(ctx: Ctx, s: GameState): void {
   drawParticles(ctx, s);
   ctx.restore();
 
+  // brief full-screen flash when a new act begins (fades from ~0.25 alpha)
+  if (s.actFlash > 0) {
+    ctx.fillStyle = withAlpha(pal.accent1, s.actFlash * 0.5);
+    ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
+  }
+
   // HUD pixel bits + scanlines + the dim panel backdrop (drawn straight, no shake)
-  drawHUDPixels(ctx, s);
+  drawHUDPixels(ctx, s, pal);
   ctx.fillStyle = "rgba(0,0,0,0.06)";
   for (let y = 0; y < C.VIRTUAL_H; y += 2) ctx.fillRect(0, y, C.VIRTUAL_W, 1);
-  if (panelLines(s)) {
-    ctx.fillStyle = "rgba(21,24,33,0.82)";
+
+  // 429 lockout: pulsing red screen-edge vignette
+  if (s.throttled > 0) {
+    const a = 0.14 + 0.08 * Math.sin(t * 20);
+    ctx.fillStyle = withAlpha(C.COLORS.throttle, a);
+    ctx.fillRect(0, 0, C.VIRTUAL_W, 3);
+    ctx.fillRect(0, C.VIRTUAL_H - 3, C.VIRTUAL_W, 3);
+    ctx.fillRect(0, 0, 3, C.VIRTUAL_H);
+    ctx.fillRect(C.VIRTUAL_W - 3, 0, 3, C.VIRTUAL_H);
+  }
+
+  if (panelLines(s, pal)) {
+    ctx.fillStyle = withAlpha(pal.bg, 0.82);
     ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
   }
 }
@@ -380,12 +483,20 @@ export function renderText(
     ctx.fillStyle = color;
     ctx.fillText(str, ox + vx * scale, oy + vy * scale);
   };
+  const pal = palette(s);
   vtext(`${s.score}`.padStart(5, "0"), 6, 10, 10, C.COLORS.text, "left");
   vtext(`HI ${s.highScore}`, C.VIRTUAL_W - 6, 10, 8, C.COLORS.dim, "right");
   if (s.combo > 1 && s.phase === "playing") {
     vtext(`x${s.combo}`, C.VIRTUAL_W / 2, 12, 9, C.COLORS.token, "center");
   }
-  const lines = panelLines(s);
+  // transient toast (act name / power-up label / 429 / milestone), fading out at the end
+  if (s.toast && s.phase === "playing") {
+    const alpha = Math.max(0, Math.min(1, s.toast.t / 0.4));
+    ctx.globalAlpha = alpha;
+    vtext(s.toast.text, C.VIRTUAL_W / 2, 40, 9, s.toast.color, "center");
+    ctx.globalAlpha = 1;
+  }
+  const lines = panelLines(s, pal);
   if (lines) {
     const cx = C.VIRTUAL_W / 2;
     const cy = C.VIRTUAL_H / 2;

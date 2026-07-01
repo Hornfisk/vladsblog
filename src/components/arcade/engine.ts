@@ -8,11 +8,23 @@ export type Expression = "idle" | "focused" | "alert" | "bored" | "dead";
 export type ObstacleType = "skitter" | "crawler" | "stacker" | "flyer";
 
 /** Pickup kinds. "token" is the common ground-lane reward; the rest float in the
- * high lane that only a double jump can reach. */
-export type PickupKind = "token" | "gem" | "shield" | "life";
+ * high lane that only a double jump can reach. "opus" is the rare model-upgrade star. */
+export type PickupKind = "token" | "gem" | "shield" | "life" | "opus";
+
+/** What killed the run — picks the death-screen title/subtitle. */
+export type DeathCause = "segfault" | "hallucination" | "ratelimit";
+
+/** A transient on-screen message (act name, power-up label, 429, milestone). */
+export interface Toast {
+  text: string;
+  color: string;
+  t: number; // seconds remaining
+}
 
 /** One-shot events the loop drains each frame to fire sound effects. */
-export type SfxEvent = "jump" | "duck" | "token" | "die" | "start" | "powerup" | "shield" | "life" | "hurt";
+export type SfxEvent =
+  | "jump" | "duck" | "token" | "die" | "start" | "powerup" | "shield" | "life" | "hurt"
+  | "act" | "throttle" | "opus" | "milestone";
 
 export interface Obstacle {
   id: number;
@@ -74,6 +86,14 @@ export interface GameState {
   lives: number; // stored extra lives (a hit spends one instead of dying)
   shielded: boolean; // one-hit shield active
   invuln: number; // i-frames remaining after surviving a hit
+  act: number; // index into THEMES — the current session act (drives the world palette)
+  actFlash: number; // brief flash timer when an act begins
+  usage: number; // rate-limit meter 0..1; tokens fill it, time drains it
+  throttled: number; // seconds of "429" lockout remaining (tokens score nothing)
+  opus: number; // seconds of opus mode remaining (invincible + 2× tokens + speed burst)
+  saidRight: boolean; // has the once-per-run "you're absolutely right!" fired
+  deathCause: DeathCause;
+  toast: Toast | null;
   player: Player;
   obstacles: Obstacle[];
   tokens: Token[];
@@ -120,6 +140,14 @@ export function createGameState(): GameState {
     lives: 0,
     shielded: false,
     invuln: 0,
+    act: 0,
+    actFlash: 0,
+    usage: 0,
+    throttled: 0,
+    opus: 0,
+    saidRight: false,
+    deathCause: "segfault",
+    toast: null,
     player: makePlayer(),
     obstacles: [],
     tokens: [],
@@ -221,7 +249,12 @@ function spawn(s: GameState): void {
   // rarely float a power-up in the HIGH lane — only a double jump can reach it
   if (Math.random() < C.POWERUP_CHANCE) {
     const roll = Math.random();
-    const kind: PickupKind = roll < 0.6 ? "gem" : roll < 0.9 ? "shield" : "life";
+    // opus is the rarest, and only once the run is underway (early game stays vanilla)
+    let kind: PickupKind;
+    if (s.distance > C.OPUS_MIN_DISTANCE && roll < 0.06) kind = "opus";
+    else if (roll < 0.6) kind = "gem";
+    else if (roll < 0.9) kind = "shield";
+    else kind = "life";
     s.tokens.push({
       id: s.nextId++,
       x: C.VIRTUAL_W + 60 + Math.random() * 40,
@@ -276,13 +309,15 @@ function die(s: GameState): void {
   }
 }
 
-/** Take an obstacle hit: spend a shield, then a stored life, else die. Returns true if it was fatal. */
-function hit(s: GameState): boolean {
+/** Take an obstacle hit: spend a shield, then a stored life, else die. Returns true if it was fatal.
+ *  A survived hit interrupts your flow — combo AND the usage meter both reset. */
+function hit(s: GameState, type: ObstacleType): boolean {
   const cx = s.player.x + C.PLAYER_W / 2;
   const cy = s.player.y + C.PLAYER_H / 2;
   if (s.shielded) {
     s.shielded = false;
     s.combo = 0;
+    s.usage = 0;
     s.invuln = C.INVULN_TIME;
     s.shake = 0.7;
     s.events.push("hurt");
@@ -292,12 +327,15 @@ function hit(s: GameState): boolean {
   if (s.lives > 0) {
     s.lives -= 1;
     s.combo = 0;
+    s.usage = 0;
     s.invuln = C.INVULN_TIME;
     s.shake = 0.8;
     s.events.push("hurt");
     burst(s, cx, cy, C.COLORS.clawdBody, 16, 190);
     return false;
   }
+  // fatal — pick the death-screen flavor: throttled death > flyer > ground creature
+  s.deathCause = s.throttled > 0 ? "ratelimit" : type === "flyer" ? "hallucination" : "segfault";
   die(s);
   return true;
 }
@@ -337,8 +375,35 @@ export function step(s: GameState, dt: number): void {
 
   // --- difficulty ramp ---
   s.speed = Math.min(C.MAX_SPEED, C.BASE_SPEED + s.distance * C.SPEED_PER_PX);
+  if (s.opus > 0) s.speed *= C.OPUS_SPEED_MULT; // opus burst can push past the normal cap
   s.distance += s.speed * dt;
   s.bgScroll += s.speed * dt;
+
+  // --- session act: recolor the world as the run crosses each ACT_LENGTH boundary ---
+  const act = Math.floor(s.distance / C.ACT_LENGTH) % C.THEMES.length;
+  if (act !== s.act) {
+    s.act = act;
+    s.actFlash = 0.5;
+    const th = C.THEMES[act];
+    s.toast = { text: `» ${th.name}`, color: th.accent1, t: 1.8 };
+    s.events.push("act");
+  }
+  if (s.actFlash > 0) s.actFlash = Math.max(0, s.actFlash - dt);
+
+  // --- rate-limit meter + timed states ---
+  if (s.throttled > 0) s.throttled = Math.max(0, s.throttled - dt);
+  else s.usage = Math.max(0, s.usage - C.USAGE_DECAY * dt); // drains only while not locked out
+  if (s.opus > 0) {
+    const before = s.opus;
+    s.opus = Math.max(0, s.opus - dt);
+    if (before > 0 && s.opus === 0) {
+      burst(s, s.player.x + C.PLAYER_W / 2, s.player.y + C.PLAYER_H / 2, C.COLORS.opus, 12, 150);
+    }
+  }
+  if (s.toast) {
+    s.toast.t -= dt;
+    if (s.toast.t <= 0) s.toast = null;
+  }
 
   // Clawd holds a fixed x (no horizontal control); the world scrolls past him.
 
@@ -413,8 +478,9 @@ export function step(s: GameState, dt: number): void {
   let nearest = Infinity;
   for (const o of s.obstacles) {
     if (o.x > p.x) nearest = Math.min(nearest, o.x - (p.x + C.PLAYER_W));
-    if (s.invuln <= 0 && aabb(pr.x + 1, pr.y + 1, pr.w - 2, pr.h - 2, o.x, o.y, o.w, o.h)) {
-      if (hit(s)) return; // fatal
+    // opus mode phases straight through obstacles (invincible joyride)
+    if (s.invuln <= 0 && s.opus <= 0 && aabb(pr.x + 1, pr.y + 1, pr.w - 2, pr.h - 2, o.x, o.y, o.w, o.h)) {
+      if (hit(s, o.type)) return; // fatal
       break; // survived (shield/life) — i-frames are up now, stop checking this frame
     }
   }
@@ -430,26 +496,63 @@ export function step(s: GameState, dt: number): void {
     if (dx * dx + dy * dy < reach * reach) {
       tk.collected = true;
       switch (tk.kind) {
-        case "token":
+        case "token": {
+          if (s.throttled > 0) {
+            // rate limited — the token is consumed but scores nothing (dud puff)
+            s.events.push("token");
+            burst(s, tk.x, tk.y, C.COLORS.dim, 6, 90);
+            break;
+          }
           s.combo = Math.min(C.COMBO_MAX, s.combo + 1);
-          s.tokenTally += C.TOKEN_POINTS * s.combo;
+          // once-per-run reward for maxing the combo
+          if (s.combo >= C.COMBO_MAX && !s.saidRight) {
+            s.saidRight = true;
+            s.events.push("milestone");
+            s.toast = { text: "you're absolutely right!", color: C.COLORS.token, t: 1.9 };
+          }
+          s.usage = Math.min(1, s.usage + C.USAGE_PER_TOKEN);
+          // "hot" meter pays a rising bonus; opus mode doubles on top of that
+          const hotBonus =
+            s.usage > C.USAGE_HOT
+              ? 1 + ((s.usage - C.USAGE_HOT) / (1 - C.USAGE_HOT)) * C.USAGE_BONUS
+              : 1;
+          const opusMult = s.opus > 0 ? C.OPUS_TOKEN_MULT : 1;
+          s.tokenTally += Math.round(C.TOKEN_POINTS * s.combo * hotBonus * opusMult);
           s.events.push("token");
           burst(s, tk.x, tk.y, C.COLORS.token, 8, 130);
+          // overfill → 429: wipe the combo + meter, lock scoring out for a beat
+          if (s.usage >= 1) {
+            s.throttled = C.THROTTLE_TIME;
+            s.combo = 0;
+            s.usage = 0;
+            s.events.push("throttle");
+            s.toast = { text: "429 · RATE LIMITED", color: C.COLORS.throttle, t: 1.6 };
+          }
           break;
+        }
         case "gem":
           s.tokenTally += C.GEM_POINTS;
           s.events.push("powerup");
+          s.toast = { text: `cache hit  +${C.GEM_POINTS}`, color: C.COLORS.gem, t: 1.4 };
           burst(s, tk.x, tk.y, C.COLORS.gem, 14, 170);
           break;
         case "shield":
           s.shielded = true;
           s.events.push("shield");
+          s.toast = { text: "try / catch", color: C.COLORS.shield, t: 1.4 };
           burst(s, tk.x, tk.y, C.COLORS.shield, 14, 170);
           break;
         case "life":
           s.lives = Math.min(C.MAX_LIVES, s.lives + 1);
           s.events.push("life");
+          s.toast = { text: "git commit  +1UP", color: C.COLORS.life, t: 1.4 };
           burst(s, tk.x, tk.y, C.COLORS.life, 14, 170);
+          break;
+        case "opus":
+          s.opus = C.OPUS_TIME;
+          s.events.push("opus");
+          s.toast = { text: "▲ OPUS MODE", color: C.COLORS.opus, t: 2.0 };
+          burst(s, tk.x, tk.y, C.COLORS.opus, 22, 210);
           break;
       }
     }

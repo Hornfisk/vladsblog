@@ -99,7 +99,55 @@ export const COLORS = {
   shield: "#54d6ff", // shield pickup + shield ring
   shieldGlow: "rgba(84,214,255,0.4)",
   life: "#ff5a7a", // 1up heart
+  opus: "#ffb86b", // opus-mode aura (warm terracotta-gold, sits beside Clawd's clay)
+  opusGlow: "rgba(255,184,107,0.35)",
+  throttle: "#ff4d5e", // 429 rate-limit red (meter cap + screen edge)
 } as const;
+
+// --- session acts: the world recolors as the run progresses through named phases.
+// Clawd himself stays terracotta (see clawdSprite / the fixed COLORS above) — he's the
+// constant anchor while the world cycles. A run steps through these in order, then loops.
+// Only the WORLD keys live here; tokens/gem/shield/life keep their fixed colors for
+// readability, and the flyer recolors to each theme's accent2 to stay legible on any bg. ---
+export const ACT_LENGTH = 2600; // virtual px of distance per act before the theme advances
+
+export interface Theme {
+  name: string; // shown as a "» <name>" toast when the act begins
+  bg: string;
+  ground: string;
+  groundLine: string;
+  accent1: string; // primary — ground line, ground ticks, title text, act toast
+  accent2: string; // secondary — the flyer + magenta-ish window lights
+  bug: string; // ground-creature body
+  bugDark: string; // ground-creature shading / legs
+  bugLit: string; // stacker glitch-flicker highlight
+  silhouette: string; // city skyline buildings
+  star: string; // star hue (hex; alpha applied at draw time)
+}
+
+export const THEMES: Theme[] = [
+  { name: "cold start", bg: "#0b1410", ground: "#12251a", groundLine: "#46d27a", accent1: "#46d27a", accent2: "#8affc1", bug: "#2fae63", bugDark: "#155f38", bugLit: "#8affc1", silhouette: "#0e2016", star: "#7bffb0" },
+  { name: "in the flow", bg: "#1a1206", ground: "#2c1f0c", groundLine: "#ffb347", accent1: "#ffb347", accent2: "#ffd98a", bug: "#e08a2e", bugDark: "#8f4f13", bugLit: "#ffd98a", silhouette: "#241906", star: "#ffcf8f" },
+  { name: "deep context", bg: "#151821", ground: "#2a2740", groundLine: "#9b87f5", accent1: "#9b87f5", accent2: "#D946EF", bug: "#E0556E", bugDark: "#8f2a3e", bugLit: "#ff7d92", silhouette: "#1b1e2c", star: "#cbd5ff" },
+  { name: "rate climbing", bg: "#1a0a1e", ground: "#2e0f36", groundLine: "#D946EF", accent1: "#D946EF", accent2: "#ff8af0", bug: "#c93ad6", bugDark: "#6a1370", bugLit: "#ff8af0", silhouette: "#25082b", star: "#f0a6ff" },
+  { name: "shipping", bg: "#0d0f14", ground: "#20242e", groundLine: "#e8ecf4", accent1: "#e8ecf4", accent2: "#8b8ba7", bug: "#c2c7d4", bugDark: "#5b606e", bugLit: "#ffffff", silhouette: "#171a21", star: "#ffffff" },
+];
+
+// --- rate-limit / usage meter (push-your-luck token multiplier) ---
+// Collecting tokens fills a "usage" meter. Above USAGE_HOT it pays a rising bonus (up to
+// 1 + USAGE_BONUS ×). Overfill it and you trip a 429: THROTTLE_TIME seconds where tokens
+// score nothing and the combo is wiped. Skill = ride it hot, back off before the cap.
+export const USAGE_PER_TOKEN = 0.12; // meter gained per token (0..1)
+export const USAGE_DECAY = 0.34; // meter drained per second when not collecting
+export const USAGE_HOT = 0.6; // fraction where the token bonus starts ramping in
+export const USAGE_BONUS = 1.0; // extra token multiplier at a full meter (=> up to 2×)
+export const THROTTLE_TIME = 1.5; // seconds of "429" lockout when the meter overflows
+
+// --- opus mode: a rare "model upgrade" power state ---
+export const OPUS_TIME = 5.0; // seconds of invincible + 2× tokens + speed burst
+export const OPUS_SPEED_MULT = 1.35; // world-speed boost while active (a joyride)
+export const OPUS_TOKEN_MULT = 2; // token points multiplier while active
+export const OPUS_MIN_DISTANCE = 1500; // the opus pickup can't spawn before this (early game stays normal)
 
 export const HIGHSCORE_KEY = "clawd.arcade.highscore.v1";
 export const MUTED_KEY = "clawd.arcade.muted.v1"; // sfx mute

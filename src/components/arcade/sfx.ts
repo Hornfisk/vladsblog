@@ -87,5 +87,23 @@ export function playSfx(name: SfxEvent): void {
       tone([340, 70], 0.42, "sawtooth", 0.18);
       noise(0.34, 0.1, 0.02);
       break;
+    case "act": // soft two-note "new act" chime
+      tone([523, 784], 0.14, "triangle", 0.12);
+      tone([784, 1047], 0.16, "triangle", 0.1, 0.06);
+      break;
+    case "throttle": // harsh 429 buzz-down + static
+      tone([300, 110], 0.28, "sawtooth", 0.16);
+      noise(0.16, 0.09, 0.02);
+      break;
+    case "opus": // triumphant ascending run (bigger than a normal power-up)
+      tone([523], 0.07, "square", 0.16);
+      tone([659], 0.07, "square", 0.16, 0.07);
+      tone([784], 0.07, "square", 0.16, 0.14);
+      tone([1047], 0.26, "square", 0.15, 0.21);
+      break;
+    case "milestone": // bright sparkle for "you're absolutely right!"
+      tone([1319, 1976], 0.18, "triangle", 0.14);
+      tone([1976], 0.12, "square", 0.1, 0.05);
+      break;
   }
 }
