@@ -383,9 +383,6 @@ export function GameCanvas({
     if (!mctx) return;
     mctx.imageSmoothingEnabled = false;
     mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // pillarbox margins match the current act's background so it reads as one world
-    mctx.fillStyle = (C.THEMES[stateRef.current!.act] ?? C.THEMES[0]).bg;
-    mctx.fillRect(0, 0, cw, ch);
 
     let scale = Math.min(cw / C.VIRTUAL_W, ch / C.VIRTUAL_H);
     if (scale > 1) scale = Math.floor(scale); // crisp integer scale on big screens
@@ -393,6 +390,23 @@ export function GameCanvas({
     const dh = C.VIRTUAL_H * scale;
     const ox = Math.floor((cw - dw) / 2);
     const oy = Math.floor((ch - dh) / 2);
+
+    // pillarbox margins continue the world's background. during an act transition they follow
+    // the SAME scrolling seam as the play area (old palette left of the seam, new to the right)
+    // so the margins never flip colour ahead of the splitter; otherwise it's a flat fill.
+    const st = stateRef.current!;
+    const newBg = (C.THEMES[st.act] ?? C.THEMES[0]).bg;
+    if (st.transition) {
+      const oldBg = (C.THEMES[st.transition.from] ?? C.THEMES[st.act] ?? C.THEMES[0]).bg;
+      const seamScreenX = Math.max(0, Math.min(cw, ox + st.transition.seamX * scale));
+      mctx.fillStyle = oldBg;
+      mctx.fillRect(0, 0, cw, ch);
+      mctx.fillStyle = newBg;
+      mctx.fillRect(seamScreenX, 0, cw - seamScreenX, ch);
+    } else {
+      mctx.fillStyle = newBg;
+      mctx.fillRect(0, 0, cw, ch);
+    }
     mctx.drawImage(off, ox, oy, dw, dh);
 
     // text drawn here, at native display resolution, so it stays crisp (not magnified)
