@@ -109,7 +109,8 @@ export const COLORS = {
 // constant anchor while the world cycles. A run steps through these in order, then loops.
 // Only the WORLD keys live here; tokens/gem/shield/life keep their fixed colors for
 // readability, and the flyer recolors to each theme's accent2 to stay legible on any bg. ---
-export const ACT_LENGTH = 2600; // virtual px of distance per act before the theme advances
+export const ACT_LENGTH = 5200; // virtual px of distance per act before the theme advances (~2× the first pass, ~25s)
+export const SEAM_SPEED_TRACK = 1; // the transition seam scrolls at world speed × this
 
 export interface Theme {
   name: string; // shown as a "» <name>" toast when the act begins
@@ -137,8 +138,9 @@ export const THEMES: Theme[] = [
 // Collecting tokens fills a "usage" meter. Above USAGE_HOT it pays a rising bonus (up to
 // 1 + USAGE_BONUS ×). Overfill it and you trip a 429: THROTTLE_TIME seconds where tokens
 // score nothing and the combo is wiped. Skill = ride it hot, back off before the cap.
-export const USAGE_PER_TOKEN = 0.12; // meter gained per token (0..1)
-export const USAGE_DECAY = 0.34; // meter drained per second when not collecting
+export const USAGE_PER_TOKEN = 0.16; // meter gained per token (0..1)
+export const USAGE_DECAY = 0.1; // meter drained per second once the grace window lapses
+export const USAGE_GRACE = 0.7; // seconds after a token before the meter starts draining (keeps a streak fillable)
 export const USAGE_HOT = 0.6; // fraction where the token bonus starts ramping in
 export const USAGE_BONUS = 1.0; // extra token multiplier at a full meter (=> up to 2×)
 export const THROTTLE_TIME = 1.5; // seconds of "429" lockout when the meter overflows
@@ -148,6 +150,22 @@ export const OPUS_TIME = 5.0; // seconds of invincible + 2× tokens + speed burs
 export const OPUS_SPEED_MULT = 1.35; // world-speed boost while active (a joyride)
 export const OPUS_TOKEN_MULT = 2; // token points multiplier while active
 export const OPUS_MIN_DISTANCE = 1500; // the opus pickup can't spawn before this (early game stays normal)
+
+// --- floor holes: a gap in the ground you must hop; fall in and you die (unless a shield/life
+// pops you back out, blinking). Sized well inside a single hop. Ease in after some distance. ---
+export const HOLE_MIN_DISTANCE = 1200; // no holes in the opening stretch
+export const HOLE_MIN_W = 22;
+export const HOLE_MAX_W = 40;
+export const HOLE_GROUND_SHARE = 0.32; // chance a ground-lane spawn is a hole (once past HOLE_MIN_DISTANCE)
+export const PIT_DEATH_Y = GROUND_Y + 32; // y (below the floor) past which a fall counts as into the void
+
+// --- duck-only overhang: a bar hung at head height with clearance ONLY for a crouched Clawd.
+// You cannot jump it (jumping into it kills you) — it forces a duck. Eases in after some distance. ---
+export const OVERHANG_MIN_DISTANCE = 900;
+export const OVERHANG_SHARE = 0.4; // chance an overhead spawn is an overhang vs the flyer (once past its min distance)
+export const OVERHANG_W = 26;
+export const OVERHANG_TOP = 138; // top edge of the hanging block
+export const OVERHANG_BOTTOM = 166; // bottom edge — leaves ~12px, enough for a duck (11) but not a stand (18)
 
 export const HIGHSCORE_KEY = "clawd.arcade.highscore.v1";
 export const MUTED_KEY = "clawd.arcade.muted.v1"; // sfx mute

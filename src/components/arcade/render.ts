@@ -193,6 +193,42 @@ function drawFlyer(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
   ctx.fillRect(midX - 1, yv + 14 + d, 2, 2);
 }
 
+// A duck-only overhang: a block hung from the ceiling by a stem, hazard-striped underside.
+function drawOverhang(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
+  const { x, y, w, h } = o;
+  const midX = Math.round(x + w / 2);
+  // stem up to the top of the sky, so it clearly reads as "hanging" (not floating)
+  ctx.fillStyle = pal.bugDark;
+  ctx.fillRect(midX - 1, 0, 2, y);
+  // block body
+  ctx.fillStyle = pal.bug;
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = pal.bugDark;
+  ctx.fillRect(x, y, w, 2); // top cap shade
+  // hazard stripes on the underside — the "duck!" tell
+  ctx.fillStyle = pal.accent2;
+  for (let sx = x + 1; sx < x + w - 2; sx += 4) ctx.fillRect(Math.round(sx), y + h - 2, 2, 1);
+  // little downward teeth flickering on the bottom edge
+  ctx.fillStyle = pal.bugLit;
+  const d = Math.floor(t * 8) % 2;
+  ctx.fillRect(midX - 3 + d, y + h, 1, 2);
+  ctx.fillRect(midX + 2 - d, y + h, 1, 2);
+}
+
+// Punch gaps in the floor: fill the hole column with the sky color + a ledge lip on each side.
+function drawHoles(ctx: Ctx, s: GameState, palAt: (x: number) => Theme): void {
+  for (const h of s.holes) {
+    const pal = palAt(h.x + h.w / 2);
+    const hx = Math.round(h.x);
+    const hw = Math.round(h.w);
+    ctx.fillStyle = pal.bg; // erase ground + ground line across the gap
+    ctx.fillRect(hx, C.GROUND_Y - 1, hw, C.VIRTUAL_H - C.GROUND_Y + 1);
+    ctx.fillStyle = pal.groundLine; // lit ledge lips so the edges read
+    ctx.fillRect(hx - 1, C.GROUND_Y, 1, 5);
+    ctx.fillRect(hx + hw, C.GROUND_Y, 1, 5);
+  }
+}
+
 function drawToken(ctx: Ctx, tk: Token, t: number): void {
   const yb = tk.y + Math.sin(t * 4 + tk.id) * 1.5;
   // glow
@@ -357,13 +393,15 @@ function panelLines(s: GameState, pal: Theme): PanelLine[] | null {
   if (s.phase === "dead") {
     // the title + subtitle depend on what killed the run
     const title =
-      s.deathCause === "hallucination" ? "HALLUCINATION" : s.deathCause === "ratelimit" ? "429" : "SEGFAULT";
+      s.deathCause === "hallucination" ? "HALLUCINATION"
+        : s.deathCause === "ratelimit" ? "429"
+          : s.deathCause === "void" ? "NULL POINTER"
+            : "SEGFAULT";
     const sub =
-      s.deathCause === "hallucination"
-        ? "unhandled exception"
-        : s.deathCause === "ratelimit"
-          ? "connection reset"
-          : "core dumped";
+      s.deathCause === "hallucination" ? "unhandled exception"
+        : s.deathCause === "ratelimit" ? "connection reset"
+          : s.deathCause === "void" ? "fell out of scope"
+            : "core dumped";
     return [
       { s: title, size: 18, color: C.COLORS.throttle, dy: -36 },
       { s: sub, size: 8, color: C.COLORS.dim, dy: -19 },
@@ -379,18 +417,47 @@ function panelLines(s: GameState, pal: Theme): PanelLine[] | null {
  *  native resolution, so it stays sharp instead of being magnified from this small buffer. */
 export function render(ctx: Ctx, s: GameState): void {
   const t = s.time;
-  const pal = palette(s);
+  // during an act transition, the world is split at a scrolling seam: new palette to the
+  // right (the area you're entering), old palette to the left. palAt() resolves per-x.
+  const tr = s.transition;
+  const newPal = palette(s);
+  const oldPal = tr ? (C.THEMES[tr.from] ?? newPal) : newPal;
+  const seamX = tr ? tr.seamX : -Infinity;
+  const palAt = (x: number): Theme => (x > seamX ? newPal : oldPal);
+
   ctx.save();
   if (s.shake > 0) {
     const m = s.shake * 4;
     ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
   }
-  drawBackground(ctx, s, pal);
+  // background: full frame in the left palette, then redraw the right of the seam in the new one
+  drawBackground(ctx, s, oldPal);
+  if (tr) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(seamX, 0, C.VIRTUAL_W - seamX, C.VIRTUAL_H);
+    ctx.clip();
+    drawBackground(ctx, s, newPal);
+    ctx.restore();
+  }
+  drawHoles(ctx, s, palAt);
+  // the glowing seam itself
+  if (tr) {
+    const sx = Math.round(seamX);
+    ctx.fillStyle = withAlpha(newPal.accent1, 0.22);
+    ctx.fillRect(sx - 3, 0, 7, C.VIRTUAL_H);
+    ctx.fillStyle = newPal.accent2;
+    ctx.fillRect(sx - 1, 0, 2, C.VIRTUAL_H);
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillRect(sx, 0, 1, C.VIRTUAL_H);
+  }
   for (const o of s.obstacles) {
-    if (o.type === "flyer") drawFlyer(ctx, o, t, pal);
-    else if (o.type === "skitter") drawSkitter(ctx, o, t, pal);
-    else if (o.type === "stacker") drawStacker(ctx, o, t, pal);
-    else drawCrawler(ctx, o, t, pal);
+    const op = palAt(o.x + o.w / 2);
+    if (o.type === "flyer") drawFlyer(ctx, o, t, op);
+    else if (o.type === "overhang") drawOverhang(ctx, o, t, op);
+    else if (o.type === "skitter") drawSkitter(ctx, o, t, op);
+    else if (o.type === "stacker") drawStacker(ctx, o, t, op);
+    else drawCrawler(ctx, o, t, op);
   }
   for (const tk of s.tokens) {
     if (tk.collected) continue;
@@ -441,14 +508,8 @@ export function render(ctx: Ctx, s: GameState): void {
   drawParticles(ctx, s);
   ctx.restore();
 
-  // brief full-screen flash when a new act begins (fades from ~0.25 alpha)
-  if (s.actFlash > 0) {
-    ctx.fillStyle = withAlpha(pal.accent1, s.actFlash * 0.5);
-    ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
-  }
-
   // HUD pixel bits + scanlines + the dim panel backdrop (drawn straight, no shake)
-  drawHUDPixels(ctx, s, pal);
+  drawHUDPixels(ctx, s, newPal);
   ctx.fillStyle = "rgba(0,0,0,0.06)";
   for (let y = 0; y < C.VIRTUAL_H; y += 2) ctx.fillRect(0, y, C.VIRTUAL_W, 1);
 
@@ -462,8 +523,8 @@ export function render(ctx: Ctx, s: GameState): void {
     ctx.fillRect(C.VIRTUAL_W - 3, 0, 3, C.VIRTUAL_H);
   }
 
-  if (panelLines(s, pal)) {
-    ctx.fillStyle = withAlpha(pal.bg, 0.82);
+  if (panelLines(s, newPal)) {
+    ctx.fillStyle = withAlpha(newPal.bg, 0.82);
     ctx.fillRect(0, 0, C.VIRTUAL_W, C.VIRTUAL_H);
   }
 }
