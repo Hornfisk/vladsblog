@@ -184,6 +184,19 @@ export function GameCanvas({
     };
   }, []);
 
+  // Safety net for stranded touches: if the OS swallows a pointerup (app switch, alt-tab,
+  // notification shade) we could miss the release and leave a held duck stuck on. Clearing all
+  // gesture state + the duck flag on blur means any lost pointer self-heals within a frame.
+  useEffect(() => {
+    const release = () => {
+      swipes.current.clear();
+      const s = stateRef.current;
+      if (s) s.input.duck = false;
+    };
+    window.addEventListener("blur", release);
+    return () => window.removeEventListener("blur", release);
+  }, []);
+
   // --- side jump zones: size to the empty pillar margins beside the 16:9 play area ---
   useLayoutEffect(() => {
     if (!touch) return;
@@ -237,12 +250,27 @@ export function GameCanvas({
   // --- touch / pointer on the canvas ---
   // Press in the upper area = jump NOW (snappy; hold for higher, release cuts). Press-and-hold
   // the bottom band = duck. A downward drag still slams in the air / ducks on the ground.
-  const swipe = useRef<{
-    y: number;
-    ducking: boolean;
-    wasPlaying: boolean;
-    bandDuck: boolean;
-  } | null>(null);
+  // Per-pointer gesture state, keyed by pointerId. A single shared ref used to be clobbered by
+  // a second finger (finger B's pointerdown overwrote finger A's held-duck state, so A's release
+  // cleared the wrong entry and left s.input.duck stuck true → Clawd frozen crouched). Tracking
+  // each pointer independently means one touch can never strand another's duck. duck is active
+  // whenever ANY live pointer is ducking.
+  const swipes = useRef<
+    Map<number, { y: number; ducking: boolean; wasPlaying: boolean; bandDuck: boolean }>
+  >(new Map());
+
+  const syncDuck = () => {
+    const s = stateRef.current;
+    if (!s) return;
+    let ducking = false;
+    for (const sw of swipes.current.values()) {
+      if (sw.ducking) {
+        ducking = true;
+        break;
+      }
+    }
+    s.input.duck = ducking;
+  };
 
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
@@ -256,7 +284,7 @@ export function GameCanvas({
     const s = stateRef.current!;
     const wasPlaying = s.phase === "playing";
     if (!wasPlaying) {
-      swipe.current = { y: e.clientY, ducking: false, wasPlaying, bandDuck: false };
+      swipes.current.set(e.pointerId, { y: e.clientY, ducking: false, wasPlaying, bandDuck: false });
       onJumpDown(s); // tap to start / resume / restart
       goFullscreen();
       return;
@@ -265,40 +293,36 @@ export function GameCanvas({
     const rect = e.currentTarget.getBoundingClientRect();
     const inDuckBand = e.clientY - rect.top > rect.height * DUCK_BAND;
     if (inDuckBand) {
-      s.input.duck = true;
-      swipe.current = { y: e.clientY, ducking: true, wasPlaying, bandDuck: true };
+      swipes.current.set(e.pointerId, { y: e.clientY, ducking: true, wasPlaying, bandDuck: true });
+      syncDuck();
     } else {
       onJumpDown(s); // press = jump now
-      swipe.current = { y: e.clientY, ducking: false, wasPlaying, bandDuck: false };
+      swipes.current.set(e.pointerId, { y: e.clientY, ducking: false, wasPlaying, bandDuck: false });
     }
   };
 
   const onPointerMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
-    const sw = swipe.current;
+    const sw = swipes.current.get(e.pointerId);
     const s = stateRef.current!;
     if (!sw || s.phase !== "playing") return;
     if (sw.bandDuck) return; // holding the duck zone — release ends it; ignore drags
     const dy = e.clientY - sw.y;
     if (dy > SWIPE && !sw.ducking) {
-      s.input.duck = true; // drag down = slam in the air / duck on the ground
-      sw.ducking = true;
+      sw.ducking = true; // drag down = slam in the air / duck on the ground
+      syncDuck();
     } else if (dy < SWIPE * 0.4 && sw.ducking) {
-      s.input.duck = false; // dragged back up = stop ducking
-      sw.ducking = false;
+      sw.ducking = false; // dragged back up = stop ducking
+      syncDuck();
     }
   };
 
-  const endPointer = () => {
-    const sw = swipe.current;
+  const endPointer = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const sw = swipes.current.get(e.pointerId);
     const s = stateRef.current!;
-    if (sw) {
-      if (sw.ducking) {
-        s.input.duck = false; // release ends the duck / slam
-      } else if (sw.wasPlaying) {
-        onJumpUp(s); // release cuts the jump → variable height
-      }
-    }
-    swipe.current = null;
+    if (!sw) return;
+    swipes.current.delete(e.pointerId);
+    if (!sw.ducking && sw.wasPlaying) onJumpUp(s); // a non-duck release cuts the jump → variable height
+    syncDuck(); // recompute from any pointers still down (also clears this pointer's duck)
   };
 
   // --- dedicated JUMP button (touch): press to jump, hold for a higher jump ---
