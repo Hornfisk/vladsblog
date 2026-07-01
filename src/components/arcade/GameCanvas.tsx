@@ -20,9 +20,25 @@ import {
   type GameState,
   type Phase,
 } from "./engine";
+import type { SfxEvent } from "./engine";
 import { render, renderText } from "./render";
 import { useGameLoop } from "./useGameLoop";
 import { playSfx } from "./sfx";
+
+// Light mobile haptics on meaningful events only (never per-frame stuff like jump/token).
+// navigator.vibrate is undefined on iOS Safari → this is a graceful no-op there.
+function haptic(ev: SfxEvent): void {
+  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+  switch (ev) {
+    case "die": navigator.vibrate([40, 30, 60]); break;
+    case "throttle": navigator.vibrate([20, 40, 20]); break;
+    case "opus": navigator.vibrate([15, 25, 15, 25, 30]); break;
+    case "hurt": navigator.vibrate(30); break;
+    case "shield": case "life": case "powerup": navigator.vibrate(22); break;
+    case "milestone": navigator.vibrate([12, 18, 12]); break;
+    case "clutch": navigator.vibrate(12); break;
+  }
+}
 import { initAudio, isMusicOn, toggleSfx } from "./audio";
 import { startMusic, stopMusic, toggleMusicAndSchedule, setMusicSpeed } from "./music";
 
@@ -325,9 +341,9 @@ export function GameCanvas({
       accRef.current -= STEP;
       steps++;
     }
-    // drain queued one-shot events into sound effects
+    // drain queued one-shot events into sound effects + mobile haptics
     if (s.events.length) {
-      for (const ev of s.events) playSfx(ev);
+      for (const ev of s.events) { playSfx(ev); haptic(ev); }
       s.events.length = 0;
     }
     // music tempo rises with game speed (pitch unchanged)

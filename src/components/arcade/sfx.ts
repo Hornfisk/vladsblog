@@ -105,5 +105,8 @@ export function playSfx(name: SfxEvent): void {
       tone([1319, 1976], 0.18, "triangle", 0.14);
       tone([1976], 0.12, "square", 0.1, 0.05);
       break;
+    case "clutch": // quick bright zip for a near-miss hop
+      tone([1568, 2093], 0.1, "square", 0.12);
+      break;
   }
 }

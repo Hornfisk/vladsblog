@@ -296,7 +296,7 @@ function drawPickup(ctx: Ctx, tk: Token, t: number): void {
     ctx.fill();
     ctx.fillStyle = C.COLORS.life;
     for (const [dx, dy] of HEART) ctx.fillRect(Math.round(tk.x + dx), Math.round(yb + dy - 1), 1, 1);
-  } else {
+  } else if (tk.kind === "opus") {
     // opus: a pulsing terracotta-gold up-chevron (the "model upgrade" star)
     const pr = C.PICKUP_R + 1 + Math.sin(t * 7 + tk.id) * 0.8;
     ctx.fillStyle = C.COLORS.opusGlow;
@@ -309,6 +309,21 @@ function drawPickup(ctx: Ctx, tk: Token, t: number): void {
       [-3, -1], [-1, -1], [1, -1], [3, -1], [-4, 0], [4, 0],
     ];
     for (const [dx, dy] of chev) ctx.fillRect(Math.round(tk.x + dx), Math.round(yb + dy), 1, 1);
+  } else {
+    // magnet ("hotfix"): a little steel-teal horseshoe with red tips
+    ctx.fillStyle = C.COLORS.magnetGlow;
+    ctx.beginPath();
+    ctx.arc(tk.x, yb, C.PICKUP_R + 2, 0, Math.PI * 2);
+    ctx.fill();
+    const mx = Math.round(tk.x);
+    const my = Math.round(yb);
+    ctx.fillStyle = C.COLORS.magnet;
+    ctx.fillRect(mx - 4, my - 4, 2, 6); // left prong
+    ctx.fillRect(mx + 2, my - 4, 2, 6); // right prong
+    ctx.fillRect(mx - 4, my + 1, 8, 2); // bottom bridge
+    ctx.fillStyle = C.COLORS.life; // red tips
+    ctx.fillRect(mx - 4, my - 4, 2, 1);
+    ctx.fillRect(mx + 2, my - 4, 2, 1);
   }
 }
 
@@ -480,6 +495,19 @@ export function render(ctx: Ctx, s: GameState): void {
     ctx.beginPath();
     ctx.arc(gx, gy, rr, 0, Math.PI * 2);
     ctx.stroke();
+  }
+  // magnet field: a faint dashed teal ring while the hotfix pull is active
+  if (s.magnet > 0) {
+    const gx = p.x + C.PLAYER_W / 2;
+    const gy = p.y + C.PLAYER_H / 2;
+    const rr = 12 + Math.sin(t * 9) * 2;
+    ctx.strokeStyle = C.COLORS.magnet;
+    ctx.lineWidth = 1;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 5) {
+      ctx.beginPath();
+      ctx.arc(gx, gy, rr, a, a + Math.PI / 9);
+      ctx.stroke();
+    }
   }
   if (s.shielded) {
     const sbx = p.x + C.PLAYER_W / 2;

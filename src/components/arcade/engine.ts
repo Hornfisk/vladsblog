@@ -10,7 +10,7 @@ export type ObstacleType = "skitter" | "crawler" | "stacker" | "flyer" | "overha
 
 /** Pickup kinds. "token" is the common ground-lane reward; the rest float in the
  * high lane that only a double jump can reach. "opus" is the rare model-upgrade star. */
-export type PickupKind = "token" | "gem" | "shield" | "life" | "opus";
+export type PickupKind = "token" | "gem" | "shield" | "life" | "opus" | "magnet";
 
 /** What killed the run — picks the death-screen title/subtitle. */
 export type DeathCause = "segfault" | "hallucination" | "ratelimit" | "void";
@@ -38,7 +38,7 @@ export interface Toast {
 /** One-shot events the loop drains each frame to fire sound effects. */
 export type SfxEvent =
   | "jump" | "duck" | "token" | "die" | "start" | "powerup" | "shield" | "life" | "hurt"
-  | "act" | "throttle" | "opus" | "milestone";
+  | "act" | "throttle" | "opus" | "milestone" | "clutch";
 
 export interface Obstacle {
   id: number;
@@ -47,6 +47,8 @@ export interface Obstacle {
   y: number; // top edge
   w: number;
   h: number;
+  passed?: boolean; // scored for a near-miss once it's behind Clawd
+  minGap?: number; // tightest vertical clearance seen while overlapping Clawd's column
 }
 
 export interface Token {
@@ -110,6 +112,7 @@ export interface GameState {
   comboTier: number; // highest combo tier already announced this streak (for toast triggers)
   wasHot: boolean; // was usage in the hot zone last step (edge-detect for the hot-zone toast)
   opus: number; // seconds of opus mode remaining (invincible + 2× tokens + speed burst)
+  magnet: number; // seconds of "hotfix" magnet remaining (pulls nearby tokens)
   saidRight: boolean; // has the once-per-run "you're absolutely right!" fired
   deathCause: DeathCause;
   toast: Toast | null;
@@ -136,6 +139,8 @@ const VIBE_TOASTS = [
 ];
 // Shown when a shield/life saves you or pops you out of a pit.
 const CLOSE_CALLS = ["phew", "clutch", "try/catch caught it", "that was close", "recovered", "rolled back"];
+// Shown on a near-miss hop (cleared a ground creature by a hair).
+const NEAR_MISS_TOASTS = ["clutch!", "threaded it", "so close", "surgical", "no scope"];
 
 function pick(arr: readonly string[]): string {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -188,6 +193,7 @@ export function createGameState(): GameState {
     comboTier: 0,
     wasHot: false,
     opus: 0,
+    magnet: 0,
     saidRight: false,
     deathCause: "segfault",
     toast: null,
@@ -247,14 +253,15 @@ export function onJumpUp(s: GameState): void {
 
 function spawn(s: GameState): void {
   const EDGE = C.VIRTUAL_W + 8;
+  const b = C.BIOMES[s.act] ?? C.BIOMES[0]; // biome flavor for the current act
   // keep the two forced-response hazards apart: a hole under an overhang would be unsurvivable
   const overhangNear = s.obstacles.some((o) => o.type === "overhang" && o.x > C.VIRTUAL_W - 150);
   const holeNear = s.holes.some((h) => h.x > C.VIRTUAL_W - 150);
   let holeCenter: number | null = null;
 
-  if (Math.random() < 0.5) {
+  if (Math.random() < b.overheadBias) {
     // --- overhead lane: the flyer (jump OR duck), or a duck-only overhang ---
-    if (s.distance > C.OVERHANG_MIN_DISTANCE && !holeNear && Math.random() < C.OVERHANG_SHARE) {
+    if (s.distance > C.OVERHANG_MIN_DISTANCE && !holeNear && Math.random() < b.overhangShare) {
       s.obstacles.push({
         id: s.nextId++, type: "overhang", x: EDGE,
         y: C.OVERHANG_TOP, w: C.OVERHANG_W, h: C.OVERHANG_BOTTOM - C.OVERHANG_TOP,
@@ -267,7 +274,7 @@ function spawn(s: GameState): void {
     }
   } else {
     // --- ground lane: a creature (jump over), or a hole to hop ---
-    if (s.distance > C.HOLE_MIN_DISTANCE && !overhangNear && Math.random() < C.HOLE_GROUND_SHARE) {
+    if (s.distance > C.HOLE_MIN_DISTANCE && !overhangNear && Math.random() < b.holeShare) {
       const w = C.HOLE_MIN_W + Math.floor(Math.random() * (C.HOLE_MAX_W - C.HOLE_MIN_W + 1));
       s.holes.push({ id: s.nextId++, x: EDGE, w });
       holeCenter = EDGE + w / 2;
@@ -293,7 +300,7 @@ function spawn(s: GameState): void {
         collected: false, kind: "token",
       });
     }
-  } else if (Math.random() < C.TOKEN_CHANCE) {
+  } else if (Math.random() < b.tokenChance) {
     const count = 1 + Math.floor(Math.random() * 3);
     const baseY = C.GROUND_Y - 34 - Math.random() * 40;
     const startX = C.VIRTUAL_W + 40 + Math.random() * 30;
@@ -309,13 +316,14 @@ function spawn(s: GameState): void {
   }
 
   // rarely float a power-up in the HIGH lane — only a double jump can reach it
-  if (Math.random() < C.POWERUP_CHANCE) {
+  if (Math.random() < b.powerupChance) {
     const roll = Math.random();
     // opus is the rarest, and only once the run is underway (early game stays vanilla)
     let kind: PickupKind;
     if (s.distance > C.OPUS_MIN_DISTANCE && roll < 0.06) kind = "opus";
-    else if (roll < 0.6) kind = "gem";
-    else if (roll < 0.9) kind = "shield";
+    else if (roll < 0.5) kind = "gem";
+    else if (roll < 0.72) kind = "shield";
+    else if (roll < 0.88) kind = "magnet";
     else kind = "life";
     s.tokens.push({
       id: s.nextId++,
@@ -446,6 +454,7 @@ export function step(s: GameState, dt: number): void {
 
   // --- difficulty ramp ---
   s.speed = Math.min(C.MAX_SPEED, C.BASE_SPEED + s.distance * C.SPEED_PER_PX);
+  s.speed *= (C.BIOMES[s.act] ?? C.BIOMES[0]).speedMult; // per-biome flavor (mild)
   if (s.opus > 0) s.speed *= C.OPUS_SPEED_MULT; // opus burst can push past the normal cap
   s.distance += s.speed * dt;
   s.bgScroll += s.speed * dt;
@@ -460,7 +469,7 @@ export function step(s: GameState, dt: number): void {
       s.transition = { from, seamX: C.VIRTUAL_W + 4 };
       s.lastSeamDist = s.distance;
       const th = C.THEMES[target];
-      say(s, `» ${th.name}`, th.accent1, 2.0);
+      say(s, `» ${th.name} — ${(C.BIOMES[target] ?? C.BIOMES[0]).tag}`, th.accent1, 2.2);
       s.events.push("act");
     }
   }
@@ -480,6 +489,7 @@ export function step(s: GameState, dt: number): void {
       burst(s, s.player.x + C.PLAYER_W / 2, s.player.y + C.PLAYER_H / 2, C.COLORS.opus, 12, 150);
     }
   }
+  if (s.magnet > 0) s.magnet = Math.max(0, s.magnet - dt);
   if (s.toast) {
     s.toast.t -= dt;
     if (s.toast.t <= 0) s.toast = null;
@@ -564,6 +574,21 @@ export function step(s: GameState, dt: number): void {
   for (const o of s.obstacles) o.x -= s.speed * dt;
   for (const tk of s.tokens) tk.x -= s.speed * dt;
   for (const h of s.holes) h.x -= s.speed * dt;
+  // "hotfix" magnet: pull nearby ground tokens toward Clawd while active
+  if (s.magnet > 0) {
+    const pcx = p.x + C.PLAYER_W / 2;
+    const pcy = p.y + C.PLAYER_H / 2;
+    const pullK = Math.min(1, C.MAGNET_PULL * dt);
+    for (const tk of s.tokens) {
+      if (tk.collected || tk.kind !== "token") continue;
+      const dx = pcx - tk.x;
+      const dy = pcy - tk.y;
+      if (dx * dx + dy * dy < C.MAGNET_RANGE * C.MAGNET_RANGE) {
+        tk.x += dx * pullK;
+        tk.y += dy * pullK;
+      }
+    }
+  }
   s.obstacles = s.obstacles.filter((o) => o.x + o.w > -8);
   s.tokens = s.tokens.filter((tk) => tk.x > -8 && !tk.collected);
   s.holes = s.holes.filter((h) => h.x + h.w > -8);
@@ -576,6 +601,23 @@ export function step(s: GameState, dt: number): void {
   let nearest = Infinity;
   for (const o of s.obstacles) {
     if (o.x > p.x) nearest = Math.min(nearest, o.x - (p.x + C.PLAYER_W));
+    // near-miss "clutch": for ground creatures, track the tightest clearance as Clawd hops over,
+    // then reward a hair's-breadth pass once the creature is safely behind him.
+    const isGround = o.type === "skitter" || o.type === "crawler" || o.type === "stacker";
+    if (isGround) {
+      if (o.x < pr.x + pr.w && o.x + o.w > pr.x) {
+        const gap = o.y - (pr.y + pr.h); // creature top minus Clawd's feet (positive => cleared above)
+        if (gap >= 0) o.minGap = Math.min(o.minGap ?? Infinity, gap);
+      } else if (!o.passed && o.x + o.w < pr.x) {
+        o.passed = true;
+        if (o.minGap !== undefined && o.minGap <= C.NEAR_MISS_GAP) {
+          s.tokenTally += C.NEAR_MISS_BONUS;
+          s.events.push("clutch");
+          say(s, pick(NEAR_MISS_TOASTS), C.COLORS.token, 1.0);
+          burst(s, pr.x + pr.w, pr.y, C.COLORS.token, 6, 90);
+        }
+      }
+    }
     // opus mode phases straight through obstacles (invincible joyride)
     if (s.invuln <= 0 && s.opus <= 0 && aabb(pr.x + 1, pr.y + 1, pr.w - 2, pr.h - 2, o.x, o.y, o.w, o.h)) {
       if (hit(s, o.type)) return; // fatal
@@ -611,15 +653,16 @@ export function step(s: GameState, dt: number): void {
             s.comboTier = s.combo;
             say(s, pick(VIBE_TOASTS), C.THEMES[s.act].accent2, 1.2);
           }
-          s.usage = Math.min(1, s.usage + C.USAGE_PER_TOKEN);
+          const biome = C.BIOMES[s.act] ?? C.BIOMES[0];
+          s.usage = Math.min(1, s.usage + C.USAGE_PER_TOKEN * biome.usageMult);
           s.usageGrace = C.USAGE_GRACE; // pause the drain so an active streak actually fills
-          // "hot" meter pays a rising bonus; opus mode doubles on top of that
+          // "hot" meter pays a rising bonus; opus mode + biome multiplier stack on top
           const hotBonus =
             s.usage > C.USAGE_HOT
               ? 1 + ((s.usage - C.USAGE_HOT) / (1 - C.USAGE_HOT)) * C.USAGE_BONUS
               : 1;
           const opusMult = s.opus > 0 ? C.OPUS_TOKEN_MULT : 1;
-          s.tokenTally += Math.round(C.TOKEN_POINTS * s.combo * hotBonus * opusMult);
+          s.tokenTally += Math.round(C.TOKEN_POINTS * s.combo * hotBonus * opusMult * biome.tokenMult);
           s.events.push("token");
           burst(s, tk.x, tk.y, C.COLORS.token, 8, 130);
           // overfill → 429: wipe the combo + meter, lock scoring out for a beat
@@ -656,6 +699,12 @@ export function step(s: GameState, dt: number): void {
           s.events.push("opus");
           s.toast = { text: "▲ OPUS MODE", color: C.COLORS.opus, t: 2.0 };
           burst(s, tk.x, tk.y, C.COLORS.opus, 22, 210);
+          break;
+        case "magnet":
+          s.magnet = C.MAGNET_TIME;
+          s.events.push("powerup");
+          s.toast = { text: "hotfix · magnet", color: C.COLORS.magnet, t: 1.4 };
+          burst(s, tk.x, tk.y, C.COLORS.magnet, 14, 170);
           break;
       }
     }

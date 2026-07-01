@@ -102,7 +102,40 @@ export const COLORS = {
   opus: "#ffb86b", // opus-mode aura (warm terracotta-gold, sits beside Clawd's clay)
   opusGlow: "rgba(255,184,107,0.35)",
   throttle: "#ff4d5e", // 429 rate-limit red (meter cap + screen edge)
+  magnet: "#6fd3d3", // "hotfix" magnet pickup + field (steel-teal, distinct from shield cyan)
+  magnetGlow: "rgba(111,211,211,0.32)",
 } as const;
+
+// --- per-act biomes: each color act also plays differently (side-grades, not a difficulty
+// ladder — acts start random and cycle). Indexed to match THEMES. Values feed spawn()/ramp. ---
+export interface Biome {
+  speedMult: number; // multiplier on world speed (kept mild so seam crossings don't lurch)
+  overheadBias: number; // chance a spawn is overhead (flyer/overhang) vs ground
+  holeShare: number; // chance a ground spawn is a hole
+  overhangShare: number; // chance an overhead spawn is a duck-only overhang (vs flyer)
+  tokenChance: number; // chance to float a token arc after a spawn
+  tokenMult: number; // multiplier on token points collected in this biome
+  usageMult: number; // multiplier on how fast the rate-limit meter fills
+  powerupChance: number; // chance to float a high-lane power-up after a spawn
+  tag: string; // short personality shown in the act toast
+}
+
+export const BIOMES: Biome[] = [
+  { speedMult: 0.97, overheadBias: 0.42, holeShare: 0.16, overhangShare: 0.28, tokenChance: 0.72, tokenMult: 1, usageMult: 1.0, powerupChance: 0.18, tag: "warming up" }, // cold start
+  { speedMult: 1.0, overheadBias: 0.5, holeShare: 0.3, overhangShare: 0.4, tokenChance: 0.6, tokenMult: 1, usageMult: 1.0, powerupChance: 0.16, tag: "in the groove" }, // in the flow
+  { speedMult: 1.0, overheadBias: 0.5, holeShare: 0.26, overhangShare: 0.4, tokenChance: 0.7, tokenMult: 1, usageMult: 0.9, powerupChance: 0.24, tag: "resource-rich" }, // deep context
+  { speedMult: 1.06, overheadBias: 0.64, holeShare: 0.24, overhangShare: 0.46, tokenChance: 0.6, tokenMult: 2, usageMult: 1.5, powerupChance: 0.14, tag: "×2 tokens · risky" }, // rate climbing
+  { speedMult: 1.1, overheadBias: 0.4, holeShare: 0.46, overhangShare: 0.34, tokenChance: 0.52, tokenMult: 1, usageMult: 1.0, powerupChance: 0.16, tag: "fast & gappy" }, // shipping
+];
+
+// --- near-miss "clutch" bonus: clearing a GROUND creature by a hair pays a little extra ---
+export const NEAR_MISS_GAP = 6; // px clearance under which a hop counts as clutch
+export const NEAR_MISS_BONUS = 40;
+
+// --- "hotfix" magnet power-up: briefly vacuums nearby ground tokens toward Clawd ---
+export const MAGNET_TIME = 4.5; // seconds active
+export const MAGNET_RANGE = 120; // px pull radius
+export const MAGNET_PULL = 9; // per-second approach factor (fraction of remaining distance/s)
 
 // --- session acts: the world recolors as the run progresses through named phases.
 // Clawd himself stays terracotta (see clawdSprite / the fixed COLORS above) — he's the
