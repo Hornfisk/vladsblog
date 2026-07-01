@@ -109,7 +109,7 @@ export const COLORS = {
 // constant anchor while the world cycles. A run steps through these in order, then loops.
 // Only the WORLD keys live here; tokens/gem/shield/life keep their fixed colors for
 // readability, and the flyer recolors to each theme's accent2 to stay legible on any bg. ---
-export const ACT_LENGTH = 5200; // virtual px of distance per act before the theme advances (~2× the first pass, ~25s)
+export const ACT_LENGTH = 7800; // virtual px of distance per act before the theme advances (rarer — a new area every ~30–50s)
 export const SEAM_SPEED_TRACK = 1; // the transition seam scrolls at world speed × this
 
 export interface Theme {
@@ -138,9 +138,9 @@ export const THEMES: Theme[] = [
 // Collecting tokens fills a "usage" meter. Above USAGE_HOT it pays a rising bonus (up to
 // 1 + USAGE_BONUS ×). Overfill it and you trip a 429: THROTTLE_TIME seconds where tokens
 // score nothing and the combo is wiped. Skill = ride it hot, back off before the cap.
-export const USAGE_PER_TOKEN = 0.16; // meter gained per token (0..1)
-export const USAGE_DECAY = 0.1; // meter drained per second once the grace window lapses
-export const USAGE_GRACE = 0.7; // seconds after a token before the meter starts draining (keeps a streak fillable)
+export const USAGE_PER_TOKEN = 0.14; // meter gained per token (0..1) — between the fast (0.16) and slow (0.12) tunings
+export const USAGE_DECAY = 0.16; // meter drained per second once the grace window lapses
+export const USAGE_GRACE = 0.5; // seconds after a token before the meter starts draining (keeps a streak fillable)
 export const USAGE_HOT = 0.6; // fraction where the token bonus starts ramping in
 export const USAGE_BONUS = 1.0; // extra token multiplier at a full meter (=> up to 2×)
 export const THROTTLE_TIME = 1.5; // seconds of "429" lockout when the meter overflows

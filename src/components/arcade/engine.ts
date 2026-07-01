@@ -446,11 +446,15 @@ export function step(s: GameState, dt: number): void {
   // --- session act: crossing an ACT_LENGTH boundary starts a seam sweep to the new palette ---
   const act = Math.floor(s.distance / C.ACT_LENGTH) % C.THEMES.length;
   if (act !== s.act) {
-    s.transition = { from: s.act, seamX: C.VIRTUAL_W + 4 };
+    const from = s.act;
     s.act = act;
-    const th = C.THEMES[act];
-    say(s, `» ${th.name}`, th.accent1, 2.0);
-    s.events.push("act");
+    // don't stack seams — if one is still sweeping, just advance the palette (no second gate)
+    if (!s.transition) {
+      s.transition = { from, seamX: C.VIRTUAL_W + 4 };
+      const th = C.THEMES[act];
+      say(s, `» ${th.name}`, th.accent1, 2.0);
+      s.events.push("act");
+    }
   }
   if (s.transition) {
     s.transition.seamX -= s.speed * dt * C.SEAM_SPEED_TRACK; // sweeps left at world speed
