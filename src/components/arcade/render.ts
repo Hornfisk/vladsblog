@@ -441,15 +441,16 @@ export function render(ctx: Ctx, s: GameState): void {
     ctx.restore();
   }
   drawHoles(ctx, s, palAt);
-  // the glowing seam itself
+  // the seam itself — one crisp line with a soft glow only on the trailing (already-entered)
+  // side, so it reads unambiguously as a single moving gate (no symmetric band that looks doubled)
   if (tr) {
     const sx = Math.round(seamX);
-    ctx.fillStyle = withAlpha(newPal.accent1, 0.22);
-    ctx.fillRect(sx - 3, 0, 7, C.VIRTUAL_H);
+    ctx.fillStyle = withAlpha(newPal.accent2, 0.16);
+    ctx.fillRect(sx - 3, 0, 3, C.VIRTUAL_H); // subtle trailing glow, left only
     ctx.fillStyle = newPal.accent2;
-    ctx.fillRect(sx - 1, 0, 2, C.VIRTUAL_H);
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillRect(sx, 0, 1, C.VIRTUAL_H);
+    ctx.fillRect(sx - 1, 0, 2, C.VIRTUAL_H); // bright bar
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.fillRect(sx - 1, 0, 1, C.VIRTUAL_H); // white leading edge
   }
   for (const o of s.obstacles) {
     const op = palAt(o.x + o.w / 2);

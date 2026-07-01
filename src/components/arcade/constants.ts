@@ -111,6 +111,7 @@ export const COLORS = {
 // readability, and the flyer recolors to each theme's accent2 to stay legible on any bg. ---
 export const ACT_LENGTH = 7800; // virtual px of distance per act before the theme advances (rarer — a new area every ~30–50s)
 export const SEAM_SPEED_TRACK = 1; // the transition seam scrolls at world speed × this
+export const MIN_ACT_GAP = 3200; // hard floor: never start a new seam within this many px of the last (guarantees spacing)
 
 export interface Theme {
   name: string; // shown as a "» <name>" toast when the act begins

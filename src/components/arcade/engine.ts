@@ -101,6 +101,8 @@ export interface GameState {
   shielded: boolean; // one-hit shield active
   invuln: number; // i-frames remaining after surviving a hit
   act: number; // index into THEMES — the current session act (drives the world palette)
+  actOffset: number; // random starting theme; acts cycle in order from here
+  lastSeamDist: number; // distance at which the last seam started (enforces MIN_ACT_GAP spacing)
   transition: Transition | null; // active act-change seam sweep (visual only)
   usage: number; // rate-limit meter 0..1; tokens fill it, time drains it
   usageGrace: number; // seconds left before the meter starts draining again (reset by each token)
@@ -177,6 +179,8 @@ export function createGameState(): GameState {
     shielded: false,
     invuln: 0,
     act: 0,
+    actOffset: 0,
+    lastSeamDist: -1e9,
     transition: null,
     usage: 0,
     usageGrace: 0,
@@ -211,6 +215,9 @@ export function startGame(s: GameState): void {
   s.highScore = high;
   s.input = input;
   s.phase = "playing";
+  // start on a random theme; acts then cycle in order from there
+  s.actOffset = Math.floor(Math.random() * C.THEMES.length);
+  s.act = s.actOffset;
   s.events.push("start");
 }
 
@@ -444,14 +451,15 @@ export function step(s: GameState, dt: number): void {
   s.bgScroll += s.speed * dt;
 
   // --- session act: crossing an ACT_LENGTH boundary starts a seam sweep to the new palette ---
-  const act = Math.floor(s.distance / C.ACT_LENGTH) % C.THEMES.length;
-  if (act !== s.act) {
+  const target = (s.actOffset + Math.floor(s.distance / C.ACT_LENGTH)) % C.THEMES.length;
+  if (target !== s.act) {
     const from = s.act;
-    s.act = act;
-    // don't stack seams — if one is still sweeping, just advance the palette (no second gate)
-    if (!s.transition) {
+    s.act = target;
+    // one seam at a time, and never two within MIN_ACT_GAP; otherwise just advance the palette quietly
+    if (!s.transition && s.distance - s.lastSeamDist >= C.MIN_ACT_GAP) {
       s.transition = { from, seamX: C.VIRTUAL_W + 4 };
-      const th = C.THEMES[act];
+      s.lastSeamDist = s.distance;
+      const th = C.THEMES[target];
       say(s, `» ${th.name}`, th.accent1, 2.0);
       s.events.push("act");
     }
