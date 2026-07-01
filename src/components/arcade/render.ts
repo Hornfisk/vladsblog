@@ -197,10 +197,9 @@ function drawFlyer(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
 function drawOverhang(ctx: Ctx, o: Obstacle, t: number, pal: Theme): void {
   const { x, y, w, h } = o;
   const midX = Math.round(x + w / 2);
-  // stem up to the top of the sky, so it clearly reads as "hanging" (not floating)
-  ctx.fillStyle = pal.bugDark;
-  ctx.fillRect(midX - 1, 0, 2, y);
-  // block body
+  // block body — hangs at head height. (No ceiling stem: the full-height 2px line read as a
+  // vertical "splitter" bar rather than a support, and two overheads in a row looked like a
+  // doubled seam, so it was removed.)
   ctx.fillStyle = pal.bug;
   ctx.fillRect(x, y, w, h);
   ctx.fillStyle = pal.bugDark;

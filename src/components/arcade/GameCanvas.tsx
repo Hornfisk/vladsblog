@@ -346,8 +346,12 @@ export function GameCanvas({
       for (const ev of s.events) { playSfx(ev); haptic(ev); }
       s.events.length = 0;
     }
-    // music tempo rises with game speed (pitch unchanged)
-    setMusicSpeed((s.speed - C.BASE_SPEED) / (C.MAX_SPEED - C.BASE_SPEED));
+    // music tempo rises with game speed (pitch unchanged); on the menu / death / pause
+    // screens it snaps back to the base theme tempo instead of holding the last in-game speed
+    // (on death, update() returns before the ramp, so s.speed would otherwise stay frozen high)
+    setMusicSpeed(
+      s.phase === "playing" ? (s.speed - C.BASE_SPEED) / (C.MAX_SPEED - C.BASE_SPEED) : 0,
+    );
     // surface phase transitions (ready/playing/paused/dead) to the page
     if (s.phase !== lastPhaseRef.current) {
       lastPhaseRef.current = s.phase;
